@@ -6,6 +6,7 @@ import { RouterProvider, createRouter } from '@tanstack/react-router'
 
 // Import the generated route tree
 import { routeTree } from './routeTree.gen'
+import { AuthProvider } from '@/hooks/useAuth'
 import './index.css'
 
 // Create a new query client instance
@@ -51,11 +52,13 @@ if (!rootElement.innerHTML) {
   root.render(
     <React.StrictMode>
       <QueryClientProvider client={queryClient}>
-        <RouterProvider router={router} />
-        <ReactQueryDevtools 
-          initialIsOpen={false} 
-          position="bottom-right"
-        />
+        <AuthProvider>
+          <RouterProvider router={router} />
+          <ReactQueryDevtools 
+            initialIsOpen={false} 
+            position="bottom-right"
+          />
+        </AuthProvider>
       </QueryClientProvider>
     </React.StrictMode>
   )
