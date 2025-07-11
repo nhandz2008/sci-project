@@ -60,10 +60,10 @@ class Settings(BaseSettings):
             port = values.get("POSTGRES_PORT", "5432")
             db = values.get("POSTGRES_DB", "sci_db")
             
-            return f"postgresql://{user}:{password}@{host}:{port}/{db}"
+            return f"postgresql+psycopg://{user}:{password}@{host}:{port}/{db}"
         
         # Default fallback
-        return "postgresql://postgres:postgres@localhost:5432/sci_db"
+        return "postgresql+psycopg://postgres:postgres@localhost:5432/sci_db"
     
     # Admin user (will be created automatically)
     FIRST_SUPERUSER_EMAIL: str = "admin@sci.com"

@@ -10,9 +10,12 @@ from app.core.security import verify_token
 # from app.models.user import User
 # from app.services.auth_service import get_user_by_email
 
-# Database engine - we'll create this properly when we set up the database
-# For now, this is a placeholder structure
-engine = None  # Will be: create_engine(str(settings.DATABASE_URL))
+# Database engine setup
+engine = create_engine(
+    str(settings.DATABASE_URL),
+    echo=False,  # Set to True for SQL query logging in development
+    pool_pre_ping=True,  # Verify connections before use
+)
 
 # Security scheme for JWT tokens
 security = HTTPBearer()
@@ -28,14 +31,15 @@ def get_db() -> Generator[Session, None, None]:
     Yields:
         Database session
     """
-    # We'll implement this properly when we set up the database
-    # For now, this is the structure:
-    
-    # with Session(engine) as session:
-    #     yield session
-    
-    # Placeholder until we set up the database
-    raise NotImplementedError("Database not configured yet")
+    with Session(engine) as session:
+        try:
+            yield session
+            session.commit()
+        except Exception:
+            session.rollback()
+            raise
+        finally:
+            session.close()
 
 
 def get_current_user_token(credentials: HTTPAuthorizationCredentials = Depends(security)) -> dict:
