@@ -1,0 +1,1 @@
+# Core package for configuration, security, and app-wide utilities 
