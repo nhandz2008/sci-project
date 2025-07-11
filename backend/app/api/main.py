@@ -2,8 +2,9 @@ from fastapi import APIRouter
 from datetime import datetime
 from app.schemas import HealthResponse
 
-# We'll import these route modules as we create them
-# from app.api.routes import auth, users, competitions, recommendations
+# Import route modules
+from app.api.routes import auth
+# from app.api.routes import users, competitions, recommendations
 
 # Create the main API router
 api_router = APIRouter()
@@ -35,8 +36,10 @@ def health_check():
         }
     )
 
-# We'll include the route modules here as we create them:
-# api_router.include_router(auth.router, prefix="/auth", tags=["authentication"])
+# Include route modules
+api_router.include_router(auth.router, prefix="/auth", tags=["authentication"])
+
+# We'll include other route modules as we create them:
 # api_router.include_router(users.router, prefix="/users", tags=["users"])
 # api_router.include_router(competitions.router, prefix="/competitions", tags=["competitions"])
 # api_router.include_router(recommendations.router, prefix="/recommendations", tags=["recommendations"]) 
