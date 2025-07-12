@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { 
   Users, 
@@ -39,11 +39,13 @@ const userSchema = yup.object({
     .optional()
     .test('password-required', 'Password is required for new users', function(value) {
       const isEdit = this.parent.id // If editing, password is optional
-      return isEdit || (value && value.length >= 8)
+      return isEdit || !!value
     })
-    .test('password-strength', 'Password must contain at least one uppercase letter, one lowercase letter, and one number', function(value) {
+    .test('password-strength', 'Password must be at least 8 characters and contain at least one uppercase letter, one lowercase letter, and one number', function(value) {
       if (!value) return true // Let required test handle empty values
-      return /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/.test(value)
+      const hasMinLength = value.length >= 8
+      const hasStrength = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/.test(value)
+      return hasMinLength && hasStrength
     }),
   role: yup.string().required('Role is required'),
   is_active: yup.boolean(),
@@ -58,6 +60,27 @@ interface UserModalProps {
   onSuccess: () => void
 }
 
+// Helper function to get form default values
+const getFormDefaultValues = (user: User | null | undefined): UserFormData => {
+  if (!user) {
+    return {
+      username: '',
+      email: '',
+      password: '',
+      role: UserRole.CREATOR,
+      is_active: true,
+    }
+  }
+
+  return {
+    username: user.username || '',
+    email: user.email || '',
+    password: '', // Always empty for edits
+    role: user.role || UserRole.CREATOR,
+    is_active: user.is_active !== undefined ? user.is_active : true,
+  }
+}
+
 const UserModal: React.FC<UserModalProps> = ({ isOpen, onClose, user, onSuccess }) => {
   const [showPassword, setShowPassword] = useState(false)
   const queryClient = useQueryClient()
@@ -70,14 +93,13 @@ const UserModal: React.FC<UserModalProps> = ({ isOpen, onClose, user, onSuccess 
     setError,
   } = useForm<UserFormData>({
     resolver: yupResolver(userSchema),
-    defaultValues: user || {
-      username: '',
-      email: '',
-      password: '',
-      role: UserRole.CREATOR,
-      is_active: true,
-    },
+    defaultValues: getFormDefaultValues(user),
   })
+
+  // Reset form when user data changes
+  useEffect(() => {
+    reset(getFormDefaultValues(user))
+  }, [user, reset])
 
   const createMutation = useMutation({
     mutationFn: userAPI.createUser,
