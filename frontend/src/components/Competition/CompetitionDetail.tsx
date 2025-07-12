@@ -20,15 +20,11 @@ import { useAuth } from '@/hooks/useAuth'
 
 interface CompetitionDetailProps {
   competition: CompetitionWithCreator
-  onEdit?: () => void
-  onDelete?: () => void
   className?: string
 }
 
 const CompetitionDetail: React.FC<CompetitionDetailProps> = ({
   competition,
-  onEdit,
-  onDelete,
   className,
 }) => {
   const { user } = useAuth()
@@ -140,25 +136,6 @@ const CompetitionDetail: React.FC<CompetitionDetailProps> = ({
           >
             <Share2 className="w-5 h-5" />
           </button>
-          
-          {canEdit && (
-            <>
-              <button
-                onClick={onEdit}
-                className="bg-white/90 backdrop-blur-sm text-blue-600 p-2 rounded-lg hover:bg-white transition-colors"
-                title="Edit competition"
-              >
-                <Edit className="w-5 h-5" />
-              </button>
-              <button
-                onClick={onDelete}
-                className="bg-white/90 backdrop-blur-sm text-red-600 p-2 rounded-lg hover:bg-white transition-colors"
-                title="Delete competition"
-              >
-                <Trash2 className="w-5 h-5" />
-              </button>
-            </>
-          )}
         </div>
 
         {/* Badges */}

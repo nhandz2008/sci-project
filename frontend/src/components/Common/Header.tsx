@@ -79,7 +79,7 @@ const Header: React.FC = () => {
             {isAuthenticated ? (
               <>
                 <button
-                  onClick={() => navigate({ to: '/competitions/create' })}
+                  onClick={() => navigate({ to: '/dashboard/competitions' })}
                   className="btn-outline px-4 py-2 text-sm flex items-center gap-2 hover:bg-primary hover:text-white transition-colors"
                 >
                   <Calendar className="w-4 h-4" />
@@ -147,7 +147,7 @@ const Header: React.FC = () => {
                   <div className="space-y-2">
                     <button
                       onClick={() => {
-                        navigate({ to: '/competitions/create' })
+                        navigate({ to: '/dashboard/competitions' })
                         closeMobileMenu()
                       }}
                       className="w-full flex items-center space-x-3 px-3 py-2 text-gray-600 hover:text-primary hover:bg-gray-50 rounded-md transition-colors"

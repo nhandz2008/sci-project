@@ -126,7 +126,7 @@ function Index() {
                   Global Reach
                 </span>
                 <button 
-                  onClick={() => navigate({ to: isAuthenticated ? '/competitions/create' : '/auth/register' })}
+                  onClick={() => navigate({ to: isAuthenticated ? '/dashboard/competitions' : '/auth/register' })}
                   className="btn-ghost px-3 py-1 text-sm hover:text-blue-600 transition-colors flex items-center gap-1"
                 >
                   {isAuthenticated ? 'Create Competition' : 'Get Started'} <ArrowRight className="w-3 h-3" />

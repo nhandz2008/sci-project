@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { 
   Trophy, 
@@ -15,7 +15,9 @@ import {
   MoreHorizontal,
   AlertCircle,
   CheckCircle,
-  X
+  X,
+  Upload,
+  Image as ImageIcon
 } from 'lucide-react'
 import { useForm } from 'react-hook-form'
 import { yupResolver } from '@hookform/resolvers/yup'
@@ -92,6 +94,10 @@ interface CompetitionModalProps {
 const CompetitionModal: React.FC<CompetitionModalProps> = ({ isOpen, onClose, competition, onSuccess }) => {
   const queryClient = useQueryClient()
   const { user } = useAuth()
+  const [imageFile, setImageFile] = useState<File | null>(null)
+  const [imagePreview, setImagePreview] = useState<string | null>(competition?.image_url || null)
+  const [uploadingImage, setUploadingImage] = useState(false)
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   // Transform competition data for form
   const getFormDefaultValues = () => {
@@ -161,14 +167,54 @@ const CompetitionModal: React.FC<CompetitionModalProps> = ({ isOpen, onClose, co
   // Reset form when competition data changes
   useEffect(() => {
     reset(getFormDefaultValues())
+    setImagePreview(competition?.image_url || null)
+    setImageFile(null)
   }, [competition, reset])
+
+  const handleImageSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
+    if (file) {
+      setImageFile(file)
+      
+      // Create preview
+      const reader = new FileReader()
+      reader.onload = (e) => {
+        setImagePreview(e.target?.result as string)
+      }
+      reader.readAsDataURL(file)
+    }
+  }
+
+  const handleImageUpload = async (file: File): Promise<string> => {
+    if (!competition) {
+      throw new Error('Competition not found')
+    }
+    const response = await imageUploadMutation.mutateAsync({ competitionId: competition.id, file })
+    return response.image_url
+  }
 
   const createMutation = useMutation({
     mutationFn: competitionAPI.createCompetition,
-    onSuccess: () => {
+    onSuccess: async (newCompetition) => {
+      // If there's an image file, upload it after competition creation
+      if (imageFile) {
+        try {
+          await imageUploadMutation.mutateAsync({ 
+            competitionId: newCompetition.id, 
+            file: imageFile 
+          })
+        } catch (error) {
+          console.error('Error uploading image after creation:', error)
+          // Don't fail the entire operation, just log the error
+        }
+      }
+      
       queryClient.invalidateQueries({ queryKey: ['competitions-management'] })
+      queryClient.invalidateQueries({ queryKey: ['competitions'] })
       onSuccess()
       reset()
+      setImageFile(null)
+      setImagePreview(null)
     },
     onError: (error: any) => {
       const errorMessage = extractErrorMessage(error)
@@ -183,8 +229,11 @@ const CompetitionModal: React.FC<CompetitionModalProps> = ({ isOpen, onClose, co
         : competitionAPI.updateCompetition(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['competitions-management'] })
+      queryClient.invalidateQueries({ queryKey: ['competitions'] })
       onSuccess()
       reset()
+      setImageFile(null)
+      setImagePreview(competition?.image_url || null)
     },
     onError: (error: any) => {
       const errorMessage = extractErrorMessage(error)
@@ -192,41 +241,83 @@ const CompetitionModal: React.FC<CompetitionModalProps> = ({ isOpen, onClose, co
     },
   })
 
-  const onSubmit = (data: CompetitionFormData) => {
-    // Format dates to YYYY-MM-DD format (date-only)
-    const formatDate = (dateValue: Date | string | undefined) => {
-      if (!dateValue) return undefined
-      const date = new Date(dateValue)
-      return date.toISOString().split('T')[0] // Extract date part only
-    }
+  const imageUploadMutation = useMutation({
+    mutationFn: ({ competitionId, file }: { competitionId: number; file: File }) => 
+      competitionAPI.uploadCompetitionImage(competitionId, file),
+    onSuccess: (response) => {
+      // Invalidate both management and public competitions queries
+      queryClient.invalidateQueries({ queryKey: ['competitions-management'] })
+      queryClient.invalidateQueries({ queryKey: ['competitions'] })
+      return response
+    },
+    onError: (error: any) => {
+      console.error('Error uploading image:', error)
+      throw error
+    },
+  })
 
-    const competitionData: CompetitionCreate | CompetitionUpdate = {
-      title: data.title,
-      description: data.description,
-      location: data.location,
-      scale: data.scale as CompetitionScale,
-      start_date: formatDate(data.start_date),
-      end_date: formatDate(data.end_date),
-      registration_deadline: formatDate(data.registration_deadline),
-      external_url: data.external_url,
-      prize_structure: data.prize_structure || undefined,
-      eligibility_criteria: data.eligibility || undefined,
-      target_age_min: data.age_min || undefined,
-      target_age_max: data.age_max || undefined,
-      required_grade_min: data.grade_min || undefined,
-      required_grade_max: data.grade_max || undefined,
-      subject_areas: Array.isArray(data.subject_areas) 
-        ? data.subject_areas.filter(s => s && s.trim()).join(', ')
-        : data.subject_areas || undefined,
-      is_featured: user?.role === UserRole.ADMIN ? data.is_featured : false,
-      featured_priority: user?.role === UserRole.ADMIN ? data.featured_priority : 0,
-      is_active: data.is_active,
-    }
+  const onSubmit = async (data: CompetitionFormData) => {
+    try {
+      // Format dates to YYYY-MM-DD format (date-only)
+      const formatDate = (dateValue: Date | string | undefined) => {
+        if (!dateValue) return undefined
+        const date = new Date(dateValue)
+        return date.toISOString().split('T')[0] // Extract date part only
+      }
 
-    if (competition) {
-      updateMutation.mutate({ id: competition.id, data: competitionData })
-    } else {
-      createMutation.mutate(competitionData as CompetitionCreate)
+      let finalData: CompetitionCreate | CompetitionUpdate = {
+        title: data.title,
+        description: data.description,
+        location: data.location,
+        scale: data.scale as CompetitionScale,
+        start_date: formatDate(data.start_date),
+        end_date: formatDate(data.end_date),
+        registration_deadline: formatDate(data.registration_deadline),
+        external_url: data.external_url,
+        prize_structure: data.prize_structure || undefined,
+        eligibility_criteria: data.eligibility || undefined,
+        target_age_min: data.age_min || undefined,
+        target_age_max: data.age_max || undefined,
+        required_grade_min: data.grade_min || undefined,
+        required_grade_max: data.grade_max || undefined,
+        subject_areas: Array.isArray(data.subject_areas) 
+          ? data.subject_areas.filter(s => s && s.trim()).join(', ')
+          : data.subject_areas || undefined,
+        is_featured: user?.role === UserRole.ADMIN ? data.is_featured : false,
+        featured_priority: user?.role === UserRole.ADMIN ? data.featured_priority : 0,
+        is_active: data.is_active,
+      }
+
+      // Handle image upload if there's a new image and we're editing
+      if (imageFile && competition) {
+        setUploadingImage(true)
+        try {
+          const imageUrl = await handleImageUpload(imageFile)
+          finalData.image_url = imageUrl
+        } catch (error) {
+          console.error('Error uploading image:', error)
+          setError('root', { message: 'Failed to upload image' })
+          setUploadingImage(false)
+          return
+        } finally {
+          setUploadingImage(false)
+        }
+      }
+
+      // For new competitions, we'll handle image upload after creation
+      if (imageFile && !competition) {
+        // Store the file for later upload after competition creation
+        // This will be handled in the onSuccess callback
+      }
+
+      if (competition) {
+        updateMutation.mutate({ id: competition.id, data: finalData })
+      } else {
+        createMutation.mutate(finalData as CompetitionCreate)
+      }
+    } catch (error) {
+      console.error('Error submitting form:', error)
+      setError('root', { message: 'Failed to submit form' })
     }
   }
 
@@ -285,6 +376,57 @@ const CompetitionModal: React.FC<CompetitionModalProps> = ({ isOpen, onClose, co
               <p className="text-red-500 text-sm mt-1">{errors.description.message}</p>
             )}
           </div>
+
+          {/* Image Upload */}
+          {(
+            <div>
+              <label className="block text-sm font-medium mb-2">
+                Competition Image
+              </label>
+              <div className="flex items-start space-x-4">
+                <div className="flex-1">
+                  <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center hover:border-primary/50 transition-colors">
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept="image/*"
+                      onChange={handleImageSelect}
+                      className="hidden"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => fileInputRef.current?.click()}
+                      className="flex flex-col items-center space-y-2 text-gray-600 hover:text-primary transition-colors"
+                      disabled={uploadingImage}
+                    >
+                      {uploadingImage ? (
+                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                      ) : (
+                        <Upload className="h-8 w-8" />
+                      )}
+                      <span className="text-sm">
+                        {uploadingImage ? 'Uploading...' : 'Click to upload image'}
+                      </span>
+                    </button>
+                  </div>
+                </div>
+                
+                {imagePreview && (
+                  <div className="w-24 h-24 flex-shrink-0">
+                    <img
+                      src={imagePreview}
+                      alt="Competition preview"
+                      className="w-full h-full object-cover rounded-lg border"
+                    />
+                  </div>
+                )}
+              </div>
+              <p className="text-xs text-gray-500 mt-1">
+                Supported formats: JPEG, PNG, GIF, WebP. Max size: 5MB.
+                {!competition && ' Image will be uploaded after competition creation.'}
+              </p>
+            </div>
+          )}
 
           {/* Location and Scale */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -845,14 +987,6 @@ export const CompetitionManagement: React.FC = () => {
             <p className="text-muted-foreground">
               {searchTerm ? 'No competitions match your search.' : 'No competitions found.'}
             </p>
-            {!searchTerm && (
-              <button
-                onClick={handleCreateCompetition}
-                className="btn-primary mt-4"
-              >
-                Create your first competition
-              </button>
-            )}
           </div>
         )}
       </div>

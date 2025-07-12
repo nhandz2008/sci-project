@@ -24,7 +24,7 @@ class CompetitionCreate(CompetitionBase):
     eligibility_criteria: Optional[str] = Field(None, description="Eligibility requirements")
     
     # Media and links
-    image_url: Optional[HttpUrl] = Field(None, description="Competition image URL")
+    image_url: Optional[str] = Field(None, description="Competition image URL")
     external_url: Optional[HttpUrl] = Field(None, description="External registration/info URL")
     
     # AI recommendation fields
@@ -89,7 +89,7 @@ class CompetitionUpdate(BaseModel):
     registration_deadline: Optional[date] = None
     prize_structure: Optional[str] = None
     eligibility_criteria: Optional[str] = None
-    image_url: Optional[HttpUrl] = None
+    image_url: Optional[str] = None
     external_url: Optional[HttpUrl] = None
     target_age_min: Optional[int] = Field(None, ge=5, le=25)
     target_age_max: Optional[int] = Field(None, ge=5, le=25)

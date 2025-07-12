@@ -15,7 +15,6 @@ import { Route as CompetitionsIndexRouteImport } from './routes/competitions/ind
 import { Route as DashboardUsersRouteImport } from './routes/dashboard/users'
 import { Route as DashboardProfileRouteImport } from './routes/dashboard/profile'
 import { Route as DashboardCompetitionsRouteImport } from './routes/dashboard/competitions'
-import { Route as CompetitionsCreateRouteImport } from './routes/competitions/create'
 import { Route as CompetitionsCompetitionIdRouteImport } from './routes/competitions/$competitionId'
 import { Route as AuthRegisterRouteImport } from './routes/auth/register'
 import { Route as AuthLoginRouteImport } from './routes/auth/login'
@@ -50,11 +49,6 @@ const DashboardCompetitionsRoute = DashboardCompetitionsRouteImport.update({
   path: '/dashboard/competitions',
   getParentRoute: () => rootRouteImport,
 } as any)
-const CompetitionsCreateRoute = CompetitionsCreateRouteImport.update({
-  id: '/competitions/create',
-  path: '/competitions/create',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const CompetitionsCompetitionIdRoute =
   CompetitionsCompetitionIdRouteImport.update({
     id: '/competitions/$competitionId',
@@ -77,7 +71,6 @@ export interface FileRoutesByFullPath {
   '/auth/login': typeof AuthLoginRoute
   '/auth/register': typeof AuthRegisterRoute
   '/competitions/$competitionId': typeof CompetitionsCompetitionIdRoute
-  '/competitions/create': typeof CompetitionsCreateRoute
   '/dashboard/competitions': typeof DashboardCompetitionsRoute
   '/dashboard/profile': typeof DashboardProfileRoute
   '/dashboard/users': typeof DashboardUsersRoute
@@ -89,7 +82,6 @@ export interface FileRoutesByTo {
   '/auth/login': typeof AuthLoginRoute
   '/auth/register': typeof AuthRegisterRoute
   '/competitions/$competitionId': typeof CompetitionsCompetitionIdRoute
-  '/competitions/create': typeof CompetitionsCreateRoute
   '/dashboard/competitions': typeof DashboardCompetitionsRoute
   '/dashboard/profile': typeof DashboardProfileRoute
   '/dashboard/users': typeof DashboardUsersRoute
@@ -102,7 +94,6 @@ export interface FileRoutesById {
   '/auth/login': typeof AuthLoginRoute
   '/auth/register': typeof AuthRegisterRoute
   '/competitions/$competitionId': typeof CompetitionsCompetitionIdRoute
-  '/competitions/create': typeof CompetitionsCreateRoute
   '/dashboard/competitions': typeof DashboardCompetitionsRoute
   '/dashboard/profile': typeof DashboardProfileRoute
   '/dashboard/users': typeof DashboardUsersRoute
@@ -116,7 +107,6 @@ export interface FileRouteTypes {
     | '/auth/login'
     | '/auth/register'
     | '/competitions/$competitionId'
-    | '/competitions/create'
     | '/dashboard/competitions'
     | '/dashboard/profile'
     | '/dashboard/users'
@@ -128,7 +118,6 @@ export interface FileRouteTypes {
     | '/auth/login'
     | '/auth/register'
     | '/competitions/$competitionId'
-    | '/competitions/create'
     | '/dashboard/competitions'
     | '/dashboard/profile'
     | '/dashboard/users'
@@ -140,7 +129,6 @@ export interface FileRouteTypes {
     | '/auth/login'
     | '/auth/register'
     | '/competitions/$competitionId'
-    | '/competitions/create'
     | '/dashboard/competitions'
     | '/dashboard/profile'
     | '/dashboard/users'
@@ -153,7 +141,6 @@ export interface RootRouteChildren {
   AuthLoginRoute: typeof AuthLoginRoute
   AuthRegisterRoute: typeof AuthRegisterRoute
   CompetitionsCompetitionIdRoute: typeof CompetitionsCompetitionIdRoute
-  CompetitionsCreateRoute: typeof CompetitionsCreateRoute
   DashboardCompetitionsRoute: typeof DashboardCompetitionsRoute
   DashboardProfileRoute: typeof DashboardProfileRoute
   DashboardUsersRoute: typeof DashboardUsersRoute
@@ -205,13 +192,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardCompetitionsRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/competitions/create': {
-      id: '/competitions/create'
-      path: '/competitions/create'
-      fullPath: '/competitions/create'
-      preLoaderRoute: typeof CompetitionsCreateRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/competitions/$competitionId': {
       id: '/competitions/$competitionId'
       path: '/competitions/$competitionId'
@@ -241,7 +221,6 @@ const rootRouteChildren: RootRouteChildren = {
   AuthLoginRoute: AuthLoginRoute,
   AuthRegisterRoute: AuthRegisterRoute,
   CompetitionsCompetitionIdRoute: CompetitionsCompetitionIdRoute,
-  CompetitionsCreateRoute: CompetitionsCreateRoute,
   DashboardCompetitionsRoute: DashboardCompetitionsRoute,
   DashboardProfileRoute: DashboardProfileRoute,
   DashboardUsersRoute: DashboardUsersRoute,
