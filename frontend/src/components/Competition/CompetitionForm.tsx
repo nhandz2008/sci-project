@@ -148,6 +148,18 @@ const CompetitionForm: React.FC<CompetitionFormProps> = ({
         }
       }
 
+      // Format dates to YYYY-MM-DD format (date-only)
+      const formatDate = (dateValue: Date | string | undefined) => {
+        if (!dateValue) return undefined
+        const date = new Date(dateValue)
+        return date.toISOString().split('T')[0] // Extract date part only
+      }
+
+      // Format date fields
+      finalData.start_date = formatDate(finalData.start_date)
+      finalData.end_date = formatDate(finalData.end_date)
+      finalData.registration_deadline = formatDate(finalData.registration_deadline)
+
       // Convert empty strings to undefined for optional fields
       Object.keys(finalData).forEach(key => {
         if (finalData[key] === '') {

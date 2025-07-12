@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { 
   Trophy, 
@@ -21,9 +21,9 @@ import { useForm } from 'react-hook-form'
 import { yupResolver } from '@hookform/resolvers/yup'
 import * as yup from 'yup'
 import { competitionAPI } from '@/client/api'
-import { Competition, CompetitionCreate, CompetitionUpdate, CompetitionScale, UserRole, CompetitionManagement } from '@/types'
+import { Competition, CompetitionCreate, CompetitionUpdate, CompetitionScale, UserRole, CompetitionManagement as CompetitionManagementType } from '@/types'
 import { useAuth } from '@/hooks/useAuth'
-import { cn } from '@/utils'
+import { cn, extractErrorMessage } from '@/utils'
 import { format } from 'date-fns'
 
 // Validation schema for competition form
@@ -48,22 +48,21 @@ const competitionSchema = yup.object({
     .required('Scale is required')
     .oneOf(Object.values(CompetitionScale), 'Invalid scale'),
   start_date: yup
-    .date()
-    .required('Start date is required')
-    .min(new Date(), 'Start date must be in the future'),
+    .string()
+    .required('Start date is required'),
   end_date: yup
-    .date()
+    .string()
     .required('End date is required')
     .test('end-after-start', 'End date must be after start date', function(value) {
       const { start_date } = this.parent
-      return !start_date || !value || value > start_date
+      return !start_date || !value || new Date(value) > new Date(start_date)
     }),
   registration_deadline: yup
-    .date()
+    .string()
     .required('Registration deadline is required')
     .test('deadline-before-start', 'Registration deadline must be before start date', function(value) {
       const { start_date } = this.parent
-      return !start_date || !value || value < start_date
+      return !start_date || !value || new Date(value) < new Date(start_date)
     }),
   external_url: yup
     .string()
@@ -75,7 +74,7 @@ const competitionSchema = yup.object({
   age_max: yup.number().min(5, 'Maximum age must be at least 5').max(25, 'Maximum age must be at most 25').optional(),
   grade_min: yup.number().min(1, 'Minimum grade must be at least 1').max(12, 'Minimum grade must be at most 12').optional(),
   grade_max: yup.number().min(1, 'Maximum grade must be at least 1').max(12, 'Maximum grade must be at most 12').optional(),
-  subject_areas: yup.array().of(yup.string()).optional(),
+  subject_areas: yup.string().optional(),
   is_featured: yup.boolean().optional(),
   is_active: yup.boolean().optional(),
 })
@@ -85,13 +84,64 @@ type CompetitionFormData = yup.InferType<typeof competitionSchema>
 interface CompetitionModalProps {
   isOpen: boolean
   onClose: () => void
-  competition?: CompetitionManagement | null
+  competition?: CompetitionManagementType | null
   onSuccess: () => void
 }
 
 const CompetitionModal: React.FC<CompetitionModalProps> = ({ isOpen, onClose, competition, onSuccess }) => {
   const queryClient = useQueryClient()
   const { user } = useAuth()
+
+  // Transform competition data for form
+  const getFormDefaultValues = () => {
+    if (!competition) {
+      return {
+        title: '',
+        description: '',
+        location: '',
+        scale: CompetitionScale.LOCAL,
+        start_date: undefined,
+        end_date: undefined,
+        registration_deadline: undefined,
+        external_url: '',
+        prize_structure: '',
+        eligibility: '',
+        age_min: undefined,
+        age_max: undefined,
+        grade_min: undefined,
+        grade_max: undefined,
+        subject_areas: '',
+        is_featured: false,
+        is_active: true,
+      }
+    }
+
+    // Format dates for datetime-local inputs (YYYY-MM-DDTHH:MM)
+    const formatDateForInput = (dateStr: string) => {
+      const date = new Date(dateStr)
+      return date.toISOString().slice(0, 16) // YYYY-MM-DDTHH:MM
+    }
+
+    return {
+      title: competition.title,
+      description: competition.description,
+      location: competition.location,
+      scale: competition.scale,
+      start_date: formatDateForInput(competition.start_date),
+      end_date: formatDateForInput(competition.end_date),
+      registration_deadline: formatDateForInput(competition.registration_deadline),
+      external_url: competition.external_url || '',
+      prize_structure: competition.prize_structure || '',
+      eligibility: competition.eligibility_criteria || '', // Map eligibility_criteria to eligibility
+      age_min: competition.target_age_min || undefined,
+      age_max: competition.target_age_max || undefined,
+      grade_min: competition.required_grade_min || undefined,
+      grade_max: competition.required_grade_max || undefined,
+      subject_areas: competition.subject_areas || '',
+      is_featured: competition.is_featured || false,
+      is_active: competition.is_active ?? true,
+    }
+  }
 
   const {
     register,
@@ -102,26 +152,13 @@ const CompetitionModal: React.FC<CompetitionModalProps> = ({ isOpen, onClose, co
     watch,
   } = useForm<CompetitionFormData>({
     resolver: yupResolver(competitionSchema),
-    defaultValues: competition || {
-      title: '',
-      description: '',
-      location: '',
-      scale: CompetitionScale.LOCAL,
-      start_date: undefined,
-      end_date: undefined,
-      registration_deadline: undefined,
-      external_url: '',
-      prize_structure: '',
-      eligibility: '',
-      age_min: undefined,
-      age_max: undefined,
-      grade_min: undefined,
-      grade_max: undefined,
-      subject_areas: [],
-      is_featured: false,
-      is_active: true,
-    },
+    defaultValues: getFormDefaultValues(),
   })
+
+  // Reset form when competition data changes
+  useEffect(() => {
+    reset(getFormDefaultValues())
+  }, [competition, reset])
 
   const createMutation = useMutation({
     mutationFn: competitionAPI.createCompetition,
@@ -131,8 +168,8 @@ const CompetitionModal: React.FC<CompetitionModalProps> = ({ isOpen, onClose, co
       reset()
     },
     onError: (error: any) => {
-      const detail = error.response?.data?.detail || 'Failed to create competition'
-      setError('root', { message: detail })
+      const errorMessage = extractErrorMessage(error)
+      setError('root', { message: errorMessage })
     },
   })
 
@@ -147,20 +184,27 @@ const CompetitionModal: React.FC<CompetitionModalProps> = ({ isOpen, onClose, co
       reset()
     },
     onError: (error: any) => {
-      const detail = error.response?.data?.detail || 'Failed to update competition'
-      setError('root', { message: detail })
+      const errorMessage = extractErrorMessage(error)
+      setError('root', { message: errorMessage })
     },
   })
 
   const onSubmit = (data: CompetitionFormData) => {
+    // Format dates to YYYY-MM-DD format (date-only)
+    const formatDate = (dateValue: Date | string | undefined) => {
+      if (!dateValue) return undefined
+      const date = new Date(dateValue)
+      return date.toISOString().split('T')[0] // Extract date part only
+    }
+
     const competitionData: CompetitionCreate | CompetitionUpdate = {
       title: data.title,
       description: data.description,
       location: data.location,
       scale: data.scale as CompetitionScale,
-      start_date: data.start_date,
-      end_date: data.end_date,
-      registration_deadline: data.registration_deadline,
+      start_date: formatDate(data.start_date),
+      end_date: formatDate(data.end_date),
+      registration_deadline: formatDate(data.registration_deadline),
       external_url: data.external_url,
       prize_structure: data.prize_structure || undefined,
       eligibility_criteria: data.eligibility || undefined,
@@ -168,7 +212,9 @@ const CompetitionModal: React.FC<CompetitionModalProps> = ({ isOpen, onClose, co
       target_age_max: data.age_max || undefined,
       required_grade_min: data.grade_min || undefined,
       required_grade_max: data.grade_max || undefined,
-      subject_areas: data.subject_areas || [],
+      subject_areas: Array.isArray(data.subject_areas) 
+        ? data.subject_areas.filter(s => s && s.trim()).join(', ')
+        : data.subject_areas || undefined,
       is_featured: user?.role === UserRole.ADMIN ? data.is_featured : false,
       is_active: data.is_active,
     }
@@ -357,44 +403,103 @@ const CompetitionModal: React.FC<CompetitionModalProps> = ({ isOpen, onClose, co
           </div>
 
           {/* Age and Grade Ranges */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
+          <div className="flex flex-col md:flex-row gap-6">
+            <div className="flex-1">
               <label className="block text-sm font-medium mb-2">Age Range</label>
-              <div className="flex gap-2">
+              <div className="flex items-center gap-2">
                 <input
                   type="number"
                   placeholder="Min"
                   {...register('age_min')}
-                  className="flex-1 px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                  className="w-24 px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                  min={5}
+                  max={25}
                 />
-                <span className="self-center">-</span>
+                <span className="mx-1">-</span>
                 <input
                   type="number"
                   placeholder="Max"
                   {...register('age_max')}
-                  className="flex-1 px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                  className="w-24 px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                  min={5}
+                  max={25}
                 />
               </div>
             </div>
 
-            <div>
+            <div className="flex-1 mt-4 md:mt-0">
               <label className="block text-sm font-medium mb-2">Grade Range</label>
-              <div className="flex gap-2">
+              <div className="flex items-center gap-2">
                 <input
                   type="number"
                   placeholder="Min"
                   {...register('grade_min')}
-                  className="flex-1 px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                  className="w-24 px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                  min={1}
+                  max={12}
                 />
-                <span className="self-center">-</span>
+                <span className="mx-1">-</span>
                 <input
                   type="number"
                   placeholder="Max"
                   {...register('grade_max')}
-                  className="flex-1 px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                  className="w-24 px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                  min={1}
+                  max={12}
                 />
               </div>
             </div>
+          </div>
+
+          {/* Subject Areas */}
+          <div>
+            <label htmlFor="subject_areas" className="block text-sm font-medium mb-2">
+              Subject Areas
+            </label>
+            <input
+              id="subject_areas"
+              type="text"
+              {...register('subject_areas')}
+              className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+              placeholder="e.g., Biology, Chemistry, Physics (comma-separated)"
+            />
+            {errors.subject_areas && (
+              <p className="text-red-500 text-sm mt-1">{errors.subject_areas.message}</p>
+            )}
+          </div>
+
+          {/* Prize Structure */}
+          <div>
+            <label htmlFor="prize_structure" className="block text-sm font-medium mb-2">
+              Prize Structure
+            </label>
+            <textarea
+              id="prize_structure"
+              rows={3}
+              {...register('prize_structure')}
+              className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+              placeholder="Describe the prizes and awards..."
+            />
+            {errors.prize_structure && (
+              <p className="text-red-500 text-sm mt-1">{errors.prize_structure.message}</p>
+            )}
+          </div>
+
+          {/* Eligibility Criteria */}
+          <div>
+            <label htmlFor="eligibility" className="block text-sm font-medium mb-2">
+              Eligibility Criteria
+            </label>
+            <textarea
+              id="eligibility"
+              rows={3}
+              {...register('eligibility')}
+              className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+              placeholder="Who can participate in this competition?"
+            />
+            {errors.eligibility && (
+              <p className="text-red-500 text-sm mt-1">{errors.eligibility.message}</p>
+            )}
           </div>
 
           {/* Admin-only fields */}
@@ -462,8 +567,8 @@ const CompetitionModal: React.FC<CompetitionModalProps> = ({ isOpen, onClose, co
 export const CompetitionManagement: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('')
   const [isModalOpen, setIsModalOpen] = useState(false)
-  const [selectedCompetition, setSelectedCompetition] = useState<CompetitionManagement | null>(null)
-  const [deleteConfirm, setDeleteConfirm] = useState<CompetitionManagement | null>(null)
+  const [selectedCompetition, setSelectedCompetition] = useState<CompetitionManagementType | null>(null)
+  const [deleteConfirm, setDeleteConfirm] = useState<CompetitionManagementType | null>(null)
 
   const { user } = useAuth()
   const queryClient = useQueryClient()
@@ -502,12 +607,12 @@ export const CompetitionManagement: React.FC = () => {
     setIsModalOpen(true)
   }
 
-  const handleEditCompetition = (competition: CompetitionManagement) => {
+  const handleEditCompetition = (competition: CompetitionManagementType) => {
     setSelectedCompetition(competition)
     setIsModalOpen(true)
   }
 
-  const handleDeleteCompetition = (competition: CompetitionManagement) => {
+  const handleDeleteCompetition = (competition: CompetitionManagementType) => {
     setDeleteConfirm(competition)
   }
 

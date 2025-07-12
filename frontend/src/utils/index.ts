@@ -149,4 +149,84 @@ export function safeJsonParse<T = any>(json: string, fallback: T): T {
  */
 export function sleep(ms: number) {
   return new Promise(resolve => setTimeout(resolve, ms))
+}
+
+/**
+ * Extract error message from FastAPI error response
+ */
+export const extractErrorMessage = (error: any): string => {
+  // Handle network errors
+  if (!error.response) {
+    return 'Network error. Please check your connection and try again.'
+  }
+
+  const { status, data } = error.response
+
+  // Handle different error types
+  if (status === 422 && data?.detail) {
+    // FastAPI validation errors
+    if (Array.isArray(data.detail)) {
+      // Extract the first error message
+      const firstError = data.detail[0]
+      if (firstError?.msg) {
+        return firstError.msg
+      }
+    }
+    // If detail is a string
+    if (typeof data.detail === 'string') {
+      return data.detail
+    }
+  }
+
+  // Handle other error formats
+  if (data?.detail && typeof data.detail === 'string') {
+    return data.detail
+  }
+
+  if (data?.message && typeof data.message === 'string') {
+    return data.message
+  }
+
+  // Default error messages based on status
+  switch (status) {
+    case 400:
+      return 'Bad request. Please check your input and try again.'
+    case 401:
+      return 'You are not authorized to perform this action.'
+    case 403:
+      return 'You do not have permission to perform this action.'
+    case 404:
+      return 'The requested resource was not found.'
+    case 409:
+      return 'A conflict occurred. The resource may already exist.'
+    case 422:
+      return 'Validation error. Please check your input and try again.'
+    case 500:
+      return 'Internal server error. Please try again later.'
+    default:
+      return 'An unexpected error occurred. Please try again.'
+  }
+}
+
+/**
+ * Extract all validation errors from FastAPI response
+ */
+export const extractValidationErrors = (error: any): { [key: string]: string } => {
+  const errors: { [key: string]: string } = {}
+
+  if (error.response?.status === 422 && error.response?.data?.detail) {
+    const { detail } = error.response.data
+
+    if (Array.isArray(detail)) {
+      detail.forEach((err: any) => {
+        if (err.loc && err.msg) {
+          // Extract field name from location array
+          const fieldName = err.loc[err.loc.length - 1]
+          errors[fieldName] = err.msg
+        }
+      })
+    }
+  }
+
+  return errors
 } 

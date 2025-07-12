@@ -427,6 +427,12 @@ def create_competition(
     competition_data["created_by"] = current_user.id
     competition_data["created_at"] = datetime.utcnow()
     
+    # Convert HttpUrl objects to strings for database storage
+    if competition_data.get("image_url"):
+        competition_data["image_url"] = str(competition_data["image_url"])
+    if competition_data.get("external_url"):
+        competition_data["external_url"] = str(competition_data["external_url"])
+    
     # Create competition
     competition = Competition(**competition_data)
     
@@ -486,6 +492,12 @@ def update_competition(
         update_data["end_date"] = competition_update.end_date
     if "registration_deadline" in update_data:
         update_data["registration_deadline"] = competition_update.registration_deadline
+    
+    # Convert HttpUrl objects to strings for database storage
+    if "image_url" in update_data and update_data["image_url"]:
+        update_data["image_url"] = str(update_data["image_url"])
+    if "external_url" in update_data and update_data["external_url"]:
+        update_data["external_url"] = str(update_data["external_url"])
     
     # Add updated timestamp
     update_data["updated_at"] = datetime.utcnow()

@@ -156,7 +156,7 @@ export interface CompetitionCreate {
   target_age_max?: number
   required_grade_min?: number
   required_grade_max?: number
-  subject_areas?: string[]
+  subject_areas?: string
   is_featured?: boolean
   is_active?: boolean
 }
@@ -177,7 +177,7 @@ export interface CompetitionUpdate {
   target_age_max?: number
   required_grade_min?: number
   required_grade_max?: number
-  subject_areas?: string[]
+  subject_areas?: string
   is_featured?: boolean
   is_active?: boolean
 }
@@ -258,7 +258,7 @@ export interface CompetitionFormData {
   target_age_max?: number
   required_grade_min?: number
   required_grade_max?: number
-  subject_areas?: string[]
+  subject_areas?: string
   is_featured?: boolean
   is_active?: boolean
 }

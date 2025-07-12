@@ -18,12 +18,25 @@ const CreateCompetitionPage = () => {
     },
     onError: (error: any) => {
       console.error('Error creating competition:', error)
-      alert('Failed to create competition. Please try again.')
+      // Extract a better error message from the API response
+      const errorMessage = error.response?.data?.detail 
+        ? (Array.isArray(error.response.data.detail) 
+          ? error.response.data.detail[0]?.msg || 'Failed to create competition' 
+          : error.response.data.detail)
+        : 'Failed to create competition. Please try again.'
+      alert(errorMessage)
     },
   })
 
   const handleSubmit = async (data: CompetitionCreate) => {
-    await createMutation.mutateAsync(data)
+    // Fix subject_areas format - backend expects string, not array
+    const fixedData = {
+      ...data,
+      subject_areas: Array.isArray(data.subject_areas) 
+        ? data.subject_areas.filter(s => s && s.trim()).join(', ')
+        : data.subject_areas
+    }
+    await createMutation.mutateAsync(fixedData)
   }
 
   const handleCancel = () => {
