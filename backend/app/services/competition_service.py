@@ -155,9 +155,9 @@ def get_competitions_list(
     if conditions:
         statement = statement.where(and_(*conditions))
     
-    # Order by featured first, then by registration deadline
+    # Order by featured priority first, then by registration deadline
     statement = statement.order_by(
-        Competition.is_featured.desc(),
+        Competition.featured_priority.desc(),
         Competition.registration_deadline.asc()
     )
     
@@ -194,14 +194,17 @@ def get_featured_competitions(db: Session, limit: int = 10) -> List[Competition]
         limit: Maximum number of competitions to return
         
     Returns:
-        List of featured competitions
+        List of featured competitions ordered by priority
     """
     statement = select(Competition).where(
         and_(
             Competition.is_featured == True,
             Competition.is_active == True
         )
-    ).order_by(Competition.registration_deadline.asc()).limit(limit)
+    ).order_by(
+        Competition.featured_priority.desc(),  # Higher priority first
+        Competition.registration_deadline.asc()  # Then by deadline
+    ).limit(limit)
     
     return db.exec(statement).all()
 
@@ -355,9 +358,9 @@ def get_competitions_for_management(
     if conditions:
         statement = statement.where(and_(*conditions))
     
-    # Order by featured first, then by creation date
+    # Order by featured priority first, then by creation date
     statement = statement.order_by(
-        Competition.is_featured.desc(),
+        Competition.featured_priority.desc(),
         Competition.created_at.desc()
     )
     

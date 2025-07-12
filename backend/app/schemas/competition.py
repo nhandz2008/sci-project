@@ -36,6 +36,7 @@ class CompetitionCreate(CompetitionBase):
     
     # Status flags
     is_featured: bool = Field(default=False, description="Whether competition is featured")
+    featured_priority: int = Field(default=0, ge=0, le=100, description="Priority for featuring (higher = more featured)")
     is_active: bool = Field(default=True, description="Whether competition is active")
     
     @field_validator('end_date')
@@ -96,6 +97,7 @@ class CompetitionUpdate(BaseModel):
     required_grade_max: Optional[int] = Field(None, ge=1, le=12)
     subject_areas: Optional[str] = Field(None, max_length=500)
     is_featured: Optional[bool] = None
+    featured_priority: Optional[int] = Field(None, ge=0, le=100)
     is_active: Optional[bool] = None
 
 
@@ -115,6 +117,7 @@ class CompetitionResponse(CompetitionBase):
     required_grade_max: Optional[int] = None
     subject_areas: Optional[str] = None
     is_featured: bool
+    featured_priority: int
     is_active: bool
     created_by: int
     created_at: datetime

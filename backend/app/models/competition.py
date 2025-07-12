@@ -52,6 +52,7 @@ class Competition(SQLModel, table=True):
     
     # Status
     is_featured: bool = Field(default=False, index=True)
+    featured_priority: int = Field(default=0, ge=0, le=100, description="Priority for featuring (higher = more featured)")
     is_active: bool = Field(default=True, index=True)
     
     # Relationships
