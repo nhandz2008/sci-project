@@ -160,10 +160,37 @@ class CompetitionWithCreator(CompetitionResponse):
     model_config = ConfigDict(from_attributes=True)
 
 
+# Creator information schema
+class CreatorInfo(BaseModel):
+    """Creator information schema for management views."""
+    id: int
+    username: str
+    email: str
+    role: str
+    
+    model_config = ConfigDict(from_attributes=True)
+
+
+class CompetitionManagement(CompetitionResponse):
+    """Competition schema for management views with full creator information."""
+    creator: CreatorInfo = Field(..., description="Full creator information")
+    
+    model_config = ConfigDict(from_attributes=True)
+
+
 # List and pagination schemas
 class CompetitionListResponse(BaseModel):
     """Response schema for paginated competition lists."""
     competitions: List[CompetitionPublic]
+    total: int = Field(..., description="Total number of competitions")
+    page: int = Field(..., description="Current page number")
+    size: int = Field(..., description="Page size")
+    pages: int = Field(..., description="Total number of pages")
+
+
+class CompetitionManagementListResponse(BaseModel):
+    """Response schema for paginated competition management lists."""
+    competitions: List[CompetitionManagement]
     total: int = Field(..., description="Total number of competitions")
     page: int = Field(..., description="Current page number")
     size: int = Field(..., description="Page size")

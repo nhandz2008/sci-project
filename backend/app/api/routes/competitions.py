@@ -10,7 +10,9 @@ from app.schemas.competition import (
     CompetitionCard,
     CompetitionListResponse,
     CompetitionSearchFilters,
-    CompetitionWithCreator
+    CompetitionWithCreator,
+    CompetitionManagementListResponse,
+    CompetitionManagement
 )
 from app.services.competition_service import (
     create_competition,
@@ -24,7 +26,8 @@ from app.services.competition_service import (
     get_user_competitions,
     search_competitions,
     get_competitions_by_scale,
-    get_upcoming_competitions
+    get_upcoming_competitions,
+    get_competitions_for_management
 )
 from app.core.deps import get_db, get_current_active_user, require_creator, require_admin
 from app.models.user import User
@@ -163,6 +166,51 @@ def read_my_competitions(
     
     return CompetitionListResponse(
         competitions=[CompetitionResponse.model_validate(comp) for comp in result["competitions"]],
+        total=result["total"],
+        page=result["page"],
+        size=result["size"],
+        pages=result["pages"]
+    )
+
+
+@router.get("/management", response_model=CompetitionManagementListResponse)
+def read_competitions_for_management(
+    skip: int = Query(0, ge=0, description="Number of competitions to skip"),
+    limit: int = Query(100, ge=1, le=100, description="Number of competitions to return"),
+    search: Optional[str] = Query(None, description="Search term for competition title or description"),
+    location: Optional[str] = Query(None, description="Filter by location"),
+    scale: Optional[CompetitionScale] = Query(None, description="Filter by competition scale"),
+    is_featured: Optional[bool] = Query(None, description="Filter featured competitions"),
+    include_inactive: bool = Query(False, description="Include inactive competitions"),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user)
+):
+    """
+    Get competitions for management interface with creator information.
+    
+    This endpoint returns competitions with full creator information for management.
+    - Admins can see all competitions
+    - Creators can see only their own competitions
+    """
+    # Build filters object
+    filters = CompetitionSearchFilters(
+        search=search,
+        location=location,
+        scale=scale,
+        is_featured=is_featured
+    )
+    
+    result = get_competitions_for_management(
+        db, 
+        user=current_user, 
+        skip=skip, 
+        limit=limit, 
+        filters=filters,
+        include_inactive=include_inactive
+    )
+    
+    return CompetitionManagementListResponse(
+        competitions=[CompetitionManagement.model_validate(comp) for comp in result["competitions"]],
         total=result["total"],
         page=result["page"],
         size=result["size"],

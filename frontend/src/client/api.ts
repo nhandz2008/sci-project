@@ -1,151 +1,188 @@
 import axios, { AxiosInstance, AxiosResponse } from 'axios'
-import type {
-  User,
-  LoginCredentials,
-  AuthResponse,
-  APIResponse,
-  UserProfile,
-  UserCreate,
-  UserUpdate,
+import { 
+  User, 
+  UserCreate, 
+  UserUpdate, 
+  UserProfile, 
   UserListResponse,
-  RecommendationRequest,
-  RecommendationResponse,
   Competition,
+  CompetitionCreate,
+  CompetitionUpdate,
   CompetitionWithCreator,
   CompetitionCard,
   CompetitionPublic,
   CompetitionListResponse,
-  CompetitionCreate,
-  CompetitionUpdate,
-  CompetitionFilters,
+  CompetitionManagement,
+  CompetitionManagementListResponse,
   CompetitionScale,
   ImageUploadResponse,
+  LoginCredentials,
+  Token,
+  UserRole
 } from '@/types'
+
+// Token Manager for handling authentication tokens
+export const tokenManager = {
+  /**
+   * Get stored token
+   */
+  getToken: (): string | null => {
+    return localStorage.getItem('access_token')
+  },
+
+  /**
+   * Set token in storage
+   */
+  setToken: (token: string): void => {
+    localStorage.setItem('access_token', token)
+  },
+
+  /**
+   * Remove token from storage
+   */
+  removeToken: (): void => {
+    localStorage.removeItem('access_token')
+  },
+
+  /**
+   * Check if token is expired
+   */
+  isTokenExpired: (token: string): boolean => {
+    try {
+      // JWT tokens have 3 parts separated by dots
+      const parts = token.split('.')
+      if (parts.length !== 3) return true
+
+      // Decode the payload (second part)
+      const payload = JSON.parse(atob(parts[1]))
+      
+      // Check if token has expiration time
+      if (!payload.exp) return false
+
+      // Compare with current time (exp is in seconds, Date.now() in milliseconds)
+      return payload.exp * 1000 < Date.now()
+    } catch (error) {
+      // If we can't parse the token, consider it expired
+      return true
+    }
+  },
+
+  /**
+   * Get user info from token
+   */
+  getUserFromToken: (token: string): Partial<User> | null => {
+    try {
+      const parts = token.split('.')
+      if (parts.length !== 3) return null
+
+      const payload = JSON.parse(atob(parts[1]))
+      return {
+        id: payload.sub,
+        email: payload.email,
+        role: payload.role,
+      }
+    } catch (error) {
+      return null
+    }
+  },
+}
 
 // Create axios instance with base configuration
 const api: AxiosInstance = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1',
+  baseURL: '/api/v1',
   timeout: 10000,
   headers: {
     'Content-Type': 'application/json',
   },
 })
 
-// Auth token management
-const TOKEN_KEY = 'sci_auth_token'
-
-export const tokenManager = {
-  getToken: (): string | null => {
-    return localStorage.getItem(TOKEN_KEY)
-  },
-  
-  setToken: (token: string): void => {
-    localStorage.setItem(TOKEN_KEY, token)
-  },
-  
-  removeToken: (): void => {
-    localStorage.removeItem(TOKEN_KEY)
-  },
-  
-  isTokenExpired: (token: string): boolean => {
-    try {
-      const payload = JSON.parse(atob(token.split('.')[1]))
-      const exp = payload.exp * 1000 // Convert to milliseconds
-      return Date.now() >= exp
-    } catch {
-      return true
-    }
-  },
-}
-
 // Request interceptor to add auth token
 api.interceptors.request.use(
-  config => {
+  (config) => {
     const token = tokenManager.getToken()
-    if (token && !tokenManager.isTokenExpired(token)) {
+    if (token) {
       config.headers.Authorization = `Bearer ${token}`
     }
     return config
   },
-  error => {
+  (error) => {
     return Promise.reject(error)
   }
 )
 
-// Response interceptor to handle auth errors
+// Response interceptor to handle errors
 api.interceptors.response.use(
-  response => response,
-  error => {
-    // Handle 401 unauthorized responses
+  (response) => {
+    return response
+  },
+  (error) => {
     if (error.response?.status === 401) {
+      // Token expired or invalid
       tokenManager.removeToken()
-      // Could trigger a logout event here
-      window.dispatchEvent(new CustomEvent('auth:logout'))
+      window.location.href = '/auth/login'
     }
     return Promise.reject(error)
   }
 )
 
-// API endpoints
+// Auth API
 export const authAPI = {
   /**
-   * Login user with email and password
+   * Login with email and password
    */
-  login: async (credentials: LoginCredentials): Promise<AuthResponse> => {
+  login: async (credentials: LoginCredentials): Promise<{ user: User; token: Token }> => {
+    // FastAPI expects form data for OAuth2
     const formData = new FormData()
     formData.append('username', credentials.email) // OAuth2 uses 'username' field
     formData.append('password', credentials.password)
-    
-    const response: AxiosResponse<AuthResponse> = await api.post(
+
+    const response: AxiosResponse<{ user: User; token: Token }> = await api.post(
       '/auth/login',
       formData,
       {
         headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
+          'Content-Type': 'multipart/form-data',
         },
       }
     )
-    
-    // Store token after successful login
-    if (response.data.token?.access_token) {
-      tokenManager.setToken(response.data.token.access_token)
+
+    const { user, token } = response.data
+
+    // Store token
+    tokenManager.setToken(token.access_token)
+
+    return {
+      user,
+      token,
     }
-    
-    return response.data
   },
 
   /**
-   * Get current user information
+   * Logout user
+   */
+  logout: async (): Promise<void> => {
+    try {
+      await api.post('/auth/logout')
+    } catch (error) {
+      // Ignore errors on logout
+    } finally {
+      tokenManager.removeToken()
+    }
+  },
+
+  /**
+   * Get current user info
    */
   getCurrentUser: async (): Promise<User> => {
     const response: AxiosResponse<User> = await api.get('/auth/me')
     return response.data
   },
-
-  /**
-   * Logout current user
-   */
-  logout: async (): Promise<void> => {
-    try {
-      await api.post('/auth/logout')
-    } finally {
-      // Always remove token, even if API call fails
-      tokenManager.removeToken()
-    }
-  },
-
-  /**
-   * Check if user is authenticated
-   */
-  isAuthenticated: (): boolean => {
-    const token = tokenManager.getToken()
-    return token !== null && !tokenManager.isTokenExpired(token)
-  },
 }
 
+// Competition API
 export const competitionAPI = {
   /**
-   * Get all competitions with optional filtering and pagination
+   * Get all competitions with optional filters
    */
   getCompetitions: async (params?: {
     skip?: number
@@ -183,7 +220,7 @@ export const competitionAPI = {
   },
 
   /**
-   * Get featured competitions for carousel
+   * Get featured competitions
    */
   getFeaturedCompetitions: async (limit?: number): Promise<CompetitionCard[]> => {
     const params = limit ? `?limit=${limit}` : ''
@@ -192,7 +229,7 @@ export const competitionAPI = {
   },
 
   /**
-   * Get upcoming competitions (registration still open)
+   * Get upcoming competitions
    */
   getUpcomingCompetitions: async (limit?: number): Promise<CompetitionCard[]> => {
     const params = limit ? `?limit=${limit}` : ''
@@ -234,6 +271,34 @@ export const competitionAPI = {
     
     const response: AxiosResponse<CompetitionListResponse> = await api.get(
       `/competitions/my${params.toString() ? `?${params.toString()}` : ''}`
+    )
+    return response.data
+  },
+
+  /**
+   * Get competitions for management with creator information
+   */
+  getCompetitionsForManagement: async (params?: {
+    skip?: number
+    limit?: number
+    search?: string
+    location?: string
+    scale?: CompetitionScale
+    is_featured?: boolean
+    include_inactive?: boolean
+  }): Promise<CompetitionManagementListResponse> => {
+    const searchParams = new URLSearchParams()
+    
+    if (params?.skip !== undefined) searchParams.append('skip', params.skip.toString())
+    if (params?.limit !== undefined) searchParams.append('limit', params.limit.toString())
+    if (params?.search) searchParams.append('search', params.search)
+    if (params?.location) searchParams.append('location', params.location)
+    if (params?.scale) searchParams.append('scale', params.scale)
+    if (params?.is_featured !== undefined) searchParams.append('is_featured', params.is_featured.toString())
+    if (params?.include_inactive !== undefined) searchParams.append('include_inactive', params.include_inactive.toString())
+    
+    const response: AxiosResponse<CompetitionManagementListResponse> = await api.get(
+      `/competitions/management${searchParams.toString() ? `?${searchParams.toString()}` : ''}`
     )
     return response.data
   },
@@ -413,14 +478,12 @@ export const userAPI = {
   getUserStatistics: async (): Promise<{
     total_users: number
     active_users: number
-    inactive_users: number
     admin_count: number
     creator_count: number
   }> => {
     const response: AxiosResponse<{
       total_users: number
       active_users: number
-      inactive_users: number
       admin_count: number
       creator_count: number
     }> = await api.get('/users/statistics')

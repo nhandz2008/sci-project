@@ -16,7 +16,10 @@ from app.schemas.competition import (
     CompetitionCard,
     CompetitionListResponse,
     CompetitionSearchFilters,
-    CompetitionWithCreator
+    CompetitionWithCreator,
+    CompetitionManagement,
+    CompetitionManagementListResponse,
+    CreatorInfo
 )
 
 
@@ -198,7 +201,7 @@ def get_featured_competitions(db: Session, limit: int = 10) -> List[Competition]
             Competition.is_featured == True,
             Competition.is_active == True
         )
-    ).order_by(Competition.created_at.desc()).limit(limit)
+    ).order_by(Competition.registration_deadline.asc()).limit(limit)
     
     return db.exec(statement).all()
 
@@ -215,27 +218,180 @@ def get_user_competitions(
     Args:
         db: Database session
         user_id: User ID
-        skip: Number of records to skip
+        skip: Number of records to skip (for pagination)
         limit: Maximum number of records to return
         
     Returns:
         Dictionary containing user's competitions and pagination info
     """
+    # Build query for user's competitions
     statement = select(Competition).where(Competition.created_by == user_id)
     
-    # Get total count
-    total = db.exec(select(func.count(Competition.id)).where(Competition.created_by == user_id)).first() or 0
+    # Order by creation date (newest first)
+    statement = statement.order_by(Competition.created_at.desc())
     
-    # Apply pagination and ordering
-    statement = statement.order_by(Competition.created_at.desc()).offset(skip).limit(limit)
+    # Get total count
+    count_statement = select(func.count(Competition.id)).where(Competition.created_by == user_id)
+    total = db.exec(count_statement).first() or 0
+    
+    # Apply pagination
+    statement = statement.offset(skip).limit(limit)
     
     competitions = db.exec(statement).all()
     
     # Calculate pagination info
-    pages = (total + limit - 1) // limit
+    pages = (total + limit - 1) // limit  # Ceiling division
     
     return {
         "competitions": competitions,
+        "total": total,
+        "page": (skip // limit) + 1,
+        "size": limit,
+        "pages": pages
+    }
+
+
+def get_competitions_for_management(
+    db: Session, 
+    user: User,
+    skip: int = 0, 
+    limit: int = 100,
+    filters: Optional[CompetitionSearchFilters] = None,
+    include_inactive: bool = False
+) -> Dict[str, Any]:
+    """
+    Get competitions for management interface with full creator information.
+    
+    Args:
+        db: Database session
+        user: Current user (determines what competitions they can see)
+        skip: Number of records to skip (for pagination)
+        limit: Maximum number of records to return
+        filters: Search and filter criteria
+        include_inactive: Whether to include inactive competitions
+        
+    Returns:
+        Dictionary containing competitions with creator info and pagination info
+    """
+    # Build base query with join to get creator information
+    statement = select(Competition, User).join(User, Competition.created_by == User.id)
+    
+    # Apply filters
+    conditions = []
+    
+    # Role-based filtering
+    if user.role != UserRole.ADMIN:
+        # Non-admin users can only see their own competitions
+        conditions.append(Competition.created_by == user.id)
+    
+    if not include_inactive:
+        conditions.append(Competition.is_active == True)
+    
+    if filters:
+        # Search in title and description
+        if filters.search:
+            search_term = f"%{filters.search}%"
+            conditions.append(
+                or_(
+                    Competition.title.ilike(search_term),
+                    Competition.description.ilike(search_term)
+                )
+            )
+        
+        # Filter by location
+        if filters.location:
+            conditions.append(Competition.location.ilike(f"%{filters.location}%"))
+        
+        # Filter by scale
+        if filters.scale:
+            conditions.append(Competition.scale == filters.scale)
+        
+        # Filter by featured status
+        if filters.is_featured is not None:
+            conditions.append(Competition.is_featured == filters.is_featured)
+        
+        # Filter by age range
+        if filters.age_min is not None:
+            conditions.append(
+                or_(
+                    Competition.target_age_min == None,
+                    Competition.target_age_min <= filters.age_min
+                )
+            )
+        
+        if filters.age_max is not None:
+            conditions.append(
+                or_(
+                    Competition.target_age_max == None,
+                    Competition.target_age_max >= filters.age_max
+                )
+            )
+        
+        # Filter by grade range
+        if filters.grade_min is not None:
+            conditions.append(
+                or_(
+                    Competition.required_grade_min == None,
+                    Competition.required_grade_min <= filters.grade_min
+                )
+            )
+        
+        if filters.grade_max is not None:
+            conditions.append(
+                or_(
+                    Competition.required_grade_max == None,
+                    Competition.required_grade_max >= filters.grade_max
+                )
+            )
+        
+        # Filter by subject areas
+        if filters.subject_areas:
+            subject_conditions = []
+            for subject in filters.subject_areas:
+                subject_conditions.append(Competition.subject_areas.ilike(f"%{subject}%"))
+            conditions.append(or_(*subject_conditions))
+    
+    # Apply all conditions
+    if conditions:
+        statement = statement.where(and_(*conditions))
+    
+    # Order by featured first, then by creation date
+    statement = statement.order_by(
+        Competition.is_featured.desc(),
+        Competition.created_at.desc()
+    )
+    
+    # Get total count for pagination
+    count_statement = select(func.count(Competition.id)).select_from(
+        select(Competition).join(User, Competition.created_by == User.id)
+    )
+    if conditions:
+        count_statement = count_statement.where(and_(*conditions))
+    
+    total = db.exec(count_statement).first() or 0
+    
+    # Apply pagination
+    statement = statement.offset(skip).limit(limit)
+    
+    results = db.exec(statement).all()
+    
+    # Transform results to include creator information
+    competitions_with_creators = []
+    for competition, creator in results:
+        competition_dict = competition.model_dump()
+        competition_dict['creator'] = {
+            'id': creator.id,
+            'username': creator.username,
+            'email': creator.email,
+            'role': creator.role
+        }
+        competitions_with_creators.append(competition_dict)
+    
+    # Calculate pagination info
+    pages = (total + limit - 1) // limit  # Ceiling division
+    
+    return {
+        "competitions": competitions_with_creators,
         "total": total,
         "page": (skip // limit) + 1,
         "size": limit,
@@ -253,59 +409,27 @@ def create_competition(
     
     Args:
         db: Database session
-        competition_create: Competition creation data
+        competition_create: Competition data
         current_user: User creating the competition
         
     Returns:
-        Created competition object
+        Created competition
         
     Raises:
-        HTTPException: If creation fails or validation errors
+        HTTPException: If creation fails
     """
-    # Validate dates
-    if competition_create.end_date <= competition_create.start_date:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="End date must be after start date"
-        )
+    # Only admins can set competitions as featured
+    if competition_create.is_featured and current_user.role != UserRole.ADMIN:
+        competition_create.is_featured = False
     
-    if competition_create.registration_deadline >= competition_create.start_date:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Registration deadline must be before start date"
-        )
-    
-    # Validate age range
-    if (competition_create.target_age_min is not None and 
-        competition_create.target_age_max is not None and
-        competition_create.target_age_max < competition_create.target_age_min):
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Maximum age must be greater than minimum age"
-        )
-    
-    # Validate grade range
-    if (competition_create.required_grade_min is not None and 
-        competition_create.required_grade_max is not None and
-        competition_create.required_grade_max < competition_create.required_grade_min):
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Maximum grade must be greater than minimum grade"
-        )
-    
-    # Create competition object
+    # Create competition data
     competition_data = competition_create.model_dump()
     competition_data["created_by"] = current_user.id
+    competition_data["created_at"] = datetime.utcnow()
     
-    # Convert URLs to strings if they are HttpUrl objects
-    if competition_data.get("image_url"):
-        competition_data["image_url"] = str(competition_data["image_url"])
-    if competition_data.get("external_url"):
-        competition_data["external_url"] = str(competition_data["external_url"])
-    
+    # Create competition
     competition = Competition(**competition_data)
     
-    # Save to database
     db.add(competition)
     db.commit()
     db.refresh(competition)
@@ -329,7 +453,7 @@ def update_competition(
         current_user: User attempting the update
         
     Returns:
-        Updated competition object
+        Updated competition
         
     Raises:
         HTTPException: If competition not found or user lacks permission
@@ -348,62 +472,28 @@ def update_competition(
             detail="Not authorized to update this competition"
         )
     
-    # Get update data, excluding None values
+    # Only admins can set competitions as featured
+    if competition_update.is_featured is not None and current_user.role != UserRole.ADMIN:
+        competition_update.is_featured = competition.is_featured  # Keep existing value
+    
+    # Update competition with provided data
     update_data = competition_update.model_dump(exclude_unset=True)
     
-    # Validate dates if being updated
-    start_date = update_data.get("start_date", competition.start_date)
-    end_date = update_data.get("end_date", competition.end_date)
-    registration_deadline = update_data.get("registration_deadline", competition.registration_deadline)
+    # Handle datetime fields
+    if "start_date" in update_data:
+        update_data["start_date"] = competition_update.start_date
+    if "end_date" in update_data:
+        update_data["end_date"] = competition_update.end_date
+    if "registration_deadline" in update_data:
+        update_data["registration_deadline"] = competition_update.registration_deadline
     
-    if end_date <= start_date:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="End date must be after start date"
-        )
+    # Add updated timestamp
+    update_data["updated_at"] = datetime.utcnow()
     
-    if registration_deadline >= start_date:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Registration deadline must be before start date"
-        )
-    
-    # Validate age range
-    target_age_min = update_data.get("target_age_min", competition.target_age_min)
-    target_age_max = update_data.get("target_age_max", competition.target_age_max)
-    
-    if (target_age_min is not None and target_age_max is not None and 
-        target_age_max < target_age_min):
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Maximum age must be greater than minimum age"
-        )
-    
-    # Validate grade range
-    required_grade_min = update_data.get("required_grade_min", competition.required_grade_min)
-    required_grade_max = update_data.get("required_grade_max", competition.required_grade_max)
-    
-    if (required_grade_min is not None and required_grade_max is not None and 
-        required_grade_max < required_grade_min):
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Maximum grade must be greater than minimum grade"
-        )
-    
-    # Convert URLs to strings if they are HttpUrl objects
-    if update_data.get("image_url"):
-        update_data["image_url"] = str(update_data["image_url"])
-    if update_data.get("external_url"):
-        update_data["external_url"] = str(update_data["external_url"])
-    
-    # Update competition fields
+    # Apply updates
     for field, value in update_data.items():
         setattr(competition, field, value)
     
-    # Update timestamp
-    competition.updated_at = datetime.utcnow()
-    
-    # Save to database
     db.commit()
     db.refresh(competition)
     

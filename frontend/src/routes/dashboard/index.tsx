@@ -47,7 +47,7 @@ function DashboardPage() {
       title: 'Competitions',
       description: 'Manage science competitions',
       icon: Trophy,
-      href: '/competitions',
+      href: '/dashboard/competitions',
       color: 'text-green-500',
     },
     {

@@ -14,7 +14,6 @@ export enum UserRole {
   CREATOR = 'creator',
 }
 
-// User management types
 export interface UserCreate {
   email: string
   username: string
@@ -78,6 +77,19 @@ export interface CompetitionWithCreator extends Competition {
   creator_username: string
 }
 
+// Creator information for management views
+export interface CreatorInfo {
+  id: number
+  username: string
+  email: string
+  role: string
+}
+
+// Competition management type with full creator info
+export interface CompetitionManagement extends Competition {
+  creator: CreatorInfo
+}
+
 export interface CompetitionCard {
   id: number
   title: string
@@ -118,15 +130,24 @@ export interface CompetitionListResponse {
   pages: number
 }
 
+// Competition management list response
+export interface CompetitionManagementListResponse {
+  competitions: CompetitionManagement[]
+  total: number
+  page: number
+  size: number
+  pages: number
+}
+
 // Competition creation/update
 export interface CompetitionCreate {
   title: string
   description: string
   location: string
   scale: CompetitionScale
-  start_date: string
-  end_date: string
-  registration_deadline: string
+  start_date: string | Date
+  end_date: string | Date
+  registration_deadline: string | Date
   prize_structure?: string
   eligibility_criteria?: string
   image_url?: string
@@ -135,7 +156,7 @@ export interface CompetitionCreate {
   target_age_max?: number
   required_grade_min?: number
   required_grade_max?: number
-  subject_areas?: string
+  subject_areas?: string[]
   is_featured?: boolean
   is_active?: boolean
 }
@@ -145,9 +166,9 @@ export interface CompetitionUpdate {
   description?: string
   location?: string
   scale?: CompetitionScale
-  start_date?: string
-  end_date?: string
-  registration_deadline?: string
+  start_date?: string | Date
+  end_date?: string | Date
+  registration_deadline?: string | Date
   prize_structure?: string
   eligibility_criteria?: string
   image_url?: string
@@ -156,7 +177,7 @@ export interface CompetitionUpdate {
   target_age_max?: number
   required_grade_min?: number
   required_grade_max?: number
-  subject_areas?: string
+  subject_areas?: string[]
   is_featured?: boolean
   is_active?: boolean
 }
