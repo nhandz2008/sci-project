@@ -1,6 +1,6 @@
 // User types
 export interface User {
-  id: string
+  id: number
   email: string
   username: string
   role: UserRole
@@ -16,7 +16,7 @@ export enum UserRole {
 
 // Competition types
 export interface Competition {
-  id: string
+  id: number
   title: string
   description: string
   location: string
@@ -32,12 +32,40 @@ export interface Competition {
   target_age_max?: number
   required_grade_min?: number
   required_grade_max?: number
-  subject_areas?: string[]
+  subject_areas?: string
   is_featured: boolean
   is_active: boolean
-  created_by: string
+  created_by: number
   created_at: string
-  updated_at: string
+  updated_at?: string
+}
+
+export interface CompetitionWithCreator extends Competition {
+  creator_username: string
+}
+
+export interface CompetitionCard {
+  id: number
+  title: string
+  location: string
+  scale: CompetitionScale
+  registration_deadline: string
+  image_url?: string
+  is_featured: boolean
+}
+
+export interface CompetitionPublic {
+  id: number
+  title: string
+  description: string
+  location: string
+  scale: CompetitionScale
+  start_date: string
+  end_date: string
+  registration_deadline: string
+  image_url?: string
+  external_url?: string
+  is_featured: boolean
 }
 
 export enum CompetitionScale {
@@ -45,6 +73,58 @@ export enum CompetitionScale {
   REGIONAL = 'regional', 
   NATIONAL = 'national',
   INTERNATIONAL = 'international',
+}
+
+// Competition list response
+export interface CompetitionListResponse {
+  competitions: CompetitionPublic[]
+  total: number
+  page: number
+  size: number
+  pages: number
+}
+
+// Competition creation/update
+export interface CompetitionCreate {
+  title: string
+  description: string
+  location: string
+  scale: CompetitionScale
+  start_date: string
+  end_date: string
+  registration_deadline: string
+  prize_structure?: string
+  eligibility_criteria?: string
+  image_url?: string
+  external_url?: string
+  target_age_min?: number
+  target_age_max?: number
+  required_grade_min?: number
+  required_grade_max?: number
+  subject_areas?: string
+  is_featured?: boolean
+  is_active?: boolean
+}
+
+export interface CompetitionUpdate {
+  title?: string
+  description?: string
+  location?: string
+  scale?: CompetitionScale
+  start_date?: string
+  end_date?: string
+  registration_deadline?: string
+  prize_structure?: string
+  eligibility_criteria?: string
+  image_url?: string
+  external_url?: string
+  target_age_min?: number
+  target_age_max?: number
+  required_grade_min?: number
+  required_grade_max?: number
+  subject_areas?: string
+  is_featured?: boolean
+  is_active?: boolean
 }
 
 // API Response types
@@ -131,15 +211,22 @@ export interface CompetitionFormData {
 // Filter and search types
 export interface CompetitionFilters {
   search?: string
-  scale?: CompetitionScale[]
   location?: string
-  start_date_after?: string
-  start_date_before?: string
+  scale?: CompetitionScale
   is_featured?: boolean
+  age_min?: number
+  age_max?: number
+  grade_min?: number
+  grade_max?: number
   subject_areas?: string[]
 }
 
 export interface SortOption {
   field: string
   direction: 'asc' | 'desc'
+}
+
+// Image upload response
+export interface ImageUploadResponse {
+  image_url: string
 } 

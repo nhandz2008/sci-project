@@ -7,6 +7,16 @@ import type {
   UserProfile,
   RecommendationRequest,
   RecommendationResponse,
+  Competition,
+  CompetitionWithCreator,
+  CompetitionCard,
+  CompetitionPublic,
+  CompetitionListResponse,
+  CompetitionCreate,
+  CompetitionUpdate,
+  CompetitionFilters,
+  CompetitionScale,
+  ImageUploadResponse,
 } from '@/types'
 
 // Create axios instance with base configuration
@@ -127,6 +137,182 @@ export const authAPI = {
   isAuthenticated: (): boolean => {
     const token = tokenManager.getToken()
     return token !== null && !tokenManager.isTokenExpired(token)
+  },
+}
+
+export const competitionAPI = {
+  /**
+   * Get all competitions with optional filtering and pagination
+   */
+  getCompetitions: async (params?: {
+    skip?: number
+    limit?: number
+    search?: string
+    location?: string
+    scale?: CompetitionScale
+    is_featured?: boolean
+    age_min?: number
+    age_max?: number
+    grade_min?: number
+    grade_max?: number
+    subject_areas?: string[]
+  }): Promise<CompetitionListResponse> => {
+    const searchParams = new URLSearchParams()
+    
+    if (params?.skip !== undefined) searchParams.append('skip', params.skip.toString())
+    if (params?.limit !== undefined) searchParams.append('limit', params.limit.toString())
+    if (params?.search) searchParams.append('search', params.search)
+    if (params?.location) searchParams.append('location', params.location)
+    if (params?.scale) searchParams.append('scale', params.scale)
+    if (params?.is_featured !== undefined) searchParams.append('is_featured', params.is_featured.toString())
+    if (params?.age_min !== undefined) searchParams.append('age_min', params.age_min.toString())
+    if (params?.age_max !== undefined) searchParams.append('age_max', params.age_max.toString())
+    if (params?.grade_min !== undefined) searchParams.append('grade_min', params.grade_min.toString())
+    if (params?.grade_max !== undefined) searchParams.append('grade_max', params.grade_max.toString())
+    if (params?.subject_areas) {
+      params.subject_areas.forEach(area => searchParams.append('subject_areas', area))
+    }
+    
+    const response: AxiosResponse<CompetitionListResponse> = await api.get(
+      `/competitions/${searchParams.toString() ? `?${searchParams.toString()}` : ''}`
+    )
+    return response.data
+  },
+
+  /**
+   * Get featured competitions for carousel
+   */
+  getFeaturedCompetitions: async (limit?: number): Promise<CompetitionCard[]> => {
+    const params = limit ? `?limit=${limit}` : ''
+    const response: AxiosResponse<CompetitionCard[]> = await api.get(`/competitions/featured${params}`)
+    return response.data
+  },
+
+  /**
+   * Get upcoming competitions (registration still open)
+   */
+  getUpcomingCompetitions: async (limit?: number): Promise<CompetitionCard[]> => {
+    const params = limit ? `?limit=${limit}` : ''
+    const response: AxiosResponse<CompetitionCard[]> = await api.get(`/competitions/upcoming${params}`)
+    return response.data
+  },
+
+  /**
+   * Search competitions by query
+   */
+  searchCompetitions: async (query: string, limit?: number): Promise<CompetitionPublic[]> => {
+    const params = new URLSearchParams({ q: query })
+    if (limit) params.append('limit', limit.toString())
+    
+    const response: AxiosResponse<CompetitionPublic[]> = await api.get(
+      `/competitions/search?${params.toString()}`
+    )
+    return response.data
+  },
+
+  /**
+   * Get competitions by scale
+   */
+  getCompetitionsByScale: async (scale: CompetitionScale, limit?: number): Promise<CompetitionCard[]> => {
+    const params = limit ? `?limit=${limit}` : ''
+    const response: AxiosResponse<CompetitionCard[]> = await api.get(
+      `/competitions/scale/${scale}${params}`
+    )
+    return response.data
+  },
+
+  /**
+   * Get current user's competitions
+   */
+  getMyCompetitions: async (skip?: number, limit?: number): Promise<CompetitionListResponse> => {
+    const params = new URLSearchParams()
+    if (skip !== undefined) params.append('skip', skip.toString())
+    if (limit !== undefined) params.append('limit', limit.toString())
+    
+    const response: AxiosResponse<CompetitionListResponse> = await api.get(
+      `/competitions/my${params.toString() ? `?${params.toString()}` : ''}`
+    )
+    return response.data
+  },
+
+  /**
+   * Get single competition by ID
+   */
+  getCompetition: async (id: number): Promise<CompetitionWithCreator> => {
+    const response: AxiosResponse<CompetitionWithCreator> = await api.get(`/competitions/${id}`)
+    return response.data
+  },
+
+  /**
+   * Create new competition
+   */
+  createCompetition: async (competitionData: CompetitionCreate): Promise<Competition> => {
+    const response: AxiosResponse<Competition> = await api.post('/competitions/', competitionData)
+    return response.data
+  },
+
+  /**
+   * Update competition
+   */
+  updateCompetition: async (id: number, competitionData: CompetitionUpdate): Promise<Competition> => {
+    const response: AxiosResponse<Competition> = await api.put(`/competitions/${id}`, competitionData)
+    return response.data
+  },
+
+  /**
+   * Delete competition
+   */
+  deleteCompetition: async (id: number): Promise<void> => {
+    await api.delete(`/competitions/${id}`)
+  },
+
+  /**
+   * Upload competition image
+   */
+  uploadCompetitionImage: async (id: number, file: File): Promise<ImageUploadResponse> => {
+    const formData = new FormData()
+    formData.append('file', file)
+    
+    const response: AxiosResponse<ImageUploadResponse> = await api.post(
+      `/competitions/${id}/image`,
+      formData,
+      {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      }
+    )
+    return response.data
+  },
+
+  /**
+   * Get all competitions (admin only)
+   */
+  getAllCompetitionsAdmin: async (
+    skip?: number,
+    limit?: number,
+    includeInactive?: boolean
+  ): Promise<CompetitionListResponse> => {
+    const params = new URLSearchParams()
+    if (skip !== undefined) params.append('skip', skip.toString())
+    if (limit !== undefined) params.append('limit', limit.toString())
+    if (includeInactive !== undefined) params.append('include_inactive', includeInactive.toString())
+    
+    const response: AxiosResponse<CompetitionListResponse> = await api.get(
+      `/competitions/admin/all${params.toString() ? `?${params.toString()}` : ''}`
+    )
+    return response.data
+  },
+
+  /**
+   * Admin update competition
+   */
+  adminUpdateCompetition: async (id: number, competitionData: CompetitionUpdate): Promise<Competition> => {
+    const response: AxiosResponse<Competition> = await api.put(
+      `/competitions/${id}/admin`,
+      competitionData
+    )
+    return response.data
   },
 }
 

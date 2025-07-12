@@ -11,6 +11,9 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as DashboardIndexRouteImport } from './routes/dashboard/index'
+import { Route as CompetitionsIndexRouteImport } from './routes/competitions/index'
+import { Route as CompetitionsCreateRouteImport } from './routes/competitions/create'
+import { Route as CompetitionsCompetitionIdRouteImport } from './routes/competitions/$competitionId'
 import { Route as AuthLoginRouteImport } from './routes/auth/login'
 
 const IndexRoute = IndexRouteImport.update({
@@ -23,6 +26,22 @@ const DashboardIndexRoute = DashboardIndexRouteImport.update({
   path: '/dashboard/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const CompetitionsIndexRoute = CompetitionsIndexRouteImport.update({
+  id: '/competitions/',
+  path: '/competitions/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CompetitionsCreateRoute = CompetitionsCreateRouteImport.update({
+  id: '/competitions/create',
+  path: '/competitions/create',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CompetitionsCompetitionIdRoute =
+  CompetitionsCompetitionIdRouteImport.update({
+    id: '/competitions/$competitionId',
+    path: '/competitions/$competitionId',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const AuthLoginRoute = AuthLoginRouteImport.update({
   id: '/auth/login',
   path: '/auth/login',
@@ -32,30 +51,61 @@ const AuthLoginRoute = AuthLoginRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth/login': typeof AuthLoginRoute
+  '/competitions/$competitionId': typeof CompetitionsCompetitionIdRoute
+  '/competitions/create': typeof CompetitionsCreateRoute
+  '/competitions': typeof CompetitionsIndexRoute
   '/dashboard': typeof DashboardIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth/login': typeof AuthLoginRoute
+  '/competitions/$competitionId': typeof CompetitionsCompetitionIdRoute
+  '/competitions/create': typeof CompetitionsCreateRoute
+  '/competitions': typeof CompetitionsIndexRoute
   '/dashboard': typeof DashboardIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/auth/login': typeof AuthLoginRoute
+  '/competitions/$competitionId': typeof CompetitionsCompetitionIdRoute
+  '/competitions/create': typeof CompetitionsCreateRoute
+  '/competitions/': typeof CompetitionsIndexRoute
   '/dashboard/': typeof DashboardIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/auth/login' | '/dashboard'
+  fullPaths:
+    | '/'
+    | '/auth/login'
+    | '/competitions/$competitionId'
+    | '/competitions/create'
+    | '/competitions'
+    | '/dashboard'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/auth/login' | '/dashboard'
-  id: '__root__' | '/' | '/auth/login' | '/dashboard/'
+  to:
+    | '/'
+    | '/auth/login'
+    | '/competitions/$competitionId'
+    | '/competitions/create'
+    | '/competitions'
+    | '/dashboard'
+  id:
+    | '__root__'
+    | '/'
+    | '/auth/login'
+    | '/competitions/$competitionId'
+    | '/competitions/create'
+    | '/competitions/'
+    | '/dashboard/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthLoginRoute: typeof AuthLoginRoute
+  CompetitionsCompetitionIdRoute: typeof CompetitionsCompetitionIdRoute
+  CompetitionsCreateRoute: typeof CompetitionsCreateRoute
+  CompetitionsIndexRoute: typeof CompetitionsIndexRoute
   DashboardIndexRoute: typeof DashboardIndexRoute
 }
 
@@ -75,6 +125,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/competitions/': {
+      id: '/competitions/'
+      path: '/competitions'
+      fullPath: '/competitions'
+      preLoaderRoute: typeof CompetitionsIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/competitions/create': {
+      id: '/competitions/create'
+      path: '/competitions/create'
+      fullPath: '/competitions/create'
+      preLoaderRoute: typeof CompetitionsCreateRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/competitions/$competitionId': {
+      id: '/competitions/$competitionId'
+      path: '/competitions/$competitionId'
+      fullPath: '/competitions/$competitionId'
+      preLoaderRoute: typeof CompetitionsCompetitionIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/auth/login': {
       id: '/auth/login'
       path: '/auth/login'
@@ -88,6 +159,9 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthLoginRoute: AuthLoginRoute,
+  CompetitionsCompetitionIdRoute: CompetitionsCompetitionIdRoute,
+  CompetitionsCreateRoute: CompetitionsCreateRoute,
+  CompetitionsIndexRoute: CompetitionsIndexRoute,
   DashboardIndexRoute: DashboardIndexRoute,
 }
 export const routeTree = rootRouteImport
