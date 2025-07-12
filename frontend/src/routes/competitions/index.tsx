@@ -4,6 +4,8 @@ import { useState } from 'react'
 import { competitionAPI } from '@/client/api'
 import { CompetitionGrid, CompetitionFilters } from '@/components/Competition'
 import { CompetitionFilters as CompetitionFiltersType } from '@/types'
+import Header from '@/components/Common/Header'
+import Footer from '@/components/Common/Footer'
 
 const CompetitionsPage = () => {
   const [filters, setFilters] = useState<CompetitionFiltersType>({})
@@ -42,8 +44,11 @@ const CompetitionsPage = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
+      {/* Header */}
+      <Header />
+      
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Header */}
+        {/* Page Header */}
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900 mb-2">
             Science Competitions
@@ -182,6 +187,9 @@ const CompetitionsPage = () => {
           </div>
         </div>
       </div>
+      
+      {/* Footer */}
+      <Footer />
     </div>
   )
 }

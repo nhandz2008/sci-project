@@ -1,7 +1,13 @@
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { useAuth } from '@/hooks/useAuth'
 import { UserProfile } from '@/components/Auth/UserProfile'
-import { LogIn, UserPlus, Search, Bot } from 'lucide-react'
+import { LogIn, UserPlus, Search, Bot, Users, Calendar, ArrowRight, Building2 } from 'lucide-react'
+import { useEffect, useState } from 'react'
+import { competitionAPI } from '@/client/api'
+import type { CompetitionCard as CompetitionCardType } from '@/types'
+import CompetitionCard from '@/components/Competition/CompetitionCard'
+import Header from '@/components/Common/Header'
+import Footer from '@/components/Common/Footer'
 
 export const Route = createFileRoute('/')({
   component: Index,
@@ -10,50 +16,28 @@ export const Route = createFileRoute('/')({
 function Index() {
   const navigate = useNavigate()
   const { isAuthenticated, user } = useAuth()
+  const [featuredCompetitions, setFeaturedCompetitions] = useState<CompetitionCardType[]>([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    const fetchFeaturedCompetitions = async () => {
+      try {
+        const competitions = await competitionAPI.getFeaturedCompetitions(6)
+        setFeaturedCompetitions(competitions)
+      } catch (error) {
+        console.error('Failed to fetch featured competitions:', error)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchFeaturedCompetitions()
+  }, [])
 
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
-      <header className="border-b bg-card">
-        <div className="container mx-auto container-padding">
-          <div className="flex items-center justify-between py-4">
-            <h1 className="text-2xl font-bold text-primary">
-              Science Competitions Insight
-            </h1>
-            
-            <div className="flex items-center gap-4">
-              {isAuthenticated ? (
-                <>
-                  <button
-                    onClick={() => navigate({ to: '/dashboard' })}
-                    className="btn-outline px-4 py-2"
-                  >
-                    Dashboard
-                  </button>
-                  <UserProfile />
-                </>
-              ) : (
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={() => navigate({ to: '/auth/register' })}
-                    className="btn-outline px-4 py-2 flex items-center gap-2"
-                  >
-                    <UserPlus className="h-4 w-4" />
-                    Sign Up
-                  </button>
-                  <button
-                    onClick={() => navigate({ to: '/auth/login' })}
-                    className="btn-primary px-4 py-2 flex items-center gap-2"
-                  >
-                    <LogIn className="h-4 w-4" />
-                    Sign In
-                  </button>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      </header>
+      <Header />
 
       {/* Hero Section */}
       <div className="container mx-auto container-padding">
@@ -98,83 +82,104 @@ function Index() {
           )}
         </div>
         
-        {/* Features Section */}
+        {/* What SCI Provides Section */}
         <section className="py-16">
-          <h2 className="text-3xl font-bold text-center mb-12">Why Join SCI?</h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {[
-              {
-                title: "Discover Opportunities",
-                description: "Find science competitions that match your interests and skill level",
-                scale: "Local",
-                color: "text-green-500"
-              },
-              {
-                title: "Share Your Events",
-                description: "Post your own competitions and reach a global audience",
-                scale: "Regional", 
-                color: "text-blue-500"
-              },
-              {
-                title: "Connect & Grow",
-                description: "Join a community of passionate scientists and innovators",
-                scale: "International",
-                color: "text-purple-500"
-              }
-            ].map((feature, i) => (
-              <div key={i} className="bg-card rounded-lg p-6 shadow-sm border hover:border-primary/50 transition-colors">
-                <div className="h-48 bg-gradient-to-br from-primary/10 to-secondary/10 rounded-md mb-4 flex items-center justify-center">
-                  <div className="text-6xl opacity-30">🏆</div>
-                </div>
-                <h3 className="text-lg font-semibold mb-2">{feature.title}</h3>
-                <p className="text-muted-foreground mb-4 text-sm">
-                  {feature.description}
-                </p>
-                <div className="flex justify-between items-center">
-                  <span className={`text-sm px-2 py-1 rounded bg-primary/10 ${feature.color} font-medium`}>
-                    {feature.scale}
-                  </span>
-                  <button 
-                    onClick={() => navigate({ to: isAuthenticated ? '/dashboard' : '/auth/register' })}
-                    className="btn-ghost px-3 py-1 text-sm hover:text-primary transition-colors"
-                  >
-                    {isAuthenticated ? 'Get Started' : 'Join Now'} →
-                  </button>
-                </div>
+          <h2 className="text-3xl font-bold text-center mb-12">What SCI Provides</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+            {/* For Participants */}
+            <div className="bg-card rounded-lg p-8 shadow-sm border hover:border-primary/50 transition-colors">
+              <div className="h-32 bg-gradient-to-br from-green-50 to-emerald-100 rounded-md mb-6 flex items-center justify-center">
+                <Users className="w-12 h-12 text-green-600" />
               </div>
-            ))}
-          </div>
-        </section>
-
-        {/* Call to Action for Non-Authenticated Users */}
-        {!isAuthenticated && (
-          <section className="py-16 bg-muted/30 rounded-lg">
-            <div className="text-center">
-              <h2 className="text-2xl font-bold mb-4">
-                Ready to Join the Community? 🚀
-              </h2>
-              <p className="text-muted-foreground mb-6 max-w-lg mx-auto">
-                Create your free account today and start discovering amazing science competitions from around the world.
+              <h3 className="text-xl font-semibold mb-4 text-green-700">For Participants</h3>
+              <h4 className="text-lg font-medium mb-3 text-green-600">Discover Opportunities, Connect & Grow</h4>
+              <p className="text-muted-foreground mb-6">
+                Find science competitions that match your interests and skill level. 
+                Join a community of passionate scientists and innovators.
               </p>
-              <div className="flex gap-4 justify-center">
+              <div className="flex justify-between items-center">
+                <span className="text-sm px-3 py-1 rounded-full bg-green-100 text-green-700 font-medium">
+                  Global Access
+                </span>
                 <button 
-                  onClick={() => navigate({ to: '/auth/register' })}
-                  className="btn-primary px-6 py-3 flex items-center gap-2"
+                  onClick={() => navigate({ to: '/competitions' })}
+                  className="btn-ghost px-3 py-1 text-sm hover:text-green-600 transition-colors flex items-center gap-1"
                 >
-                  <UserPlus className="h-5 w-5" />
-                  Create Free Account
-                </button>
-                <button 
-                  onClick={() => navigate({ to: '/auth/login' })}
-                  className="btn-outline px-6 py-3 flex items-center gap-2"
-                >
-                  <LogIn className="h-5 w-5" />
-                  Already have an account?
+                  Explore Competitions <ArrowRight className="w-3 h-3" />
                 </button>
               </div>
             </div>
-          </section>
-        )}
+
+            {/* For Organizers */}
+            <div className="bg-card rounded-lg p-8 shadow-sm border hover:border-primary/50 transition-colors">
+              <div className="h-32 bg-gradient-to-br from-bluegit status-50 to-indigo-100 rounded-md mb-6 flex items-center justify-center">
+              <Building2 className="w-12 h-12 text-blue-600" />
+              </div>
+              <h3 className="text-xl font-semibold mb-4 text-blue-700">For Organizers</h3>
+              <h4 className="text-lg font-medium mb-3 text-blue-600">Share Your Events</h4>
+              <p className="text-muted-foreground mb-6">
+                Post your own competitions and reach a global audience. 
+                Connect with talented participants from around the world.
+              </p>
+              <div className="flex justify-between items-center">
+                <span className="text-sm px-3 py-1 rounded-full bg-blue-100 text-blue-700 font-medium">
+                  Global Reach
+                </span>
+                <button 
+                  onClick={() => navigate({ to: isAuthenticated ? '/competitions/create' : '/auth/register' })}
+                  className="btn-ghost px-3 py-1 text-sm hover:text-blue-600 transition-colors flex items-center gap-1"
+                >
+                  {isAuthenticated ? 'Create Competition' : 'Get Started'} <ArrowRight className="w-3 h-3" />
+                </button>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Featured Competitions Section */}
+        <section className="py-16">
+          <div className="flex items-center justify-between mb-8">
+            <h2 className="text-3xl font-bold">Featured Competitions</h2>
+            <button 
+              onClick={() => navigate({ to: '/competitions' })}
+              className="btn-outline px-4 py-2 flex items-center gap-2 hover:bg-primary hover:text-white transition-colors"
+            >
+              View All Competitions
+              <ArrowRight className="w-4 h-4" />
+            </button>
+          </div>
+          
+          {loading ? (
+            <div className="flex justify-center items-center h-64">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+            </div>
+          ) : featuredCompetitions.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {featuredCompetitions.map((competition) => (
+                <CompetitionCard
+                  key={competition.id}
+                  competition={competition}
+                  variant="featured"
+                  className="h-full"
+                />
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-12">
+              <div className="text-6xl mb-4">🏆</div>
+              <h3 className="text-xl font-semibold mb-2">No Featured Competitions</h3>
+              <p className="text-muted-foreground mb-4">
+                Check back soon for exciting featured competitions!
+              </p>
+              <button 
+                onClick={() => navigate({ to: '/competitions' })}
+                className="btn-primary px-6 py-2"
+              >
+                Browse All Competitions
+              </button>
+            </div>
+          )}
+        </section>
 
         {/* Welcome Message for Authenticated Users */}
         {isAuthenticated && user && (
@@ -204,6 +209,9 @@ function Index() {
           </section>
         )}
       </div>
+      
+      {/* Footer */}
+      <Footer />
     </div>
   )
 } 

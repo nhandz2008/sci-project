@@ -3,6 +3,7 @@ import { useEffect } from 'react'
 import { UserManagement } from '@/components/Admin/UserManagement'
 import { useAuth } from '@/hooks/useAuth'
 import { UserRole } from '@/types'
+import Header from '@/components/Common/Header'
 
 export const Route = createFileRoute('/dashboard/users')({
   component: UserManagementPage,
@@ -44,22 +45,7 @@ function UserManagementPage() {
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
-      <header className="border-b bg-card">
-        <div className="container mx-auto container-padding">
-          <div className="flex items-center justify-between py-4">
-            <div className="flex items-center gap-4">
-              <button
-                onClick={() => navigate({ to: '/dashboard' })}
-                className="text-2xl font-bold text-primary hover:text-primary/80 transition-colors"
-              >
-                SCI Dashboard
-              </button>
-              <span className="text-muted-foreground">/</span>
-              <span className="text-lg font-medium">User Management</span>
-            </div>
-          </div>
-        </div>
-      </header>
+      <Header />
 
       {/* Main Content */}
       <main className="container mx-auto container-padding">

@@ -4,6 +4,7 @@ import { UserProfile } from '@/components/Auth/UserProfile'
 import { useAuth } from '@/hooks/useAuth'
 import { LayoutDashboard, Users, Trophy, BarChart3, UserCog } from 'lucide-react'
 import { UserRole } from '@/types'
+import Header from '@/components/Common/Header'
 
 export const Route = createFileRoute('/dashboard/')({
   component: DashboardPage,
@@ -80,21 +81,7 @@ function DashboardPage() {
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
-      <header className="border-b bg-card">
-        <div className="container mx-auto container-padding">
-          <div className="flex items-center justify-between py-4">
-            <div className="flex items-center gap-4">
-              <button
-                onClick={() => navigate({ to: '/' })}
-                className="text-2xl font-bold text-primary hover:text-primary/80 transition-colors"
-              >
-                SCI Dashboard
-              </button>
-            </div>
-            <UserProfile />
-          </div>
-        </div>
-      </header>
+      <Header />
 
       {/* Main Content */}
       <main className="container mx-auto container-padding py-8">
