@@ -5,6 +5,9 @@ import type {
   AuthResponse,
   APIResponse,
   UserProfile,
+  UserCreate,
+  UserUpdate,
+  UserListResponse,
   RecommendationRequest,
   RecommendationResponse,
   Competition,
@@ -312,6 +315,123 @@ export const competitionAPI = {
       `/competitions/${id}/admin`,
       competitionData
     )
+    return response.data
+  },
+}
+
+export const userAPI = {
+  /**
+   * Register a new user
+   */
+  register: async (userData: UserCreate): Promise<User> => {
+    const response: AxiosResponse<User> = await api.post('/users/register', userData)
+    return response.data
+  },
+
+  /**
+   * Get current user profile
+   */
+  getProfile: async (): Promise<UserProfile> => {
+    const response: AxiosResponse<UserProfile> = await api.get('/users/me')
+    return response.data
+  },
+
+  /**
+   * Update current user profile
+   */
+  updateProfile: async (userData: UserUpdate): Promise<UserProfile> => {
+    const response: AxiosResponse<UserProfile> = await api.put('/users/me', userData)
+    return response.data
+  },
+
+  /**
+   * Get all users (admin only)
+   */
+  getAllUsers: async (params?: {
+    skip?: number
+    limit?: number
+    search?: string
+    role?: string
+    is_active?: boolean
+  }): Promise<UserListResponse> => {
+    const searchParams = new URLSearchParams()
+    
+    if (params?.skip !== undefined) searchParams.append('skip', params.skip.toString())
+    if (params?.limit !== undefined) searchParams.append('limit', params.limit.toString())
+    if (params?.search) searchParams.append('search', params.search)
+    if (params?.role) searchParams.append('role', params.role)
+    if (params?.is_active !== undefined) searchParams.append('is_active', params.is_active.toString())
+    
+    const response: AxiosResponse<UserListResponse> = await api.get(
+      `/users/${searchParams.toString() ? `?${searchParams.toString()}` : ''}`
+    )
+    return response.data
+  },
+
+  /**
+   * Get user by ID
+   */
+  getUser: async (id: number): Promise<User> => {
+    const response: AxiosResponse<User> = await api.get(`/users/${id}`)
+    return response.data
+  },
+
+  /**
+   * Update user (admin only)
+   */
+  updateUser: async (id: number, userData: UserUpdate): Promise<User> => {
+    const response: AxiosResponse<User> = await api.put(`/users/${id}`, userData)
+    return response.data
+  },
+
+  /**
+   * Delete user (admin only)
+   */
+  deleteUser: async (id: number): Promise<void> => {
+    await api.delete(`/users/${id}`)
+  },
+
+  /**
+   * Deactivate user (admin only)
+   */
+  deactivateUser: async (id: number): Promise<User> => {
+    const response: AxiosResponse<User> = await api.put(`/users/${id}/deactivate`)
+    return response.data
+  },
+
+  /**
+   * Activate user (admin only)
+   */
+  activateUser: async (id: number): Promise<User> => {
+    const response: AxiosResponse<User> = await api.put(`/users/${id}/activate`)
+    return response.data
+  },
+
+  /**
+   * Get user statistics (admin only)
+   */
+  getUserStatistics: async (): Promise<{
+    total_users: number
+    active_users: number
+    inactive_users: number
+    admin_count: number
+    creator_count: number
+  }> => {
+    const response: AxiosResponse<{
+      total_users: number
+      active_users: number
+      inactive_users: number
+      admin_count: number
+      creator_count: number
+    }> = await api.get('/users/statistics')
+    return response.data
+  },
+
+  /**
+   * Create user (admin only)
+   */
+  createUser: async (userData: UserCreate): Promise<User> => {
+    const response: AxiosResponse<User> = await api.post('/users/', userData)
     return response.data
   },
 }

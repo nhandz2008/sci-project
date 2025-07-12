@@ -2,7 +2,8 @@ import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { yupResolver } from '@hookform/resolvers/yup'
 import * as yup from 'yup'
-import { Eye, EyeOff, Mail, Lock, Loader2 } from 'lucide-react'
+import { useNavigate } from '@tanstack/react-router'
+import { Eye, EyeOff, Mail, Lock, Loader2, UserPlus } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
 import { cn } from '@/utils'
 import type { LoginCredentials } from '@/types'
@@ -28,6 +29,7 @@ export const LoginForm = ({ onSuccess, className }: LoginFormProps) => {
   const [showPassword, setShowPassword] = useState(false)
   const [loginError, setLoginError] = useState<string | null>(null)
   const { login, isLoading } = useAuth()
+  const navigate = useNavigate()
 
   const {
     register,
@@ -164,6 +166,22 @@ export const LoginForm = ({ onSuccess, className }: LoginFormProps) => {
             {(isSubmitting || isLoading) ? 'Signing In...' : 'Sign In'}
           </button>
         </form>
+
+        {/* Registration Link */}
+        <div className="mt-6 pt-4 border-t">
+          <div className="text-center">
+            <p className="text-sm text-muted-foreground mb-3">
+              Don't have an account?
+            </p>
+            <button
+              onClick={() => navigate({ to: '/auth/register' })}
+              className="btn-outline px-4 py-2 flex items-center gap-2 mx-auto"
+            >
+              <UserPlus className="h-4 w-4" />
+              Create New Account
+            </button>
+          </div>
+        </div>
 
         {/* Demo Accounts */}
         <div className="mt-6 pt-4 border-t">

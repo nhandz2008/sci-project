@@ -2,7 +2,8 @@ import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { useEffect } from 'react'
 import { UserProfile } from '@/components/Auth/UserProfile'
 import { useAuth } from '@/hooks/useAuth'
-import { LayoutDashboard, Users, Trophy, BarChart3 } from 'lucide-react'
+import { LayoutDashboard, Users, Trophy, BarChart3, UserCog } from 'lucide-react'
+import { UserRole } from '@/types'
 
 export const Route = createFileRoute('/dashboard/')({
   component: DashboardPage,
@@ -46,8 +47,15 @@ function DashboardPage() {
       title: 'Competitions',
       description: 'Manage science competitions',
       icon: Trophy,
-      href: '/dashboard/competitions',
+      href: '/competitions',
       color: 'text-green-500',
+    },
+    {
+      title: 'Profile Settings',
+      description: 'Manage your account information',
+      icon: UserCog,
+      href: '/dashboard/profile',
+      color: 'text-indigo-500',
     },
     {
       title: 'Analytics',
@@ -59,7 +67,7 @@ function DashboardPage() {
   ]
 
   // Add admin-only items
-  if (user.role === 'admin') {
+  if (user.role === UserRole.ADMIN) {
     dashboardItems.push({
       title: 'User Management',
       description: 'Manage users and permissions',
@@ -123,16 +131,29 @@ function DashboardPage() {
           })}
         </div>
 
-        {/* User Profile Section */}
+        {/* Quick Actions */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <UserProfile showFullProfile={true} />
-          
+          {/* User Profile Section */}
           <div className="bg-card rounded-lg border p-6">
-            <h3 className="text-lg font-semibold mb-4">Quick Stats</h3>
-            <div className="space-y-4">
+            <h3 className="text-lg font-semibold mb-4">Your Profile</h3>
+            <div className="space-y-3">
+              <div className="flex justify-between items-center">
+                <span className="text-muted-foreground">Username</span>
+                <span className="font-medium">{user.username}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-muted-foreground">Email</span>
+                <span className="font-medium">{user.email}</span>
+              </div>
               <div className="flex justify-between items-center">
                 <span className="text-muted-foreground">Role</span>
-                <span className="font-medium capitalize">{user.role}</span>
+                <span className={`font-medium capitalize px-2 py-1 text-xs rounded-full ${
+                  user.role === UserRole.ADMIN 
+                    ? 'bg-purple-100 text-purple-800' 
+                    : 'bg-orange-100 text-orange-800'
+                }`}>
+                  {user.role}
+                </span>
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-muted-foreground">Account Status</span>
@@ -140,10 +161,24 @@ function DashboardPage() {
                   {user.is_active ? 'Active' : 'Inactive'}
                 </span>
               </div>
+
+            </div>
+          </div>
+          
+          {/* Quick Stats */}
+          <div className="bg-card rounded-lg border p-6">
+            <h3 className="text-lg font-semibold mb-4">Quick Stats</h3>
+            <div className="space-y-4">
               <div className="flex justify-between items-center">
                 <span className="text-muted-foreground">Access Level</span>
                 <span className="font-medium">
-                  {user.role === 'admin' ? 'Full Access' : 'Creator Access'}
+                  {user.role === UserRole.ADMIN ? 'Full Access' : 'Creator Access'}
+                </span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-muted-foreground">Member Since</span>
+                <span className="font-medium">
+                  {new Date(user.created_at).toLocaleDateString()}
                 </span>
               </div>
             </div>

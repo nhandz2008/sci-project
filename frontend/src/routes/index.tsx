@@ -33,13 +33,22 @@ function Index() {
                   <UserProfile />
                 </>
               ) : (
-                <button
-                  onClick={() => navigate({ to: '/auth/login' })}
-                  className="btn-primary px-4 py-2 flex items-center gap-2"
-                >
-                  <LogIn className="h-4 w-4" />
-                  Sign In
-                </button>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => navigate({ to: '/auth/register' })}
+                    className="btn-outline px-4 py-2 flex items-center gap-2"
+                  >
+                    <UserPlus className="h-4 w-4" />
+                    Sign Up
+                  </button>
+                  <button
+                    onClick={() => navigate({ to: '/auth/login' })}
+                    className="btn-primary px-4 py-2 flex items-center gap-2"
+                  >
+                    <LogIn className="h-4 w-4" />
+                    Sign In
+                  </button>
+                </div>
               )}
             </div>
           </div>
@@ -58,7 +67,7 @@ function Index() {
           {isAuthenticated ? (
             <div className="flex gap-4 justify-center">
               <button 
-                onClick={() => navigate({ to: '/dashboard' })}
+                onClick={() => navigate({ to: '/competitions' })}
                 className="btn-primary px-6 py-3 flex items-center gap-2"
               >
                 <Search className="h-5 w-5" />
@@ -72,13 +81,16 @@ function Index() {
           ) : (
             <div className="flex gap-4 justify-center">
               <button 
-                onClick={() => navigate({ to: '/auth/login' })}
+                onClick={() => navigate({ to: '/auth/register' })}
                 className="btn-primary px-6 py-3 flex items-center gap-2"
               >
-                <LogIn className="h-5 w-5" />
-                Sign In to Get Started
+                <UserPlus className="h-5 w-5" />
+                Join the Community
               </button>
-              <button className="btn-outline px-6 py-3 flex items-center gap-2">
+              <button 
+                onClick={() => navigate({ to: '/competitions' })}
+                className="btn-outline px-6 py-3 flex items-center gap-2"
+              >
                 <Search className="h-5 w-5" />
                 Browse Competitions
               </button>
@@ -88,48 +100,81 @@ function Index() {
         
         {/* Features Section */}
         <section className="py-16">
-          <h2 className="text-center mb-12">Featured Competitions</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <h2 className="text-3xl font-bold text-center mb-12">Why Join SCI?</h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             {[
               {
-                title: "Global Science Fair 2024",
-                description: "International competition for young scientists showcasing innovative research projects.",
+                title: "Discover Opportunities",
+                description: "Find science competitions that match your interests and skill level",
+                scale: "Local",
+                color: "text-green-500"
+              },
+              {
+                title: "Share Your Events",
+                description: "Post your own competitions and reach a global audience",
+                scale: "Regional", 
+                color: "text-blue-500"
+              },
+              {
+                title: "Connect & Grow",
+                description: "Join a community of passionate scientists and innovators",
                 scale: "International",
-                color: "text-blue-600"
-              },
-              {
-                title: "AI Innovation Challenge",
-                description: "Develop AI solutions for real-world problems in healthcare, environment, and education.",
-                scale: "National",
-                color: "text-green-600"
-              },
-              {
-                title: "Climate Solutions Contest",
-                description: "Design sustainable solutions to combat climate change and environmental issues.",
-                scale: "Regional",
-                color: "text-purple-600"
+                color: "text-purple-500"
               }
-            ].map((competition, i) => (
+            ].map((feature, i) => (
               <div key={i} className="bg-card rounded-lg p-6 shadow-sm border hover:border-primary/50 transition-colors">
                 <div className="h-48 bg-gradient-to-br from-primary/10 to-secondary/10 rounded-md mb-4 flex items-center justify-center">
                   <div className="text-6xl opacity-30">🏆</div>
                 </div>
-                <h3 className="text-lg font-semibold mb-2">{competition.title}</h3>
+                <h3 className="text-lg font-semibold mb-2">{feature.title}</h3>
                 <p className="text-muted-foreground mb-4 text-sm">
-                  {competition.description}
+                  {feature.description}
                 </p>
                 <div className="flex justify-between items-center">
-                  <span className={`text-sm px-2 py-1 rounded bg-primary/10 ${competition.color} font-medium`}>
-                    {competition.scale}
+                  <span className={`text-sm px-2 py-1 rounded bg-primary/10 ${feature.color} font-medium`}>
+                    {feature.scale}
                   </span>
-                  <button className="btn-ghost px-3 py-1 text-sm hover:text-primary transition-colors">
-                    Learn More →
+                  <button 
+                    onClick={() => navigate({ to: isAuthenticated ? '/dashboard' : '/auth/register' })}
+                    className="btn-ghost px-3 py-1 text-sm hover:text-primary transition-colors"
+                  >
+                    {isAuthenticated ? 'Get Started' : 'Join Now'} →
                   </button>
                 </div>
               </div>
             ))}
           </div>
         </section>
+
+        {/* Call to Action for Non-Authenticated Users */}
+        {!isAuthenticated && (
+          <section className="py-16 bg-muted/30 rounded-lg">
+            <div className="text-center">
+              <h2 className="text-2xl font-bold mb-4">
+                Ready to Join the Community? 🚀
+              </h2>
+              <p className="text-muted-foreground mb-6 max-w-lg mx-auto">
+                Create your free account today and start discovering amazing science competitions from around the world.
+              </p>
+              <div className="flex gap-4 justify-center">
+                <button 
+                  onClick={() => navigate({ to: '/auth/register' })}
+                  className="btn-primary px-6 py-3 flex items-center gap-2"
+                >
+                  <UserPlus className="h-5 w-5" />
+                  Create Free Account
+                </button>
+                <button 
+                  onClick={() => navigate({ to: '/auth/login' })}
+                  className="btn-outline px-6 py-3 flex items-center gap-2"
+                >
+                  <LogIn className="h-5 w-5" />
+                  Already have an account?
+                </button>
+              </div>
+            </div>
+          </section>
+        )}
 
         {/* Welcome Message for Authenticated Users */}
         {isAuthenticated && user && (
@@ -143,8 +188,14 @@ function Index() {
               </p>
               <div className="flex gap-4 justify-center">
                 <button 
-                  onClick={() => navigate({ to: '/dashboard' })}
+                  onClick={() => navigate({ to: '/competitions' })}
                   className="btn-primary px-6 py-3"
+                >
+                  Explore Competitions
+                </button>
+                <button 
+                  onClick={() => navigate({ to: '/dashboard' })}
+                  className="btn-outline px-6 py-3"
                 >
                   Go to Dashboard
                 </button>

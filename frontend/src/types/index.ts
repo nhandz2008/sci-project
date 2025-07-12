@@ -14,6 +14,40 @@ export enum UserRole {
   CREATOR = 'creator',
 }
 
+// User management types
+export interface UserCreate {
+  email: string
+  username: string
+  password: string
+  role?: UserRole
+}
+
+export interface UserUpdate {
+  email?: string
+  username?: string
+  password?: string
+  role?: UserRole
+  is_active?: boolean
+}
+
+export interface UserProfile {
+  id: number
+  email: string
+  username: string
+  role: UserRole
+  is_active: boolean
+  created_at: string
+  updated_at: string
+}
+
+export interface UserListResponse {
+  users: User[]
+  total: number
+  page: number
+  size: number
+  pages: number
+}
+
 // Competition types
 export interface Competition {
   id: number
@@ -161,7 +195,7 @@ export interface AuthResponse {
 }
 
 // Recommendation types
-export interface UserProfile {
+export interface RecommendationUserProfile {
   age?: number
   school_level?: string
   grade?: number
@@ -170,7 +204,7 @@ export interface UserProfile {
 }
 
 export interface RecommendationRequest {
-  user_profile: UserProfile
+  user_profile: RecommendationUserProfile
   max_results?: number
 }
 
@@ -182,7 +216,7 @@ export interface CompetitionRecommendation {
 
 export interface RecommendationResponse {
   recommendations: CompetitionRecommendation[]
-  user_profile: UserProfile
+  user_profile: RecommendationUserProfile
   generated_at: string
 }
 
@@ -208,7 +242,7 @@ export interface CompetitionFormData {
   is_active?: boolean
 }
 
-// Filter and search types
+// Filter types
 export interface CompetitionFilters {
   search?: string
   location?: string
@@ -221,12 +255,12 @@ export interface CompetitionFilters {
   subject_areas?: string[]
 }
 
+// Utility types
 export interface SortOption {
   field: string
   direction: 'asc' | 'desc'
 }
 
-// Image upload response
 export interface ImageUploadResponse {
   image_url: string
 } 

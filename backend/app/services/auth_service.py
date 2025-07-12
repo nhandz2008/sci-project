@@ -7,7 +7,7 @@ from app.core.security import create_access_token, get_password_hash
 from app.core.config import settings
 from app.models.user import User, UserRole
 from app.services.user_service import authenticate_user, get_user_by_email, get_user_by_username
-from app.schemas.user import UserCreate
+# UserCreate import removed - using user_service.create_user instead
 
 
 def login_user(db: Session, email: str, password: str) -> dict:
@@ -51,54 +51,7 @@ def login_user(db: Session, email: str, password: str) -> dict:
     }
 
 
-def create_user(db: Session, user_create: UserCreate) -> User:
-    """
-    Create a new user account.
-    
-    Args:
-        db: Database session
-        user_create: User creation data
-        
-    Returns:
-        Created user object
-        
-    Raises:
-        HTTPException: If user already exists or validation fails
-    """
-    # Check if user already exists by email
-    existing_user = get_user_by_email(db, user_create.email)
-    if existing_user:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="User with this email already exists"
-        )
-    
-    # Check if username is already taken
-    existing_username = get_user_by_username(db, user_create.username)
-    if existing_username:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Username already taken"
-        )
-    
-    # Hash the password
-    hashed_password = get_password_hash(user_create.password)
-    
-    # Create user object
-    user = User(
-        email=user_create.email,
-        username=user_create.username,
-        hashed_password=hashed_password,
-        role=user_create.role or UserRole.CREATOR,
-        is_active=True
-    )
-    
-    # Save to database
-    db.add(user)
-    db.commit()
-    db.refresh(user)
-    
-    return user
+# create_user function moved to user_service.py to avoid duplication
 
 
 def refresh_token(db: Session, user_email: str) -> dict:
