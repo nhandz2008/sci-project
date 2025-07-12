@@ -224,7 +224,7 @@ export const competitionAPI = {
    */
   getFeaturedCompetitions: async (limit?: number): Promise<CompetitionCard[]> => {
     const params = limit ? `?limit=${limit}` : ''
-    const response: AxiosResponse<CompetitionCard[]> = await api.get(`/competitions/featured${params}`)
+    const response: AxiosResponse<CompetitionCard[]> = await api.get(`/recommendations/featured${params}`)
     return response.data
   },
 

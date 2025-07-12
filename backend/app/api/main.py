@@ -6,7 +6,7 @@ from app.schemas import HealthResponse
 from app.api.routes import auth
 from app.api.routes import competitions
 from app.api.routes import users
-# from app.api.routes import recommendations
+from app.api.routes import recommendations
 
 # Create the main API router
 api_router = APIRouter()
@@ -45,5 +45,5 @@ api_router.include_router(competitions.router, prefix="/competitions", tags=["co
 # Include user routes
 api_router.include_router(users.router, prefix="/users", tags=["users"])
 
-# We'll include other route modules as we create them:
-# api_router.include_router(recommendations.router, prefix="/recommendations", tags=["recommendations"]) 
+# Include recommendations routes
+api_router.include_router(recommendations.router, prefix="/recommendations", tags=["recommendations"]) 

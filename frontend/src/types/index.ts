@@ -67,6 +67,7 @@ export interface Competition {
   required_grade_max?: number
   subject_areas?: string
   is_featured: boolean
+  featured_priority: number
   is_active: boolean
   created_by: number
   created_at: string
@@ -158,6 +159,7 @@ export interface CompetitionCreate {
   required_grade_max?: number
   subject_areas?: string
   is_featured?: boolean
+  featured_priority?: number
   is_active?: boolean
 }
 
@@ -179,6 +181,7 @@ export interface CompetitionUpdate {
   required_grade_max?: number
   subject_areas?: string
   is_featured?: boolean
+  featured_priority?: number
   is_active?: boolean
 }
 
@@ -260,6 +263,7 @@ export interface CompetitionFormData {
   required_grade_max?: number
   subject_areas?: string
   is_featured?: boolean
+  featured_priority?: number
   is_active?: boolean
 }
 

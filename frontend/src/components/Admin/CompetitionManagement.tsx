@@ -76,6 +76,7 @@ const competitionSchema = yup.object({
   grade_max: yup.number().min(1, 'Maximum grade must be at least 1').max(12, 'Maximum grade must be at most 12').optional(),
   subject_areas: yup.string().optional(),
   is_featured: yup.boolean().optional(),
+  featured_priority: yup.number().min(0, 'Priority must be at least 0').max(100, 'Priority must be at most 100').optional(),
   is_active: yup.boolean().optional(),
 })
 
@@ -112,6 +113,7 @@ const CompetitionModal: React.FC<CompetitionModalProps> = ({ isOpen, onClose, co
         grade_max: undefined,
         subject_areas: '',
         is_featured: false,
+        featured_priority: 0,
         is_active: true,
       }
     }
@@ -139,6 +141,7 @@ const CompetitionModal: React.FC<CompetitionModalProps> = ({ isOpen, onClose, co
       grade_max: competition.required_grade_max || undefined,
       subject_areas: competition.subject_areas || '',
       is_featured: competition.is_featured || false,
+      featured_priority: competition.featured_priority || 0,
       is_active: competition.is_active ?? true,
     }
   }
@@ -216,6 +219,7 @@ const CompetitionModal: React.FC<CompetitionModalProps> = ({ isOpen, onClose, co
         ? data.subject_areas.filter(s => s && s.trim()).join(', ')
         : data.subject_areas || undefined,
       is_featured: user?.role === UserRole.ADMIN ? data.is_featured : false,
+      featured_priority: user?.role === UserRole.ADMIN ? data.featured_priority : 0,
       is_active: data.is_active,
     }
 
@@ -506,23 +510,48 @@ const CompetitionModal: React.FC<CompetitionModalProps> = ({ isOpen, onClose, co
           {user?.role === UserRole.ADMIN && (
             <div className="border-t pt-4">
               <h3 className="font-medium mb-3">Admin Options</h3>
-              <div className="space-y-2">
-                <label className="flex items-center gap-2">
+              <div className="space-y-4">
+                <div className="flex items-center gap-2">
                   <input
                     type="checkbox"
                     {...register('is_featured')}
                     className="rounded border-border"
                   />
                   <span className="text-sm">Featured Competition</span>
-                </label>
-                <label className="flex items-center gap-2">
+                </div>
+                
+                <div>
+                  <label htmlFor="featured_priority" className="block text-sm font-medium mb-2">
+                    Featured Priority (0-100)
+                  </label>
+                  <input
+                    id="featured_priority"
+                    type="number"
+                    {...register('featured_priority')}
+                    className={cn(
+                      'w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary',
+                      errors.featured_priority ? 'border-red-500' : 'border-border'
+                    )}
+                    min={0}
+                    max={100}
+                    placeholder="0"
+                  />
+                  {errors.featured_priority && (
+                    <p className="text-red-500 text-sm mt-1">{errors.featured_priority.message}</p>
+                  )}
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Higher priority competitions appear first in featured lists
+                  </p>
+                </div>
+                
+                <div className="flex items-center gap-2">
                   <input
                     type="checkbox"
                     {...register('is_active')}
                     className="rounded border-border"
                   />
                   <span className="text-sm">Active Competition</span>
-                </label>
+                </div>
               </div>
             </div>
           )}
