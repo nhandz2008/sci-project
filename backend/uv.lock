@@ -1217,6 +1217,7 @@ source = { editable = "." }
 dependencies = [
     { name = "alembic" },
     { name = "fastapi", extra = ["standard"] },
+    { name = "httpx" },
     { name = "passlib", extra = ["bcrypt"] },
     { name = "pillow" },
     { name = "psycopg", extra = ["binary"] },
@@ -1236,6 +1237,7 @@ dev = [
 requires-dist = [
     { name = "alembic", specifier = ">=1.16.4" },
     { name = "fastapi", extras = ["standard"], specifier = ">=0.116.0" },
+    { name = "httpx", specifier = ">=0.28.1" },
     { name = "passlib", extras = ["bcrypt"], specifier = ">=1.7.4" },
     { name = "pillow", specifier = ">=11.3.0" },
     { name = "psycopg", extras = ["binary"], specifier = ">=3.2.9" },
