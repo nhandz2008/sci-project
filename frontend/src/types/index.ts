@@ -220,28 +220,46 @@ export interface AuthResponse {
 
 // Recommendation types
 export interface RecommendationUserProfile {
-  age?: number
-  school_level?: string
+  age: number
   grade?: number
   gpa?: number
-  interests?: string[]
+  interests: string[]
+  previous_competitions?: string[]
+  preferred_scale?: string[]
+  location_preference?: string
+  school_level?: string
+  subjects?: string
+  achievements?: string
+  time_commitment?: string
+  team_preference?: string
 }
 
 export interface RecommendationRequest {
   user_profile: RecommendationUserProfile
-  max_results?: number
+  max_recommendations?: number
+  include_explanation?: boolean
 }
 
 export interface CompetitionRecommendation {
-  competition: Competition
+  competition: CompetitionCard
   match_score: number
-  reasoning: string
+  match_reasons: string[]
+  confidence: number
+}
+
+export interface RecommendationStats {
+  average_match_score: number
+  score_distribution: Record<string, number>
+  top_matching_criteria: string[]
+  recommendation_quality: string
 }
 
 export interface RecommendationResponse {
   recommendations: CompetitionRecommendation[]
-  user_profile: RecommendationUserProfile
-  generated_at: string
+  total_competitions_analyzed: number
+  recommendation_strategy: string
+  user_profile_summary: string
+  stats?: RecommendationStats
 }
 
 // Form types

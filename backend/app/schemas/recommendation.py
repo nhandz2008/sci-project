@@ -52,12 +52,21 @@ class CompetitionRecommendation(BaseModel):
     confidence: float = Field(..., ge=0.0, le=1.0, description="AI confidence in this recommendation")
 
 
+class RecommendationStats(BaseModel):
+    """Statistics about recommendation performance."""
+    average_match_score: float = Field(..., ge=0.0, le=1.0, description="Average match score of recommendations")
+    score_distribution: dict = Field(..., description="Distribution of scores (excellent, good, fair, poor)")
+    top_matching_criteria: List[str] = Field(..., description="Top matching criteria used")
+    recommendation_quality: str = Field(..., description="Overall quality of recommendations")
+
+
 class RecommendationResponse(BaseModel):
     """Response schema for AI recommendations."""
     recommendations: List[CompetitionRecommendation]
     total_competitions_analyzed: int = Field(..., description="Total competitions considered")
     recommendation_strategy: str = Field(..., description="AI strategy used for recommendations")
     user_profile_summary: str = Field(..., description="Summary of user profile used")
+    stats: Optional[RecommendationStats] = Field(None, description="Recommendation statistics")
     
     
 class FeaturedCompetitionsResponse(BaseModel):
@@ -74,14 +83,6 @@ class RecommendationFeedback(BaseModel):
     rating: int = Field(..., ge=1, le=5, description="User rating (1-5 stars)")
     feedback_text: Optional[str] = Field(None, max_length=500, description="Optional feedback text")
     action_taken: Optional[str] = Field(None, description="Action taken (viewed, registered, etc.)")
-
-
-class RecommendationStats(BaseModel):
-    """Statistics about recommendation performance."""
-    total_requests: int = Field(..., description="Total recommendation requests")
-    average_recommendations_per_request: float = Field(..., description="Average recommendations returned")
-    most_common_interests: List[str] = Field(..., description="Most commonly requested interests")
-    success_rate: float = Field(..., ge=0.0, le=1.0, description="Recommendation success rate")
 
 
 # Advanced recommendation schemas

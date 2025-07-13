@@ -1,13 +1,13 @@
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { useAuth } from '@/hooks/useAuth'
-import { UserProfile } from '@/components/Auth/UserProfile'
-import { LogIn, UserPlus, Search, Bot, Users, Calendar, ArrowRight, Building2 } from 'lucide-react'
+import { UserPlus, Search, Bot, Users, ArrowRight, Building2 } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { competitionAPI } from '@/client/api'
 import type { CompetitionCard as CompetitionCardType } from '@/types'
 import CompetitionCard from '@/components/Competition/CompetitionCard'
 import Header from '@/components/Common/Header'
 import Footer from '@/components/Common/Footer'
+import { RecommendationWizard } from '@/components/Recommendation'
 
 export const Route = createFileRoute('/')({
   component: Index,
@@ -18,6 +18,7 @@ function Index() {
   const { isAuthenticated, user } = useAuth()
   const [featuredCompetitions, setFeaturedCompetitions] = useState<CompetitionCardType[]>([])
   const [loading, setLoading] = useState(true)
+  const [isRecommendationWizardOpen, setIsRecommendationWizardOpen] = useState(false)
 
   useEffect(() => {
     const fetchFeaturedCompetitions = async () => {
@@ -57,7 +58,10 @@ function Index() {
                 <Search className="h-5 w-5" />
                 Explore Competitions
               </button>
-              <button className="btn-outline px-6 py-3 flex items-center gap-2">
+              <button 
+                onClick={() => setIsRecommendationWizardOpen(true)}
+                className="btn-outline px-6 py-3 flex items-center gap-2"
+              >
                 <Bot className="h-5 w-5" />
                 Get AI Recommendations
               </button>
@@ -112,7 +116,7 @@ function Index() {
 
             {/* For Organizers */}
             <div className="bg-card rounded-lg p-8 shadow-sm border hover:border-primary/50 transition-colors">
-              <div className="h-32 bg-gradient-to-br from-bluegit status-50 to-indigo-100 rounded-md mb-6 flex items-center justify-center">
+              <div className="h-32 bg-gradient-to-br from-blue-50 to-indigo-100 rounded-md mb-6 flex items-center justify-center">
               <Building2 className="w-12 h-12 text-blue-600" />
               </div>
               <h3 className="text-xl font-semibold mb-4 text-blue-700">For Organizers</h3>
@@ -212,6 +216,12 @@ function Index() {
       
       {/* Footer */}
       <Footer />
+
+      {/* Recommendation Wizard Modal */}
+      <RecommendationWizard 
+        isOpen={isRecommendationWizardOpen}
+        onClose={() => setIsRecommendationWizardOpen(false)}
+      />
     </div>
   )
 } 

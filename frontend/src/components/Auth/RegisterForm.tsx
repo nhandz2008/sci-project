@@ -5,7 +5,7 @@ import { useForm } from 'react-hook-form'
 import { yupResolver } from '@hookform/resolvers/yup'
 import * as yup from 'yup'
 import { userAPI } from '@/client/api'
-import { User, UserCreate } from '@/types'
+import { User, UserCreate, UserRole } from '@/types'
 import { AlertCircle, Eye, EyeOff, UserPlus, Loader2 } from 'lucide-react'
 
 const registrationSchema = yup.object({
@@ -78,7 +78,7 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess }) => {
       username: data.username,
       email: data.email,
       password: data.password,
-      role: 'creator', // Force creator role for registration
+      role: UserRole.CREATOR, // Force creator role for registration
     }
 
     registrationMutation.mutate(registerData)

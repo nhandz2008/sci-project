@@ -56,7 +56,7 @@ if (!rootElement.innerHTML) {
           <RouterProvider router={router} />
           <ReactQueryDevtools 
             initialIsOpen={false} 
-            position="bottom-right"
+            position="bottom"
           />
         </AuthProvider>
       </QueryClientProvider>

@@ -18,7 +18,9 @@ import {
   ImageUploadResponse,
   LoginCredentials,
   Token,
-  UserRole
+  UserRole,
+  RecommendationRequest,
+  RecommendationResponse
 } from '@/types'
 
 // Token Manager for handling authentication tokens
@@ -54,7 +56,7 @@ export const tokenManager = {
       if (parts.length !== 3) return true
 
       // Decode the payload (second part)
-      const payload = JSON.parse(atob(parts[1]))
+      const payload = JSON.parse(atob(parts[1] || ''))
       
       // Check if token has expiration time
       if (!payload.exp) return false
@@ -75,7 +77,7 @@ export const tokenManager = {
       const parts = token.split('.')
       if (parts.length !== 3) return null
 
-      const payload = JSON.parse(atob(parts[1]))
+      const payload = JSON.parse(atob(parts[1] || ''))
       return {
         id: payload.sub,
         email: payload.email,
@@ -505,6 +507,25 @@ export const healthAPI = {
    */
   checkHealth: async (): Promise<any> => {
     const response = await api.get('/health')
+    return response.data
+  },
+}
+
+// Recommendation API
+export const recommendationAPI = {
+  /**
+   * Get AI-powered competition recommendations
+   */
+  getRecommendations: async (request: RecommendationRequest): Promise<RecommendationResponse> => {
+    const response: AxiosResponse<RecommendationResponse> = await api.post('/recommendations/', request)
+    return response.data
+  },
+
+  /**
+   * Get featured competitions
+   */
+  getFeaturedCompetitions: async (limit: number = 10): Promise<CompetitionCard[]> => {
+    const response: AxiosResponse<CompetitionCard[]> = await api.get(`/recommendations/featured?limit=${limit}`)
     return response.data
   },
 }
