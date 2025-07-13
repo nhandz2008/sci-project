@@ -1,0 +1,52 @@
+FROM python:3.10-slim
+
+ENV PYTHONUNBUFFERED=1
+ENV PYTHONDONTWRITEBYTECODE=1
+
+WORKDIR /app/
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install uv
+COPY --from=ghcr.io/astral-sh/uv:0.5.11 /uv /uvx /bin/
+
+# Place executables in the environment at the front of the path
+ENV PATH="/app/.venv/bin:$PATH"
+
+# uv Cache configuration
+ENV UV_LINK_MODE=copy
+
+# Install dependencies (including dev dependencies)
+RUN --mount=type=cache,target=/root/.cache/uv \
+    --mount=type=bind,source=uv.lock,target=uv.lock \
+    --mount=type=bind,source=pyproject.toml,target=pyproject.toml \
+    uv sync --frozen --no-install-project
+
+ENV PYTHONPATH=/app
+
+# Copy application code
+COPY ./scripts /app/scripts
+COPY ./pyproject.toml ./uv.lock ./alembic.ini /app/
+COPY ./app /app/app
+COPY ./alembic /app/alembic
+
+# Sync the project (including dev dependencies)
+RUN --mount=type=cache,target=/root/.cache/uv \
+    uv sync
+
+# Create uploads directory
+RUN mkdir -p /app/uploads/competitions
+
+# Create non-root user for security
+RUN useradd --create-home --shell /bin/bash app && \
+    chown -R app:app /app
+USER app
+
+# Expose port
+EXPOSE 8000
+
+# Default command for development
+CMD ["uv", "run", "fastapi", "dev", "app/main.py", "--host", "0.0.0.0", "--port", "8000", "--reload"] 

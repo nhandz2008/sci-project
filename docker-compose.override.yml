@@ -1,0 +1,48 @@
+version: '3.8'
+
+services:
+  # Development overrides for backend
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.dev
+    volumes:
+      - ./backend:/app
+      - /app/.venv
+      - uploads_data:/app/uploads
+    environment:
+      - ENVIRONMENT=development
+      - DEBUG=true
+    command: >
+      sh -c "
+        uv run alembic upgrade head &&
+        uv run fastapi dev app/main.py --host 0.0.0.0 --port 8000 --reload
+      "
+
+  # Development overrides for frontend
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.dev
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    environment:
+      - NODE_ENV=development
+      - DOCKER_ENV=true
+    command: npm run dev
+
+  # Development overrides for database
+  db:
+    ports:
+      - "5433:5432"  # Use port 5433 to avoid conflict with system PostgreSQL
+
+  # Development overrides for Redis
+  redis:
+    command: redis-server --appendonly yes
+    ports:
+      - "6379:6379"
+
+  # Enable Adminer for development
+  adminer:
+    profiles: [] 
