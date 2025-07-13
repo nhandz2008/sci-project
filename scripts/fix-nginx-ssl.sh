@@ -30,12 +30,13 @@ print_error() {
 
 print_status "Fixing Nginx SSL certificate configuration..."
 
-# Get domain name
-read -p "Enter your domain name: " DOMAIN
+# Get IP address or domain name
+PUBLIC_IP=$(curl -s http://checkip.amazonaws.com/ || echo "localhost")
+read -p "Enter your domain name (or press Enter to use IP address $PUBLIC_IP): " DOMAIN
 
 if [ -z "$DOMAIN" ]; then
-    print_error "Domain name is required"
-    exit 1
+    DOMAIN=$PUBLIC_IP
+    print_status "Using IP address: $DOMAIN"
 fi
 
 # Create HTTP-only Nginx configuration
@@ -106,8 +107,15 @@ sudo systemctl reload nginx
 
 print_success "Nginx configured for HTTP only"
 
-# Ask if user wants to set up SSL now
-read -p "Do you want to set up SSL certificates now? (y/n): " SETUP_SSL
+# Check if it's an IP address
+if [[ "$DOMAIN" != *"."* ]] || [[ "$DOMAIN" =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+    print_warning "SSL certificates cannot be obtained for IP addresses"
+    print_status "SSL setup will be skipped for IP address: $DOMAIN"
+    SETUP_SSL="n"
+else
+    # Ask if user wants to set up SSL now
+    read -p "Do you want to set up SSL certificates now? (y/n): " SETUP_SSL
+fi
 
 if [[ $SETUP_SSL =~ ^[Yy]$ ]]; then
     print_status "Setting up SSL certificates..."
