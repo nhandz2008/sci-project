@@ -8,7 +8,6 @@ import {
   Twitter, 
   Linkedin, 
   Facebook,
-  ExternalLink,
   Heart
 } from 'lucide-react'
 
@@ -155,24 +154,24 @@ const Footer: React.FC = () => {
             </div>
             
             <div className="flex items-center space-x-6 text-sm">
-              <Link
-                to="/privacy"
+              <a
+                href="#"
                 className="text-gray-400 hover:text-white transition-colors"
               >
                 Privacy Policy
-              </Link>
-              <Link
-                to="/terms"
+              </a>
+              <a
+                href="#"
                 className="text-gray-400 hover:text-white transition-colors"
               >
                 Terms of Service
-              </Link>
-              <Link
-                to="/about"
+              </a>
+              <a
+                href="#"
                 className="text-gray-400 hover:text-white transition-colors"
               >
                 About Us
-              </Link>
+              </a>
             </div>
           </div>
         </div>

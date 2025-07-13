@@ -29,8 +29,8 @@ COPY --from=build-stage /app/dist/ /usr/share/nginx/html
 COPY ./nginx.conf /etc/nginx/conf.d/default.conf
 
 # Create nginx user if it doesn't exist
-RUN addgroup -g 1001 -S nginx && \
-    adduser -S -D -H -u 1001 -h /var/cache/nginx -s /sbin/nologin -G nginx -g nginx nginx
+RUN addgroup -g 1001 -S nginx 2>/dev/null || true && \
+    adduser -S -D -H -u 1001 -h /var/cache/nginx -s /sbin/nologin -G nginx -g nginx nginx 2>/dev/null || true
 
 # Set proper permissions
 RUN chown -R nginx:nginx /usr/share/nginx/html && \
