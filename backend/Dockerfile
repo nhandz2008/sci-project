@@ -32,6 +32,6 @@ RUN --mount=type=cache,target=/root/.cache/uv \
 # Using the environment
 ENV PATH="/app/.venv/bin:$PATH"
 
-# ENV PYTHONPATH=/app
+ENV PYTHONPATH=/app
 
 # CMD ["fastapi", "run", "--workers", "4", "app/main.py"]
