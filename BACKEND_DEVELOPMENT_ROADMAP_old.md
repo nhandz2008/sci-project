@@ -88,10 +88,10 @@ uv init --python 3.11
 
 # Add core dependencies
 uv add fastapi[standard]
-# TODO:
-uv add sqlmodel
-uv add asyncpg
 uv add alembic
+uv add sqlmodel
+# TODO:
+uv add asyncpg
 uv add passlib[bcrypt]
 uv add pyjwt[crypto]
 uv add python-multipart
