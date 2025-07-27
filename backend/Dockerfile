@@ -34,4 +34,3 @@ ENV PATH="/app/.venv/bin:$PATH"
 
 ENV PYTHONPATH=/app
 
-# CMD ["fastapi", "run", "--workers", "4", "app/main.py"]

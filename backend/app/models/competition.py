@@ -1,9 +1,11 @@
 import uuid
 from enum import Enum
 import datetime
+from typing import Optional
 from sqlmodel import Field, Relationship, SQLModel
 
-from app.models.user import User
+# Remove direct import to avoid circular dependency
+# User will be imported via string reference
 
 
 # Shared properties
@@ -42,7 +44,7 @@ class Competition(CompetitionBase, table=True):
     created_at: datetime.datetime = Field(default_factory=datetime.datetime.now)
     updated_at: datetime.datetime = Field(default_factory=datetime.datetime.now)
     owner_id: uuid.UUID = Field(foreign_key="user.id", nullable=False, ondelete="CASCADE")
-    owner: User | None = Relationship(back_populates="competitions")
+    owner: Optional["User"] = Relationship(back_populates="competitions")
 
 
 # Properties to receive via API request

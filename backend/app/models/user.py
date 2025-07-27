@@ -1,11 +1,13 @@
 import uuid
 from datetime import datetime
+from typing import Optional
 
 from pydantic import EmailStr
 from sqlmodel import Field, Relationship, SQLModel
 from enum import Enum
 
-from app.models.competition import Competition
+# Remove direct import to avoid circular dependency
+# Competition will be imported via string reference
 
 
 # Shared properties
