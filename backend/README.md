@@ -825,8 +825,3 @@ For issues and questions:
 2. Review application logs: `docker compose logs -f backend`
 3. Check database connectivity: `docker compose exec db psql -U postgres`
 4. Verify environment configuration: `docker compose exec backend env`
-
----
-
-**Last Updated**: January 2024  
-**Version**: 1.0.0
