@@ -22,8 +22,7 @@ RUN --mount=type=cache,target=/root/.cache/uv \
 # Installing a project
 COPY ./app /app/app
 COPY ./scripts /app/scripts
-COPY ./pyproject.toml ./uv.lock /app/
-# COPY ./alembic.ini ./pyproject.toml ./uv.lock /app/ # TODO: replace the above with this
+COPY ./alembic.ini ./pyproject.toml ./uv.lock /app/
 
 # Sync the project
 RUN --mount=type=cache,target=/root/.cache/uv \
