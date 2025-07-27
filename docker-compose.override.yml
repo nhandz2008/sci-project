@@ -8,12 +8,12 @@ services:
     restart: "no"
     ports:
       - "8000:8000"
-    # command: sleep infinity  # Infinite loop to keep container alive doing nothing
-    command:
-      - fastapi
-      - run
-      - --reload
-      - "app/main.py"
+    volumes:
+      - ./backend/app:/app/app
+      - ./backend/scripts:/app/scripts
+      - ./backend/alembic.ini:/app/alembic.ini
+      - ./backend/pyproject.toml:/app/pyproject.toml
+      - ./backend/uv.lock:/app/uv.lock
     develop:
       watch:
         - path: ./backend
@@ -24,11 +24,3 @@ services:
             - .venv
         - path: ./backend/pyproject.toml
           action: rebuild
-    # # TODO: remove once coverage is done locally
-    # volumes:
-    #   - ./backend/htmlcov:/app/htmlcov
-    # environment:
-    #   SMTP_HOST: "mailcatcher"
-    #   SMTP_PORT: "1025"
-    #   SMTP_TLS: "false"
-    #   EMAILS_FROM_EMAIL: "noreply@example.com"

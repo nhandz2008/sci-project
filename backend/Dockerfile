@@ -33,3 +33,6 @@ ENV PATH="/app/.venv/bin:$PATH"
 
 ENV PYTHONPATH=/app
 
+# Default command to run the application
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+
