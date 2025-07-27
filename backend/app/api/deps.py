@@ -13,7 +13,7 @@ from sqlmodel import Session
 
 from app.core.config import settings
 from app.core.db import engine
-from app.core.security import verify_token
+from app.core.security import verify_access_token
 from app.crud import get_user_by_id
 from app.models import TokenPayload, User, UserRole
 
@@ -54,14 +54,14 @@ def get_current_user(session: SessionDep, token: TokenDep) -> User:
         HTTPException: If token is invalid or user not found
     """
     try:
-        # Verify and decode the token
-        token_data = verify_token(token)
+        # Verify and decode the access token
+        token_data = verify_access_token(token)
         if token_data.sub is None:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="Could not validate credentials",
             )
-    except Exception:
+    except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Could not validate credentials",

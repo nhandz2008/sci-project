@@ -1,7 +1,11 @@
 """
 Security utilities for SCI application.
 
-This module provides password hashing and verification functions using bcrypt.
+This module provides comprehensive security functions including:
+- Password hashing and verification using bcrypt
+- JWT token creation and verification
+- Refresh token management
+- Security constants and utilities
 """
 
 from datetime import datetime, timedelta
@@ -15,6 +19,11 @@ from app.models import TokenPayload
 
 # Password hashing context
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+
+# Security constants
+ALGORITHM = "HS256"
+ACCESS_TOKEN_TYPE = "access"
+REFRESH_TOKEN_TYPE = "refresh"
 
 
 def create_access_token(subject: Union[str, Any], expires_delta: timedelta = None) -> str:
@@ -34,30 +43,110 @@ def create_access_token(subject: Union[str, Any], expires_delta: timedelta = Non
         expire = datetime.utcnow() + timedelta(
             minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES
         )
-    to_encode = {"exp": expire, "sub": str(subject)}
-    encoded_jwt = jwt.encode(to_encode, settings.SECRET_KEY, algorithm="HS256")
+    
+    to_encode = {
+        "exp": expire, 
+        "sub": str(subject),
+        "type": ACCESS_TOKEN_TYPE,
+        "iat": datetime.utcnow()
+    }
+    encoded_jwt = jwt.encode(to_encode, settings.SECRET_KEY, algorithm=ALGORITHM)
     return encoded_jwt
 
 
-def verify_token(token: str) -> TokenPayload:
+def create_refresh_token(subject: Union[str, Any], expires_delta: timedelta = None) -> str:
+    """
+    Create a JWT refresh token.
+    
+    Args:
+        subject: The subject (usually user ID) to encode in the token
+        expires_delta: Optional expiration time override (defaults to 30 days)
+        
+    Returns:
+        Encoded JWT refresh token string
+    """
+    if expires_delta:
+        expire = datetime.utcnow() + expires_delta
+    else:
+        # Default refresh token expiration: 30 days
+        expire = datetime.utcnow() + timedelta(days=30)
+    
+    to_encode = {
+        "exp": expire,
+        "sub": str(subject),
+        "type": REFRESH_TOKEN_TYPE,
+        "iat": datetime.utcnow()
+    }
+    encoded_jwt = jwt.encode(to_encode, settings.SECRET_KEY, algorithm=ALGORITHM)
+    return encoded_jwt
+
+
+def verify_token(token: str, token_type: str = ACCESS_TOKEN_TYPE) -> TokenPayload:
     """
     Verify and decode a JWT token.
     
     Args:
         token: JWT token string to verify
+        token_type: Expected token type ("access" or "refresh")
         
     Returns:
         TokenPayload with decoded information
         
     Raises:
-        jwt.JWTError: If token is invalid or expired
+        jwt.PyJWTError: If token is invalid, expired, or wrong type
     """
     try:
-        decoded_token = jwt.decode(token, settings.SECRET_KEY, algorithms=["HS256"])
-        token_data = TokenPayload(**decoded_token)
+        decoded_token = jwt.decode(token, settings.SECRET_KEY, algorithms=[ALGORITHM])
+        
+        # Verify token type
+        if decoded_token.get("type") != token_type:
+            raise jwt.InvalidTokenError(f"Invalid token type. Expected {token_type}")
+        
+        # Create TokenPayload with additional fields
+        token_data = TokenPayload(
+            sub=decoded_token.get("sub"),
+            exp=decoded_token.get("exp"),
+            type=decoded_token.get("type"),
+            iat=decoded_token.get("iat")
+        )
         return token_data
+        
+    except jwt.ExpiredSignatureError:
+        raise jwt.ExpiredSignatureError("Token has expired")
     except jwt.InvalidTokenError as e:
-        raise jwt.InvalidTokenError("Invalid token")
+        raise jwt.InvalidTokenError(f"Invalid token: {str(e)}")
+
+
+def verify_access_token(token: str) -> TokenPayload:
+    """
+    Verify and decode an access token.
+    
+    Args:
+        token: JWT access token string to verify
+        
+    Returns:
+        TokenPayload with decoded information
+        
+    Raises:
+        jwt.PyJWTError: If token is invalid or expired
+    """
+    return verify_token(token, ACCESS_TOKEN_TYPE)
+
+
+def verify_refresh_token(token: str) -> TokenPayload:
+    """
+    Verify and decode a refresh token.
+    
+    Args:
+        token: JWT refresh token string to verify
+        
+    Returns:
+        TokenPayload with decoded information
+        
+    Raises:
+        jwt.PyJWTError: If token is invalid or expired
+    """
+    return verify_token(token, REFRESH_TOKEN_TYPE)
 
 
 def get_password_hash(password: str) -> str:
@@ -84,4 +173,84 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
     Returns:
         True if password matches, False otherwise
     """
-    return pwd_context.verify(plain_password, hashed_password) 
+    return pwd_context.verify(plain_password, hashed_password)
+
+
+def generate_password_reset_token(email: str) -> str:
+    """
+    Generate a password reset token.
+    
+    Args:
+        email: User's email address
+        
+    Returns:
+        Encoded JWT token for password reset
+    """
+    delta = timedelta(hours=settings.EMAIL_RESET_TOKEN_EXPIRE_HOURS)
+    now = datetime.utcnow()
+    expires = now + delta
+    exp = expires.timestamp()
+    encoded_jwt = jwt.encode(
+        {"exp": exp, "nbf": now, "sub": email, "type": "password_reset"},
+        settings.SECRET_KEY,
+        algorithm=ALGORITHM,
+    )
+    return encoded_jwt
+
+
+def verify_password_reset_token(token: str) -> str | None:
+    """
+    Verify a password reset token and return the email.
+    
+    Args:
+        token: Password reset token
+        
+    Returns:
+        Email address if token is valid, None otherwise
+    """
+    try:
+        decoded_token = jwt.decode(token, settings.SECRET_KEY, algorithms=[ALGORITHM])
+        if decoded_token.get("type") != "password_reset":
+            return None
+        return decoded_token["sub"]
+    except jwt.PyJWTError:
+        return None
+
+
+def is_token_expired(token: str) -> bool:
+    """
+    Check if a token is expired without raising an exception.
+    
+    Args:
+        token: JWT token string
+        
+    Returns:
+        True if token is expired, False otherwise
+    """
+    try:
+        jwt.decode(token, settings.SECRET_KEY, algorithms=[ALGORITHM])
+        return False
+    except jwt.ExpiredSignatureError:
+        return True
+    except jwt.PyJWTError:
+        return True
+
+
+def get_token_expiration(token: str) -> datetime | None:
+    """
+    Get the expiration time of a token.
+    
+    Args:
+        token: JWT token string
+        
+    Returns:
+        Expiration datetime if token is valid, None otherwise
+    """
+    try:
+        decoded_token = jwt.decode(token, settings.SECRET_KEY, algorithms=[ALGORITHM])
+        exp_timestamp = decoded_token.get("exp")
+        if exp_timestamp:
+            return datetime.fromtimestamp(exp_timestamp)
+        return None
+    except jwt.PyJWTError:
+        return None 
