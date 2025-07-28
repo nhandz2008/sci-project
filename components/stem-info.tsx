@@ -4,7 +4,7 @@ const STEMInfo = () => (
       <div className="mb-16 flex flex-col items-center w-full">
         <h2 className="text-3xl lg:text-4xl font-bold text-blue-900 mb-2 text-center">Understanding STEM Competitions</h2>
         <p className="mb-10 max-w-2xl text-gray-600 text-lg text-center">
-          STEM competitions challenge individuals or teams to solve real-world problems using science, technology, engineering, or mathematics. These events foster creativity, critical thinking, and innovation, offering hands-on experiences that prepare students for the future.
+        STEM competitions engage participants in solving real-world problems through science, technology, engineering, and math, promoting creativity, critical thinking, and practical skills for the future.
         </p>
       </div>
       <div className="space-y-12">
