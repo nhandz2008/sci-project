@@ -6,7 +6,7 @@ import Link from "next/link";
 const NAV_LINKS = [
   { name: "Home", href: "/" },
   { name: "Competitions", href: "/competitions" },
-  { name: "Login/Signup", href: "/auth" },
+  { name: "Login/Signup", href: "/registration" },
 ];
 
 const Navbar = () => {
