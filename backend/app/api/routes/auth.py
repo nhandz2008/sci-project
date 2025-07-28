@@ -4,25 +4,26 @@ Authentication routes for SCI application.
 This module provides authentication endpoints including:
 - User registration (signup)
 - User login with JWT tokens
-- Token refresh
 - Password reset functionality
+- User profile management
 """
 
 from datetime import timedelta
 from typing import Any
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Request
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlmodel import Session
 
-from app.api.deps import SessionDep, get_current_active_user
+from app.api.deps import SessionDep, get_current_active_user, reusable_oauth2
 from app.core.config import settings
 from app.core.security import (
     create_access_token,
-    create_refresh_token,
     get_password_hash,
     generate_password_reset_token,
     verify_password_reset_token,
+    add_password_reset_token_to_blacklist,
+    add_access_token_to_blacklist,
 )
 from app.crud import (
     authenticate,
@@ -36,12 +37,15 @@ from app.models import (
     User,
     UserCreate,
     UserPublic,
+    ForgotPasswordRequest,
+    ForgotPasswordResponse,
+    ResetPasswordRequest,
 )
 
 router = APIRouter(prefix="/auth", tags=["authentication"])
 
 
-@router.post("/signup", response_model=UserPublic)
+@router.post("/signup", response_model=UserPublic, status_code=status.HTTP_201_CREATED)
 def signup(
     *,
     session: SessionDep,
@@ -81,20 +85,22 @@ def login(
     """
     OAuth2 compatible token login, get an access token for future requests.
     
+    Note: Use 'email' as the username field in the form data.
+    
     Args:
         session: Database session
         form_data: OAuth2 form data (username=email, password)
         
     Returns:
-        Access and refresh tokens
+        Access token
         
     Raises:
         HTTPException: If credentials are invalid
     """
-    # Authenticate user
+    # Authenticate user using email as username
     user = authenticate(
         session=session, 
-        email=form_data.username, 
+        email=form_data.username,  # OAuth2 uses 'username' field for email
         password=form_data.password
     )
     if not user:
@@ -108,94 +114,30 @@ def login(
             detail="Inactive user",
         )
     
-    # Create tokens
+    # Create access token only (no refresh token for simplicity)
     access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
     access_token = create_access_token(
         subject=user.id, expires_delta=access_token_expires
     )
-    refresh_token = create_refresh_token(subject=user.id)
     
     return {
         "access_token": access_token,
-        "refresh_token": refresh_token,
         "token_type": "bearer",
         "expires_in": settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60,  # seconds
     }
 
 
-@router.post("/refresh", response_model=Token)
-def refresh_token(
-    session: SessionDep,
-    refresh_token: str,
-) -> Any:
-    """
-    Refresh access token using refresh token.
-    
-    Args:
-        session: Database session
-        refresh_token: Refresh token from previous login
-        
-    Returns:
-        New access and refresh tokens
-        
-    Raises:
-        HTTPException: If refresh token is invalid
-    """
-    from app.core.security import verify_refresh_token
-    
-    try:
-        # Verify refresh token
-        token_data = verify_refresh_token(refresh_token)
-        if token_data.sub is None:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Invalid refresh token",
-            )
-    except Exception:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid refresh token",
-        )
-    
-    # Get user
-    user = get_user_by_id(session=session, user_id=token_data.sub)
-    if not user:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="User not found",
-        )
-    if not user.is_active:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Inactive user",
-        )
-    
-    # Create new tokens
-    access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
-    new_access_token = create_access_token(
-        subject=user.id, expires_delta=access_token_expires
-    )
-    new_refresh_token = create_refresh_token(subject=user.id)
-    
-    return {
-        "access_token": new_access_token,
-        "refresh_token": new_refresh_token,
-        "token_type": "bearer",
-        "expires_in": settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60,  # seconds
-    }
-
-
-@router.post("/forgot-password", response_model=Message)
+@router.post("/forgot-password", response_model=ForgotPasswordResponse)
 def forgot_password(
     session: SessionDep,
-    email: str,
+    request: ForgotPasswordRequest,
 ) -> Any:
     """
     Request password reset.
     
     Args:
         session: Database session
-        email: User's email address
+        request: ForgotPasswordRequest containing email
         
     Returns:
         Success message
@@ -204,7 +146,7 @@ def forgot_password(
         HTTPException: If email not found
     """
     # Check if user exists
-    user = get_user_by_email(session=session, email=email)
+    user = get_user_by_email(session=session, email=request.email)
     if not user:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -212,7 +154,7 @@ def forgot_password(
         )
     
     # Generate password reset token
-    password_reset_token = generate_password_reset_token(email=email)
+    password_reset_token = generate_password_reset_token(email=request.email)
     
     # TODO: Send email with reset token
     # For now, just return the token (in production, send via email)
@@ -225,16 +167,14 @@ def forgot_password(
 @router.post("/reset-password", response_model=Message)
 def reset_password(
     session: SessionDep,
-    token: str,
-    new_password: str,
+    request: ResetPasswordRequest,
 ) -> Any:
     """
     Reset password using reset token.
     
     Args:
         session: Database session
-        token: Password reset token
-        new_password: New password
+        request: ResetPasswordRequest containing token and new_password
         
     Returns:
         Success message
@@ -243,7 +183,7 @@ def reset_password(
         HTTPException: If token is invalid or password is weak
     """
     # Verify reset token
-    email = verify_password_reset_token(token)
+    email = verify_password_reset_token(request.token)
     if not email:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -259,18 +199,21 @@ def reset_password(
         )
     
     # Validate password strength
-    if len(new_password) < 8:
+    if len(request.new_password) < 8:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Password must be at least 8 characters long",
         )
     
     # Update password
-    hashed_password = get_password_hash(new_password)
+    hashed_password = get_password_hash(request.new_password)
     user.hashed_password = hashed_password
     session.add(user)
     session.commit()
     session.refresh(user)
+    
+    # Add token to blacklist
+    add_password_reset_token_to_blacklist(request.token)
     
     return {"message": "Password updated successfully"}
 
@@ -291,6 +234,41 @@ def read_users_me(
     return current_user
 
 
+@router.post("/logout", response_model=Message)
+def logout(
+    request: Request,
+    session: SessionDep,
+    current_user: User = Depends(get_current_active_user),
+) -> Any:
+    """
+    Logout endpoint (server-side token invalidation).
+    
+    Note: This endpoint validates the access token and blacklists it
+    to prevent reuse. The client should also remove the token from storage.
+    
+    Returns:
+        Success message
+        
+    Raises:
+        HTTPException: If token is invalid or user is not authenticated
+    """
+    # Get the authorization header
+    auth_header = request.headers.get("Authorization")
+    if not auth_header or not auth_header.startswith("Bearer "):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid authorization header",
+        )
+    
+    # Extract the token
+    token = auth_header.replace("Bearer ", "")
+    
+    # Add token to blacklist
+    add_access_token_to_blacklist(token)
+    
+    return {"message": "Successfully logged out"}
+
+
 @router.get("/")
 def auth_info() -> dict[str, Any]:
     """
@@ -303,11 +281,11 @@ def auth_info() -> dict[str, Any]:
         "message": "Authentication endpoints available",
         "endpoints": [
             "POST /auth/signup - User registration",
-            "POST /auth/login - User login with JWT tokens",
-            "POST /auth/refresh - Refresh access token",
+            "POST /auth/login - User login with JWT token",
             "POST /auth/forgot-password - Request password reset",
             "POST /auth/reset-password - Reset password with token",
             "GET /auth/me - Get current user information",
+            "POST /auth/logout - Logout (server-side token invalidation)",
         ],
         "status": "implemented"
     } 

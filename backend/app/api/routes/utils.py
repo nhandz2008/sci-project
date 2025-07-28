@@ -15,11 +15,9 @@ from app.core.config import settings
 from app.core.db import engine
 from app.core.security import (
     create_access_token,
-    create_refresh_token,
     get_password_hash,
     verify_password,
     verify_access_token,
-    verify_refresh_token,
     generate_password_reset_token,
     verify_password_reset_token,
     is_token_expired,
@@ -69,7 +67,7 @@ def get_api_info() -> dict[str, Any]:
         "environment": settings.ENVIRONMENT,
         "api_v1_str": settings.API_V1_STR,
         "access_token_expire_minutes": settings.ACCESS_TOKEN_EXPIRE_MINUTES,
-        "email_reset_token_expire_hours": settings.EMAIL_RESET_TOKEN_EXPIRE_HOURS,
+        "email_reset_token_expire_minutes": settings.EMAIL_RESET_TOKEN_EXPIRE_MINUTES,
     }
 
 
@@ -183,11 +181,9 @@ def test_security_functions() -> dict[str, Any]:
     # Test token creation
     test_user_id = "test-user-123"
     access_token = create_access_token(test_user_id)
-    refresh_token = create_refresh_token(test_user_id)
     
     # Test token verification
     access_token_data = verify_access_token(access_token)
-    refresh_token_data = verify_refresh_token(refresh_token)
     
     # Test token expiration
     is_expired = is_token_expired(access_token)
@@ -208,15 +204,11 @@ def test_security_functions() -> dict[str, Any]:
         },
         "token_creation": {
             "access_token": access_token,
-            "refresh_token": refresh_token,
             "access_token_subject": access_token_data.sub,
-            "refresh_token_subject": refresh_token_data.sub,
-            "access_token_type": access_token_data.type,
-            "refresh_token_type": refresh_token_data.type
+            "access_token_type": access_token_data.type
         },
         "token_verification": {
             "access_token_valid": access_token_data.sub == test_user_id,
-            "refresh_token_valid": refresh_token_data.sub == test_user_id,
             "is_expired": is_expired,
             "expiration_time": expiration_time.isoformat() if expiration_time else None
         },

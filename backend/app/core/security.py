@@ -4,12 +4,12 @@ Security utilities for SCI application.
 This module provides comprehensive security functions including:
 - Password hashing and verification using bcrypt
 - JWT token creation and verification
-- Refresh token management
 - Security constants and utilities
 """
 
 from datetime import datetime, timedelta
 from typing import Any, Union
+from threading import Lock
 
 import jwt
 from passlib.context import CryptContext
@@ -23,7 +23,16 @@ pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 # Security constants
 ALGORITHM = "HS256"
 ACCESS_TOKEN_TYPE = "access"
-REFRESH_TOKEN_TYPE = "refresh"
+
+# Token blacklist for password reset tokens (in-memory)
+# In production, this should be stored in the database
+_used_password_reset_tokens: set[str] = set()
+_token_blacklist_lock = Lock()
+
+# Token blacklist for access tokens (in-memory)
+# In production, this should be stored in the database
+_used_access_tokens: set[str] = set()
+_access_token_blacklist_lock = Lock()
 
 
 def create_access_token(subject: Union[str, Any], expires_delta: timedelta = None) -> str:
@@ -54,40 +63,13 @@ def create_access_token(subject: Union[str, Any], expires_delta: timedelta = Non
     return encoded_jwt
 
 
-def create_refresh_token(subject: Union[str, Any], expires_delta: timedelta = None) -> str:
-    """
-    Create a JWT refresh token.
-    
-    Args:
-        subject: The subject (usually user ID) to encode in the token
-        expires_delta: Optional expiration time override (defaults to 30 days)
-        
-    Returns:
-        Encoded JWT refresh token string
-    """
-    if expires_delta:
-        expire = datetime.utcnow() + expires_delta
-    else:
-        # Default refresh token expiration: 30 days
-        expire = datetime.utcnow() + timedelta(days=30)
-    
-    to_encode = {
-        "exp": expire,
-        "sub": str(subject),
-        "type": REFRESH_TOKEN_TYPE,
-        "iat": datetime.utcnow()
-    }
-    encoded_jwt = jwt.encode(to_encode, settings.SECRET_KEY, algorithm=ALGORITHM)
-    return encoded_jwt
-
-
 def verify_token(token: str, token_type: str = ACCESS_TOKEN_TYPE) -> TokenPayload:
     """
     Verify and decode a JWT token.
     
     Args:
         token: JWT token string to verify
-        token_type: Expected token type ("access" or "refresh")
+        token_type: Expected token type ("access")
         
     Returns:
         TokenPayload with decoded information
@@ -128,25 +110,13 @@ def verify_access_token(token: str) -> TokenPayload:
         TokenPayload with decoded information
         
     Raises:
-        jwt.PyJWTError: If token is invalid or expired
+        jwt.PyJWTError: If token is invalid, expired, or blacklisted
     """
-    return verify_token(token, ACCESS_TOKEN_TYPE)
-
-
-def verify_refresh_token(token: str) -> TokenPayload:
-    """
-    Verify and decode a refresh token.
+    # Check if token has been blacklisted (logged out)
+    if is_access_token_used(token):
+        raise jwt.InvalidTokenError("Token has been logged out")
     
-    Args:
-        token: JWT refresh token string to verify
-        
-    Returns:
-        TokenPayload with decoded information
-        
-    Raises:
-        jwt.PyJWTError: If token is invalid or expired
-    """
-    return verify_token(token, REFRESH_TOKEN_TYPE)
+    return verify_token(token, ACCESS_TOKEN_TYPE)
 
 
 def get_password_hash(password: str) -> str:
@@ -186,7 +156,7 @@ def generate_password_reset_token(email: str) -> str:
     Returns:
         Encoded JWT token for password reset
     """
-    delta = timedelta(hours=settings.EMAIL_RESET_TOKEN_EXPIRE_HOURS)
+    delta = timedelta(minutes=settings.EMAIL_RESET_TOKEN_EXPIRE_MINUTES)
     now = datetime.utcnow()
     expires = now + delta
     exp = expires.timestamp()
@@ -206,8 +176,12 @@ def verify_password_reset_token(token: str) -> str | None:
         token: Password reset token
         
     Returns:
-        Email address if token is valid, None otherwise
+        Email address if token is valid and unused, None otherwise
     """
+    # Check if token has been used
+    if is_password_reset_token_used(token):
+        return None
+    
     try:
         decoded_token = jwt.decode(token, settings.SECRET_KEY, algorithms=[ALGORITHM])
         if decoded_token.get("type") != "password_reset":
@@ -253,4 +227,54 @@ def get_token_expiration(token: str) -> datetime | None:
             return datetime.fromtimestamp(exp_timestamp)
         return None
     except jwt.PyJWTError:
-        return None 
+        return None
+
+
+def add_password_reset_token_to_blacklist(token: str) -> None:
+    """
+    Add a password reset token to the blacklist to prevent reuse.
+    
+    Args:
+        token: Password reset token to blacklist
+    """
+    with _token_blacklist_lock:
+        _used_password_reset_tokens.add(token)
+
+
+def is_password_reset_token_used(token: str) -> bool:
+    """
+    Check if a password reset token has been used.
+    
+    Args:
+        token: Password reset token to check
+        
+    Returns:
+        True if token has been used, False otherwise
+    """
+    with _token_blacklist_lock:
+        return token in _used_password_reset_tokens
+
+
+def add_access_token_to_blacklist(token: str) -> None:
+    """
+    Add an access token to the blacklist to prevent reuse after logout.
+    
+    Args:
+        token: Access token to blacklist
+    """
+    with _access_token_blacklist_lock:
+        _used_access_tokens.add(token)
+
+
+def is_access_token_used(token: str) -> bool:
+    """
+    Check if an access token has been used (logged out).
+    
+    Args:
+        token: Access token to check
+        
+    Returns:
+        True if token has been used (logged out), False otherwise
+    """
+    with _access_token_blacklist_lock:
+        return token in _used_access_tokens 

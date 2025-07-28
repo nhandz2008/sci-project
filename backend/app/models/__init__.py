@@ -8,7 +8,7 @@ Handles circular dependencies between User and Competition models using TYPE_CHE
 from typing import TYPE_CHECKING
 
 # Import common models first (no dependencies)
-from .common import Message, Token, TokenPayload, NewPassword
+from .common import Message, Token, TokenPayload, NewPassword, ForgotPasswordRequest, ForgotPasswordResponse, ResetPasswordRequest
 
 # Import user models (these will be available immediately)
 from .user import (
@@ -41,6 +41,9 @@ __all__ = [
     "Token", 
     "TokenPayload",
     "NewPassword",
+    "ForgotPasswordRequest",
+    "ForgotPasswordResponse",
+    "ResetPasswordRequest",
     
     # User models
     "User",

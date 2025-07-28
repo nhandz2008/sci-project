@@ -35,8 +35,8 @@ class Settings(BaseSettings):
 
     # Security
     SECRET_KEY: str = secrets.token_urlsafe(32)
-    ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24 * 8  # 8 days
-    EMAIL_RESET_TOKEN_EXPIRE_HOURS: int = 48  # 48 hours for password reset tokens
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = 11520  # 8 days (60 * 24 * 8)
+    EMAIL_RESET_TOKEN_EXPIRE_MINUTES: int = 30  # 30 minutes for password reset tokens
 
     # Database
     POSTGRES_SERVER: str
