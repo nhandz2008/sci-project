@@ -223,7 +223,7 @@ export default function ResetPasswordPage() {
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg font-semibold hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-400 disabled:opacity-50"
+              className="w-full bg-pink-600 text-white py-3 px-4 rounded-lg font-semibold hover:bg-pink-700 focus:outline-none focus:ring-2 focus:ring-blue-400 disabled:opacity-50"
             >
               {isLoading ? "Sending..." : "Send Reset Email"}
             </button>
@@ -331,7 +331,7 @@ export default function ResetPasswordPage() {
         <div className="mt-6 text-center">
           <Link 
             href="/registration" 
-            className="text-blue-600 hover:text-blue-700 text-sm font-medium"
+            className="text-pink-600 hover:text-pink-700 text-sm font-medium"
           >
             Back to Sign In
           </Link>
