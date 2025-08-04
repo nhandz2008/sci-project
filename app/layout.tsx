@@ -1,23 +1,28 @@
+import type { Metadata } from "next";
+import { Inter } from "next/font/google";
 import "../styles/globals.css";
-import type { ReactNode } from "react";
 import Navbar from "../components/navbar";
+import { AuthProvider } from "./contexts/AuthContext";
 
-export const metadata = {
-  title: "SCI - Science Competitions Insight",
-  description: "Discover and participate in global science and technology competitions.",
+const inter = Inter({ subsets: ["latin"] });
+
+export const metadata: Metadata = {
+  title: "SCI - Science Competition Insights",
+  description: "Discover and explore science competitions worldwide",
 };
 
-export default function RootLayout({ children }: { children: ReactNode }) {
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   return (
     <html lang="en">
-      <head>
-        <title>{metadata.title}</title>
-        <meta name="description" content={metadata.description} />
-        <link rel="icon" href="/favicon.ico" />
-      </head>
-      <body className="bg-gray-50 text-gray-900">
-        <Navbar />
-        {children}
+      <body className={inter.className}>
+        <AuthProvider>
+          <Navbar />
+          {children}
+        </AuthProvider>
       </body>
     </html>
   );

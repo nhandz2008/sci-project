@@ -111,7 +111,10 @@ export default function RegistrationPage() {
     }
   };
 
-  const handleSubmit = (e: React.FormEvent, isSignUp: boolean) => {
+  const [isLoading, setIsLoading] = useState(false);
+  const [submitMessage, setSubmitMessage] = useState<{ type: 'success' | 'error', message: string } | null>(null);
+
+  const handleSubmit = async (e: React.FormEvent, isSignUp: boolean) => {
     e.preventDefault();
     const newErrors: ValidationErrors = {};
 
@@ -145,9 +148,39 @@ export default function RegistrationPage() {
     setErrors(newErrors);
 
     if (Object.keys(newErrors).length === 0) {
-      // Form is valid, proceed with submission
-      console.log("Form submitted:", formData);
-      // Here you would typically make an API call
+      setIsLoading(true);
+      setSubmitMessage(null);
+
+      try {
+        if (isSignUp) {
+          // Import the authAPI dynamically to avoid SSR issues
+          const { authAPI } = await import('../api/auth');
+          const user = await authAPI.signUp({
+            email: formData.email,
+            password: formData.password,
+            full_name: formData.name,
+          });
+          setSubmitMessage({ type: 'success', message: `Account created successfully! Welcome, ${user.full_name}!` });
+        } else {
+          // Import the authAPI dynamically to avoid SSR issues
+          const { authAPI } = await import('../api/auth');
+          const response = await authAPI.login({
+            email: formData.email,
+            password: formData.password,
+          });
+          setSubmitMessage({ type: 'success', message: 'Login successful! Redirecting...' });
+          // Store token in localStorage (in a real app, use secure storage)
+          localStorage.setItem('auth_token', response.access_token);
+        }
+      } catch (error) {
+        console.error('Authentication error:', error);
+        setSubmitMessage({ 
+          type: 'error', 
+          message: error instanceof Error ? error.message : 'Authentication failed. Please try again.' 
+        });
+      } finally {
+        setIsLoading(false);
+      }
     }
   };
 
@@ -259,9 +292,10 @@ export default function RegistrationPage() {
 
             <button
               type="submit"
-              className="mt-4 rounded-full border border-pink-600 bg-pink-600 text-white font-bold px-8 py-3 uppercase text-xs tracking-wider transition-transform active:scale-95 focus:outline-none focus:ring-2 focus:ring-pink-400"
+              disabled={isLoading}
+              className="mt-4 rounded-full border border-pink-600 bg-pink-600 text-white font-bold px-8 py-3 uppercase text-xs tracking-wider transition-transform active:scale-95 focus:outline-none focus:ring-2 focus:ring-pink-400 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              Sign Up
+              {isLoading ? 'Signing Up...' : 'Sign Up'}
             </button>
           </form>
         </div>
@@ -324,9 +358,10 @@ export default function RegistrationPage() {
             </a>
             <button
               type="submit"
-              className="mt-4 rounded-full border border-pink-600 bg-pink-600 text-white font-bold px-8 py-3 uppercase text-xs tracking-wider transition-transform active:scale-95 focus:outline-none focus:ring-2 focus:ring-pink-400"
+              disabled={isLoading}
+              className="mt-4 rounded-full border border-pink-600 bg-pink-600 text-white font-bold px-8 py-3 uppercase text-xs tracking-wider transition-transform active:scale-95 focus:outline-none focus:ring-2 focus:ring-pink-400 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              Sign In
+              {isLoading ? 'Signing In...' : 'Sign In'}
             </button>
           </form>
         </div>
@@ -369,6 +404,25 @@ export default function RegistrationPage() {
         </div>
       </div>
       
+      {/* Success/Error Message */}
+      {submitMessage && (
+        <div className={`fixed top-4 right-4 p-4 rounded-lg shadow-lg max-w-md z-50 ${
+          submitMessage.type === 'success' 
+            ? 'bg-green-500 text-white' 
+            : 'bg-red-500 text-white'
+        }`}>
+          <div className="flex items-center justify-between">
+            <span>{submitMessage.message}</span>
+            <button
+              onClick={() => setSubmitMessage(null)}
+              className="ml-4 text-white hover:text-gray-200"
+              aria-label="Close message"
+            >
+              ×
+            </button>
+          </div>
+        </div>
+      )}
     </main>
   );
 } 

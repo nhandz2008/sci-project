@@ -1,48 +1,62 @@
 "use client";
 import { useState } from "react";
+import Link from "next/link";
+import LikeButton from "../../components/like-button";
 
 const COMPETITIONS = [
   {
+    id: "imo-2024",
     name: "International Mathematical Olympiad (IMO)",
     overview: "The world's most prestigious math competition for high school students.",
     scale: "International",
     location: "Varies",
     modes: ["Offline"],
+    homepage: "https://www.imo-official.org/",
   },
   {
+    id: "first-robotics-2024",
     name: "FIRST Robotics Competition",
     overview: "A global robotics challenge inspiring young engineers and innovators.",
     scale: "International",
     location: "USA & Worldwide",
     modes: ["Hybrid"],
+    homepage: "https://www.firstinspires.org/robotics/frc",
   },
   {
+    id: "vietnam-science-2024",
     name: "Vietnam National Science Olympiad",
     overview: "A national event for students to showcase their science projects and research.",
     scale: "Regional",
     location: "Vietnam",
     modes: ["Offline"],
+    homepage: "https://example.com/vietnam-science",
   },
   {
+    id: "isef-2024",
     name: "ISEF (International Science and Engineering Fair)",
     overview: "The world's largest international pre-college science competition.",
     scale: "International",
     location: "USA",
     modes: ["Hybrid", "Online"],
+    homepage: "https://www.societyforscience.org/isef/",
   },
   {
+    id: "online-coding-2024",
     name: "Online Coding Challenge",
     overview: "A virtual competition for aspiring programmers worldwide.",
     scale: "International",
     location: "Online",
     modes: ["Online"],
+    homepage: "https://example.com/online-coding",
   },
   {
+    id: "asean-science-2024",
     name: "ASEAN Science and Math Olympiad",
     overview: "A regional event for students in Southeast Asia to compete in STEM subjects.",
     scale: "Regional",
     location: "Southeast Asia",
     modes: ["Offline", "Online"],
+    homepage: "https://example.com/asean-science",
   },
 ];
 
@@ -125,8 +139,20 @@ export default function CompetitionsPage() {
             <div className="col-span-full text-center text-gray-500 py-12">No competitions found.</div>
           ) : (
             filtered.map((c) => (
-              <div key={c.name} className="bg-white rounded-xl shadow p-6 flex flex-col gap-3 border border-gray-100">
-                <h2 className="text-xl font-semibold text-blue-800 mb-1">{c.name}</h2>
+              <div key={c.id} className="bg-white rounded-xl shadow p-6 flex flex-col gap-3 border border-gray-100">
+                <div className="flex justify-between items-start mb-2">
+                  <h2 className="text-xl font-semibold text-blue-800">{c.name}</h2>
+                  <LikeButton 
+                    competitionId={c.id} 
+                    competition={{
+                      id: c.id,
+                      name: c.name,
+                      location: c.location,
+                      description: c.overview,
+                      homepage: c.homepage,
+                    }} 
+                  />
+                </div>
                 <p className="text-gray-700 text-base mb-2">{c.overview}</p>
                 <div className="flex flex-wrap gap-2 mt-auto">
                   <span className="px-2 py-1 text-xs rounded bg-blue-100 text-blue-800 font-medium">{c.scale}</span>
@@ -135,6 +161,12 @@ export default function CompetitionsPage() {
                     <span key={m} className="px-2 py-1 text-xs rounded bg-purple-100 text-purple-800 font-medium">{m}</span>
                   ))}
                 </div>
+                <Link
+                  href={`/competitions/${c.id}`}
+                  className="text-blue-600 hover:text-blue-800 font-medium text-sm mt-2 inline-block"
+                >
+                  View Details →
+                </Link>
               </div>
             ))
           )}
