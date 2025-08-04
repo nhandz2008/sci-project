@@ -11,6 +11,12 @@ FastAPI backend for Science Competitions Insight with PostgreSQL database.
 ### Development with Docker (Recommended)
 
 ```bash
+# Start database first
+docker compose up db -d
+
+# Initialize database
+../scripts/init-db.sh
+
 # Start all services
 docker compose up --build
 

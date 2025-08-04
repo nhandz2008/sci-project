@@ -1,5 +1,7 @@
 from contextlib import asynccontextmanager
 from typing import AsyncGenerator
+import subprocess
+import sys
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -17,11 +19,34 @@ def custom_generate_unique_id(route: APIRoute) -> str:
     return f"{route.tags[0]}-{route.name}" if route.tags else route.name
 
 
+def run_migrations():
+    """Run database migrations"""
+    try:
+        print("🔄 Running database migrations...")
+        result = subprocess.run(
+            ["alembic", "upgrade", "head"],
+            capture_output=True,
+            text=True,
+            cwd="/app"
+        )
+        if result.returncode == 0:
+            print("✅ Database migrations completed successfully")
+        else:
+            print(f"❌ Migration failed: {result.stderr}")
+            sys.exit(1)
+    except Exception as e:
+        print(f"❌ Failed to run migrations: {e}")
+        sys.exit(1)
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     """Lifespan events for FastAPI application"""
     # Startup
     print("🚀 Starting SCI API...")
+    
+    # Run migrations first
+    run_migrations()
     
     # Initialize database with admin user
     engine = create_engine(str(settings.SQLALCHEMY_DATABASE_URI))

@@ -16,12 +16,22 @@ A platform for discovering and managing science competitions worldwide.
    cd sci-project
    ```
 
-2. **Start services**
+2. **Start database only**
+   ```bash
+   docker compose up db -d
+   ```
+
+3. **Initialize database**
+   ```bash
+   ./scripts/init-db.sh
+   ```
+
+4. **Start all services**
    ```bash
    docker compose up --build
    ```
 
-3. **Verify setup**
+5. **Verify setup**
    ```bash
    ./scripts/verify-setup.sh
    ```
