@@ -17,19 +17,9 @@ services:
     build:
       context: ./backend
     restart: always
-    # healthcheck:
-    #   test: ["CMD", "curl", "-f", "http://localhost:8000/api/v1/utils/health-check/"]
-    #   interval: 10s
-    #   timeout: 5s
-    #   retries: 5
-    # networks:
-    #   - traefik-public
-    #   - default
     depends_on:
       db:
         condition: service_healthy
-    #   prestart:
-    #     condition: service_completed_successfully
     env_file:
       - .env
     environment:

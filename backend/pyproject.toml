@@ -13,6 +13,7 @@ dependencies = [
     "jinja2>=3.1.6",
     "mypy>=1.17.0",
     "passlib[bcrypt]>=1.7.4",
+    "bcrypt>=4.0.1",
     "psycopg2-binary>=2.9.9",
     "pydantic-settings>=2.10.1",
     "pyjwt>=2.10.1",
