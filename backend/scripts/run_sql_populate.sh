@@ -20,10 +20,10 @@ if ! docker info > /dev/null 2>&1; then
 fi
 
 # Check if the database container is running
-if ! docker ps | grep -q "sci-project_db_1"; then
+if ! docker ps | grep -q "db"; then
     echo "⚠️  Database container is not running. Starting database..."
     cd ..
-    docker-compose up -d db
+    docker compose up -d db
     echo "⏳ Waiting for database to be ready..."
     sleep 10
     cd backend
@@ -35,7 +35,7 @@ max_attempts=30
 attempt=0
 
 while [ $attempt -lt $max_attempts ]; do
-    if docker exec sci-project_db_1 pg_isready -U postgres -d sci_db > /dev/null 2>&1; then
+    if docker exec db pg_isready -U postgres -d sci_db > /dev/null 2>&1; then
         echo "✅ Database is ready!"
         break
     fi
@@ -52,6 +52,6 @@ fi
 
 # Run the SQL script
 echo "📝 Executing SQL script..."
-docker exec -i sci-project_db_1 psql -U postgres -d sci_db < scripts/populate_competitions.sql
+docker exec -i db psql -U postgres -d sci_db < scripts/populate_competitions.sql
 
 echo "✅ SQL competition population completed!" 
