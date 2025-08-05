@@ -1,93 +1,155 @@
 "use client";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import Link from "next/link";
 import LikeButton from "../../components/like-button";
 import Image from "next/image";
+import { useCompetitions } from "../hooks/useCompetitions";
+import { Competition } from "../api/competitions";
 
-const COMPETITIONS = [
-  {
-    id: "imo-2024",
-    name: "International Mathematical Olympiad (IMO)",
-    overview: "The world's most prestigious math competition for high school students.",
-    scale: "International",
-    location: "Varies",
-    modes: ["Offline"],
-    homepage: "https://www.imo-official.org/",
-    image: "/logos/IMO_logo.svg",
-  },
-  {
-    id: "first-robotics-2024",
-    name: "FIRST Robotics Competition",
-    overview: "A global robotics challenge inspiring young engineers and innovators.",
-    scale: "International",
-    location: "USA & Worldwide",
-    modes: ["Hybrid"],
-    homepage: "https://www.firstinspires.org/robotics/frc",
-    image: "/logos/FIRST_Robotics_Competition_(logo).svg.png",
-  },
-  {
-    id: "vietnam-science-2024",
-    name: "Vietnam National Science Olympiad",
-    overview: "A national event for students to showcase their science projects and research.",
-    scale: "Regional",
-    location: "Vietnam",
-    modes: ["Offline"],
-    homepage: "https://example.com/vietnam-science",
-    image: "/images/image1.jpeg",
-  },
-  {
-    id: "isef-2024",
-    name: "ISEF (International Science and Engineering Fair)",
-    overview: "The world's largest international pre-college science competition.",
-    scale: "International",
-    location: "USA",
-    modes: ["Hybrid", "Online"],
-    homepage: "https://www.societyforscience.org/isef/",
-    image: "/logos/2021_ISEF_Logo.png",
-  },
-  {
-    id: "online-coding-2024",
-    name: "Online Coding Challenge",
-    overview: "A virtual competition for aspiring programmers worldwide.",
-    scale: "International",
-    location: "Online",
-    modes: ["Online"],
-    homepage: "https://example.com/online-coding",
-    image: "/logos/images.png",
-  },
-  {
-    id: "asean-science-2024",
-    name: "ASEAN Science and Math Olympiad",
-    overview: "A regional event for students in Southeast Asia to compete in STEM subjects.",
-    scale: "Regional",
-    location: "Southeast Asia",
-    modes: ["Offline", "Online"],
-    homepage: "https://example.com/asean-science",
-    image: "/logos/logoWeb.png",
-  },
-];
+// Helper function to get fallback image for competitions
+const getFallbackImage = (competition: Competition) => {
+  // Map competition titles to existing images or use a default
+  const title = competition.title.toLowerCase();
+  
+  if (title.includes('mathematical') || title.includes('imo')) {
+    return "/logos/IMO_logo.svg";
+  } else if (title.includes('robotics') || title.includes('first')) {
+    return "/logos/FIRST_Robotics_Competition_(logo).svg.png";
+  } else if (title.includes('isef') || title.includes('science and engineering')) {
+    return "/logos/2021_ISEF_Logo.png";
+  } else if (title.includes('coding') || title.includes('programming')) {
+    return "/logos/images.png";
+  } else if (title.includes('vietnam') || title.includes('national')) {
+    return "/images/image1.jpeg";
+  } else {
+    return "/logos/logoWeb.png";
+  }
+};
 
-const SCALES = ["International", "Regional"];
-const MODES = ["Hybrid", "Online", "Offline"];
-const LOCATIONS = [
-  ...Array.from(new Set(COMPETITIONS.map((c) => c.location))),
-];
+// Helper function to check if image URL is valid
+const isValidImageUrl = (url: string | undefined): boolean => {
+  if (!url) return false;
+  try {
+    const urlObj = new URL(url);
+    return urlObj.protocol === 'http:' || urlObj.protocol === 'https:';
+  } catch {
+    return false;
+  }
+};
+
+// Helper function to map backend format to frontend display format
+const mapCompetitionToDisplay = (competition: Competition) => {
+  return {
+    id: competition.id,
+    name: competition.title,
+    overview: competition.description || "No description available",
+    scale: competition.scale ? competition.scale.charAt(0).toUpperCase() + competition.scale.slice(1) : "Unknown",
+    location: competition.location || "TBD",
+    modes: competition.format ? [competition.format.charAt(0).toUpperCase() + competition.format.slice(1)] : ["TBD"],
+    homepage: competition.competition_link || "#",
+    image: isValidImageUrl(competition.image_url) ? competition.image_url : getFallbackImage(competition),
+  };
+};
 
 export default function CompetitionsPage() {
   const [search, setSearch] = useState("");
-  const [scale, setScale] = useState("");
-  const [mode, setMode] = useState("");
-  const [location, setLocation] = useState("");
+  const [scaleFilter, setScaleFilter] = useState("");
+  const [modeFilter, setModeFilter] = useState("");
+  const [locationFilter, setLocationFilter] = useState("");
 
-  const filtered = COMPETITIONS.filter((c) => {
-    const matchesSearch =
-      c.name.toLowerCase().includes(search.toLowerCase()) ||
-      c.overview.toLowerCase().includes(search.toLowerCase());
-    const matchesScale = !scale || c.scale === scale;
-    const matchesMode = !mode || c.modes.includes(mode);
-    const matchesLocation = !location || c.location === location;
-    return matchesSearch && matchesScale && matchesMode && matchesLocation;
-  });
+  // Fetch competitions from API
+  const { competitions, loading, error, totalCount } = useCompetitions();
+
+  // Get unique values for filters from API data
+  const { scales, modes, locations } = useMemo(() => {
+    const uniqueScales = [...new Set(competitions.map(c => c.scale ? c.scale.charAt(0).toUpperCase() + c.scale.slice(1) : '').filter(Boolean))];
+    const uniqueModes = [...new Set(competitions.map(c => c.format ? c.format.charAt(0).toUpperCase() + c.format.slice(1) : '').filter(Boolean))];
+    const uniqueLocations = [...new Set(competitions.map(c => c.location).filter(Boolean))];
+    
+    return {
+      scales: uniqueScales,
+      modes: uniqueModes,
+      locations: uniqueLocations,
+    };
+  }, [competitions]);
+
+  // Filter competitions based on search and filters
+  const filteredCompetitions = useMemo(() => {
+    return competitions
+      .map(mapCompetitionToDisplay)
+      .filter((c) => {
+        const matchesSearch =
+          c.name.toLowerCase().includes(search.toLowerCase()) ||
+          c.overview.toLowerCase().includes(search.toLowerCase());
+        const matchesScale = !scaleFilter || c.scale === scaleFilter;
+        const matchesMode = !modeFilter || c.modes.includes(modeFilter);
+        const matchesLocation = !locationFilter || c.location === locationFilter;
+        return matchesSearch && matchesScale && matchesMode && matchesLocation;
+      });
+  }, [competitions, search, scaleFilter, modeFilter, locationFilter]);
+
+  // Loading state
+  if (loading) {
+    return (
+      <section className="px-4 py-16 min-h-screen bg-gray-50">
+        <div className="container mx-auto max-w-7xl">
+          <div className="mb-12 text-center">
+            <h1 className="text-4xl lg:text-5xl font-bold text-blue-900 mb-4">Explore Competitions</h1>
+            <p className="text-gray-600 text-xl max-w-3xl mx-auto">
+              Browse and filter science & technology competitions worldwide. Find the right challenge for you!
+            </p>
+          </div>
+          
+          {/* Loading skeleton */}
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
+            {[...Array(6)].map((_, index) => (
+              <div key={index} className="bg-white rounded-xl shadow-lg overflow-hidden animate-pulse">
+                <div className="h-48 bg-gray-200"></div>
+                <div className="p-6">
+                  <div className="h-6 bg-gray-200 rounded mb-4"></div>
+                  <div className="h-4 bg-gray-200 rounded mb-2"></div>
+                  <div className="h-4 bg-gray-200 rounded mb-2"></div>
+                  <div className="h-4 bg-gray-200 rounded mb-4"></div>
+                  <div className="flex gap-2 mb-4">
+                    <div className="h-6 bg-gray-200 rounded-full w-20"></div>
+                    <div className="h-6 bg-gray-200 rounded-full w-16"></div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  // Error state
+  if (error) {
+    return (
+      <section className="px-4 py-16 min-h-screen bg-gray-50">
+        <div className="container mx-auto max-w-7xl">
+          <div className="mb-12 text-center">
+            <h1 className="text-4xl lg:text-5xl font-bold text-blue-900 mb-4">Explore Competitions</h1>
+            <p className="text-gray-600 text-xl max-w-3xl mx-auto">
+              Browse and filter science & technology competitions worldwide. Find the right challenge for you!
+            </p>
+          </div>
+          
+          <div className="bg-white rounded-xl shadow-lg p-12 text-center">
+            <div className="text-6xl mb-4">⚠️</div>
+            <h3 className="text-2xl font-semibold mb-2 text-red-600">Error Loading Competitions</h3>
+            <p className="text-gray-600 mb-4">{error}</p>
+            <button 
+              onClick={() => window.location.reload()} 
+              className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+            >
+              Try Again
+            </button>
+          </div>
+        </div>
+      </section>
+    );
+  }
 
   return (
     <section className="px-4 py-16 min-h-screen bg-gray-50">
@@ -111,35 +173,35 @@ export default function CompetitionsPage() {
               aria-label="Search competitions"
             />
             <select
-              value={scale}
-              onChange={(e) => setScale(e.target.value)}
+              value={scaleFilter}
+              onChange={(e) => setScaleFilter(e.target.value)}
               className="w-full lg:w-1/6 px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 text-lg"
               aria-label="Filter by scale"
             >
               <option value="">All Scales</option>
-              {SCALES.map((s) => (
+              {scales.map((s) => (
                 <option key={s} value={s}>{s}</option>
               ))}
             </select>
             <select
-              value={location}
-              onChange={(e) => setLocation(e.target.value)}
+              value={locationFilter}
+              onChange={(e) => setLocationFilter(e.target.value)}
               className="w-full lg:w-1/4 px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 text-lg"
               aria-label="Filter by location"
             >
               <option value="">All Locations</option>
-              {LOCATIONS.map((l) => (
+              {locations.map((l) => (
                 <option key={l} value={l}>{l}</option>
               ))}
             </select>
             <select
-              value={mode}
-              onChange={(e) => setMode(e.target.value)}
+              value={modeFilter}
+              onChange={(e) => setModeFilter(e.target.value)}
               className="w-full lg:w-1/6 px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 text-lg"
               aria-label="Filter by mode"
             >
               <option value="">All Modes</option>
-              {MODES.map((m) => (
+              {modes.map((m) => (
                 <option key={m} value={m}>{m}</option>
               ))}
             </select>
@@ -148,7 +210,7 @@ export default function CompetitionsPage() {
 
         {/* Competitions Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
-          {filtered.length === 0 ? (
+          {filteredCompetitions.length === 0 ? (
             <div className="col-span-full text-center text-gray-500 py-16 text-xl">
               <div className="bg-white rounded-xl shadow-lg p-12">
                 <div className="text-6xl mb-4">🔍</div>
@@ -157,13 +219,13 @@ export default function CompetitionsPage() {
               </div>
             </div>
           ) : (
-            filtered.map((c, index) => (
+            filteredCompetitions.map((c) => (
               <div key={c.id} className="bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition-all duration-500 ease-out transform hover:scale-105 hover:-translate-y-3 hover:shadow-2xl group">
                 {/* Image Section */}
                 <div className="relative h-48 bg-gradient-to-br from-blue-500 to-purple-600 rounded-t-xl flex items-center justify-center overflow-hidden">
                   <div className="absolute inset-0 bg-gradient-to-br from-blue-600 to-purple-700 opacity-0 group-hover:opacity-20 transition-opacity duration-300"></div>
                   <Image
-                    src={c.image}
+                    src={c.image || "/logos/logoWeb.png"}
                     alt={`${c.name} logo`}
                     width={120}
                     height={120}
@@ -233,10 +295,10 @@ export default function CompetitionsPage() {
         </div>
 
         {/* Results Count */}
-        {filtered.length > 0 && (
+        {filteredCompetitions.length > 0 && (
           <div className="mt-8 text-center text-gray-600">
             <p className="text-lg">
-              Showing {filtered.length} of {COMPETITIONS.length} competitions
+              Showing {filteredCompetitions.length} of {totalCount} competitions
             </p>
           </div>
         )}
