@@ -80,50 +80,31 @@ export default function LikeButton({ competitionId, competition }: LikeButtonPro
   };
 
   return (
-    <div className="flex items-center gap-2">
-      <button
-        onClick={handleLikeToggle}
-        disabled={isLoading}
-        className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-blue-400 ${
-          isLiked
-            ? 'bg-red-100 text-red-600 hover:bg-red-200'
-            : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-        } ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
-        aria-label={isLiked ? 'Unlike competition' : 'Like competition'}
-      >
-        {isLoading ? (
-          <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin"></div>
-        ) : (
-          <svg
-            className={`w-5 h-5 ${isLiked ? 'fill-current' : 'stroke-current fill-none'}`}
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
-            />
-          </svg>
-        )}
-        <span className="font-medium">
-          {isLiked ? 'Liked' : 'Like'}
-        </span>
-      </button>
-
-      <a
-        href={competition.homepage}
-        target="_blank"
-        rel="noopener noreferrer"
-        onClick={handleViewCompetition}
-        className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-blue-400"
-        aria-label="Visit official competition homepage"
-      >
-        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+    <button
+      onClick={handleLikeToggle}
+      disabled={isLoading}
+      className={`flex items-center justify-center w-8 h-8 rounded-full transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-white ${
+        isLiked
+          ? 'bg-red-500 text-white hover:bg-red-600 shadow-lg'
+          : 'bg-white/80 text-gray-600 hover:bg-white hover:text-red-500 shadow-md'
+      } ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
+      aria-label={isLiked ? 'Unlike competition' : 'Like competition'}
+    >
+      {isLoading ? (
+        <div className="w-3 h-3 border-2 border-current border-t-transparent rounded-full animate-spin"></div>
+      ) : (
+        <svg
+          className={`w-4 h-4 ${isLiked ? 'fill-current' : 'stroke-current fill-none'}`}
+          viewBox="0 0 24 24"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
+          />
         </svg>
-        Visit Website
-      </a>
-    </div>
+      )}
+    </button>
   );
 } 
