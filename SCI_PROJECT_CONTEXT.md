@@ -45,13 +45,15 @@
 class User(SQLModel, table=True):
     id: uuid.UUID = Field(primary_key=True)
     email: EmailStr = Field(unique=True, index=True)
-    full_name: str | None
+    full_name: str
+    organization: str
+    phone_number: str
     role: UserRole = Field(default=UserRole.CREATOR)  # ADMIN, CREATOR
     hashed_password: str
     is_active: bool = True
     created_at: datetime
-    updated_at: datetime
-    competitions: list["Competition"] = Relationship(back_populates="owner")
+    updated_at: datetime | None
+    competitions: list of Competition
 ```
 
 ### Competition Model
@@ -59,29 +61,30 @@ class User(SQLModel, table=True):
 class Competition(SQLModel, table=True):
     id: uuid.UUID = Field(primary_key=True)
     title: str = Field(min_length=1, max_length=255)
-    description: str | None
+    introduction: str | None
+    question_type: str | None
+    selection_process: str | None
+    history: str | None
+    scoring_and_format: str | None
+    awards: str | None
+    penalties_and_bans: str | None
+    notable_achievements: str | None
     competition_link: str | None
-    official_url: str | None
     background_image_url: str | None
-    description_images: list[str] = Field(default=[], sa_column=Column(JSON))
+    detail_image_urls: list[str] = Field(default=[], sa_column=Column(JSON))
     location: str | None
-    area: str | None  # Scientific discipline: Physics, Chemistry, Biology, etc.
     format: CompetitionFormat | None  # ONLINE, OFFLINE, HYBRID
     scale: CompetitionScale | None    # PROVINCIAL, REGIONAL, INTERNATIONAL
-    start_date: datetime | None
-    end_date: datetime | None
-    registration_deadline: datetime | None
+    registration_deadline: datetime
+    size: int | None
     target_age_min: int | None
     target_age_max: int | None
-    prize_structure: dict = Field(default={}, sa_column=Column(JSON))
-    eligibility_text: str | None
     is_active: bool = True
     is_featured: bool = False
     is_approved: bool = False  # For content moderation
-    view_count: int = 0
-    owner_id: uuid.UUID = Field(foreign_key="user.id")
+    owner: competition's Owner
     created_at: datetime
-    updated_at: datetime
+    updated_at: datetime | None
 ```
 
 ## API Endpoints
