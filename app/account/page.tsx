@@ -4,8 +4,11 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import CreateCompetitionForm from '../../components/create-competition-form';
+import { CompetitionCreate, competitionsAPI, Competition } from '../api/competitions';
 
-interface Competition {
+// Local interface for stored competitions (different from API Competition)
+interface StoredCompetition {
   id: string;
   name: string;
   location: string;
@@ -18,8 +21,12 @@ export default function AccountPage() {
   const router = useRouter();
   const [avatar, setAvatar] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
-  const [recentlyViewed, setRecentlyViewed] = useState<Competition[]>([]);
-  const [likedCompetitions, setLikedCompetitions] = useState<Competition[]>([]);
+  const [recentlyViewed, setRecentlyViewed] = useState<StoredCompetition[]>([]);
+  const [likedCompetitions, setLikedCompetitions] = useState<StoredCompetition[]>([]);
+  const [isCreateFormOpen, setIsCreateFormOpen] = useState(false);
+  const [isCreating, setIsCreating] = useState(false);
+  const [userCompetitions, setUserCompetitions] = useState<Competition[]>([]);
+  const [isLoadingUserCompetitions, setIsLoadingUserCompetitions] = useState(false);
 
   // Redirect if not logged in
   useEffect(() => {
@@ -48,8 +55,35 @@ export default function AccountPage() {
       if (savedLiked) {
         setLikedCompetitions(JSON.parse(savedLiked));
       }
+
+      // Fetch user's created competitions
+      fetchUserCompetitions();
     }
   }, [user]);
+
+  const fetchUserCompetitions = async () => {
+    if (!user) return;
+    
+    setIsLoadingUserCompetitions(true);
+    try {
+      const token = localStorage.getItem('auth_token');
+      if (!token) {
+        throw new Error('No authentication token found');
+      }
+
+      const response = await competitionsAPI.getCompetitions({
+        owner_id: user.id,
+        limit: 10
+      });
+      
+      setUserCompetitions(response.data);
+    } catch (error) {
+      console.error('Error fetching user competitions:', error);
+      // Don't show alert for this error as it's not critical
+    } finally {
+      setIsLoadingUserCompetitions(false);
+    }
+  };
 
   const handleAvatarUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -77,6 +111,140 @@ export default function AccountPage() {
       const updatedLiked = likedCompetitions.filter(comp => comp.id !== competitionId);
       setLikedCompetitions(updatedLiked);
       localStorage.setItem(`liked_competitions_${user.id}`, JSON.stringify(updatedLiked));
+    }
+  };
+
+  const handleCreateCompetition = async (data: CompetitionCreate) => {
+    setIsCreating(true);
+    try {
+      // Get the auth token from localStorage
+      const token = localStorage.getItem('auth_token');
+      if (!token) {
+        throw new Error('No authentication token found. Please log in again.');
+      }
+
+      // Log API base URL for debugging
+      console.log('API Base URL:', process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000');
+
+      // Test backend connectivity first
+      try {
+        const healthResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/v1/health/`);
+        console.log('Backend health check status:', healthResponse.status);
+      } catch (healthError) {
+        console.error('Backend health check failed:', healthError);
+        throw new Error('Backend server is not accessible. Please check if the server is running.');
+      }
+
+      // Validate required fields
+      if (!data.title.trim()) {
+        throw new Error('Competition title is required.');
+      }
+
+      // Clean up the data before sending to API
+      const cleanData: CompetitionCreate = {
+        title: data.title.trim(),
+        description: data.description?.trim() || undefined,
+        competition_link: data.competition_link?.trim() || undefined,
+        image_url: data.image_url?.trim() || undefined,
+        location: data.location?.trim() || undefined,
+        format: data.format,
+        scale: data.scale,
+        // Convert empty strings to undefined for optional fields
+        target_age_min: data.target_age_min || undefined,
+        target_age_max: data.target_age_max || undefined,
+        registration_deadline: data.registration_deadline ? new Date(data.registration_deadline).toISOString() : undefined,
+        is_featured: data.is_featured || false,
+      };
+
+      // Remove undefined values and ensure proper data types
+      const finalData: any = {};
+      Object.entries(cleanData).forEach(([key, value]) => {
+        if (value !== undefined && value !== null && value !== '') {
+          // Ensure numbers are actually numbers
+          if (key === 'target_age_min' || key === 'target_age_max') {
+            finalData[key] = Number(value);
+          } else {
+            finalData[key] = value;
+          }
+        }
+      });
+
+      console.log('Final data to send:', finalData);
+
+      // Call the API to create the competition
+      console.log('Sending competition data to API:', finalData);
+      const createdCompetition = await competitionsAPI.createCompetition(finalData, token);
+      
+      console.log('Competition created successfully:', createdCompetition);
+      
+      // Show success message
+      alert('Competition created successfully! You can now view it in your created competitions list.');
+      setIsCreateFormOpen(false);
+      
+      // Refresh the user competitions list to show the new competition
+      await fetchUserCompetitions();
+    } catch (error) {
+      console.error('Error creating competition:', error);
+      
+      // Handle specific error cases
+      if (error instanceof Error) {
+        const errorMessage = error.message;
+        
+        if (errorMessage.includes('authentication') || errorMessage.includes('token')) {
+          alert('Authentication failed. Please log in again.');
+          router.push('/login');
+        } else if (errorMessage.includes('validation') || errorMessage.includes('String should have') || errorMessage.includes('field required')) {
+          alert(`Validation error: ${errorMessage}`);
+        } else if (errorMessage.includes('Network error')) {
+          alert('Network error. Please check your connection and try again.');
+        } else {
+          alert(`Failed to create competition: ${errorMessage}`);
+        }
+      } else {
+        console.error('Unexpected error type:', typeof error, error);
+        alert('Failed to create competition. Please try again.');
+      }
+    } finally {
+      setIsCreating(false);
+    }
+  };
+
+  const handleEditCompetition = (competitionId: string) => {
+    // TODO: Implement edit functionality
+    console.log('Edit competition:', competitionId);
+    alert('Edit functionality coming soon!');
+  };
+
+  const handleDeleteCompetition = async (competitionId: string) => {
+    if (!confirm('Are you sure you want to delete this competition? This action cannot be undone.')) {
+      return;
+    }
+
+    try {
+      const token = localStorage.getItem('auth_token');
+      if (!token) {
+        throw new Error('No authentication token found. Please log in again.');
+      }
+
+      await competitionsAPI.deleteCompetition(competitionId, token);
+      
+      alert('Competition deleted successfully!');
+      
+      // Refresh the user competitions list
+      await fetchUserCompetitions();
+    } catch (error) {
+      console.error('Error deleting competition:', error);
+      
+      if (error instanceof Error) {
+        if (error.message.includes('authentication') || error.message.includes('token')) {
+          alert('Authentication failed. Please log in again.');
+          router.push('/login');
+        } else {
+          alert(`Failed to delete competition: ${error.message}`);
+        }
+      } else {
+        alert('Failed to delete competition. Please try again.');
+      }
     }
   };
 
@@ -231,10 +399,110 @@ export default function AccountPage() {
           </div>
         </div>
 
+        {/* My Created Competitions */}
+        <div className="mt-8 bg-white rounded-xl shadow-sm p-6">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-2xl font-bold text-gray-900">My Created Competitions</h2>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={fetchUserCompetitions}
+                disabled={isLoadingUserCompetitions}
+                className="flex items-center gap-2 px-3 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors disabled:opacity-50"
+              >
+                <svg className={`w-4 h-4 ${isLoadingUserCompetitions ? 'animate-spin' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                </svg>
+                Refresh
+              </button>
+              <button
+                onClick={() => setIsCreateFormOpen(true)}
+                className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                </svg>
+                Add Competition
+              </button>
+            </div>
+          </div>
+          
+          {isLoadingUserCompetitions ? (
+            <div className="text-center py-8">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+              <p className="text-gray-600">Loading your competitions...</p>
+            </div>
+          ) : userCompetitions.length > 0 ? (
+            <div className="space-y-4">
+              {userCompetitions.map((competition) => (
+                <div key={competition.id} className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-2">
+                        <h3 className="font-semibold text-gray-900">{competition.title}</h3>
+                        <span className={`px-2 py-1 text-xs rounded-full ${
+                          competition.is_active 
+                            ? 'bg-green-100 text-green-800' 
+                            : 'bg-red-100 text-red-800'
+                        }`}>
+                          {competition.is_active ? 'Active' : 'Inactive'}
+                        </span>
+                        {competition.is_featured && (
+                          <span className="px-2 py-1 text-xs rounded-full bg-yellow-100 text-yellow-800">
+                            Featured
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-gray-600 text-sm mb-2">{competition.location}</p>
+                      <p className="text-gray-700 text-sm line-clamp-2 mb-2">{competition.description}</p>
+                      <div className="flex items-center gap-4 text-sm text-gray-500">
+                        <span className="capitalize">{competition.format}</span>
+                        <span className="capitalize">{competition.scale}</span>
+                        {competition.registration_deadline && (
+                          <span>Deadline: {new Date(competition.registration_deadline).toLocaleDateString()}</span>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-4 mt-3">
+                        <Link
+                          href={`/competitions/${competition.id}`}
+                          className="text-blue-600 hover:text-blue-800 text-sm font-medium"
+                        >
+                          View Details →
+                        </Link>
+                        <button
+                          onClick={() => handleEditCompetition(competition.id)}
+                          className="text-green-600 hover:text-green-800 text-sm font-medium"
+                        >
+                          Edit
+                        </button>
+                        <button
+                          onClick={() => handleDeleteCompetition(competition.id)}
+                          className="text-red-600 hover:text-red-800 text-sm font-medium"
+                        >
+                          Delete
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-8">
+              <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                </svg>
+              </div>
+              <p className="text-gray-500 mb-2">You haven't created any competitions yet</p>
+              <p className="text-sm text-gray-400">Start by creating your first competition</p>
+            </div>
+          )}
+        </div>
+
         {/* Quick Actions */}
         <div className="mt-8 bg-white rounded-xl shadow-sm p-6">
           <h2 className="text-2xl font-bold text-gray-900 mb-4">Quick Actions</h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             <Link
               href="/competitions"
               className="flex items-center gap-3 p-4 border border-gray-200 rounded-lg hover:shadow-md transition-shadow"
@@ -249,6 +517,21 @@ export default function AccountPage() {
                 <p className="text-sm text-gray-600">Discover new opportunities</p>
               </div>
             </Link>
+
+            <button
+              onClick={() => setIsCreateFormOpen(true)}
+              className="flex items-center gap-3 p-4 border border-gray-200 rounded-lg hover:shadow-md transition-shadow text-left"
+            >
+              <div className="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center">
+                <svg className="w-6 h-6 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                </svg>
+              </div>
+              <div>
+                <h3 className="font-semibold text-gray-900">Add Competition</h3>
+                <p className="text-sm text-gray-600">Create a new competition</p>
+              </div>
+            </button>
 
             <Link
               href="/reset-password"
@@ -282,6 +565,14 @@ export default function AccountPage() {
           </div>
         </div>
       </div>
+
+      {/* Create Competition Form Modal */}
+      <CreateCompetitionForm
+        isOpen={isCreateFormOpen}
+        onClose={() => setIsCreateFormOpen(false)}
+        onSubmit={handleCreateCompetition}
+        isLoading={isCreating}
+      />
     </main>
   );
 } 

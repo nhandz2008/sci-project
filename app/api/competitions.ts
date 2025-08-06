@@ -50,8 +50,15 @@ export interface CompetitionFilters {
   scale?: 'provincial' | 'regional' | 'international';
 }
 
+export interface ValidationError {
+  type: string;
+  loc: (string | number)[];
+  msg: string;
+  input: any;
+}
+
 export interface ApiError {
-  detail: string;
+  detail: string | ValidationError[];
 }
 
 class CompetitionsAPI {
@@ -66,9 +73,11 @@ class CompetitionsAPI {
     options: RequestInit = {}
   ): Promise<T> {
     const url = `${this.baseURL}${endpoint}`;
+    console.log('Making API request to:', url);
+    console.log('Request options:', { method: options.method, headers: options.headers, body: options.body });
+    
     const config: RequestInit = {
       headers: {
-        'Content-Type': 'application/json',
         ...options.headers,
       },
       ...options,
@@ -76,11 +85,26 @@ class CompetitionsAPI {
 
     try {
       const response = await fetch(url, config);
+      console.log('Response status:', response.status);
+      console.log('Response headers:', Object.fromEntries(response.headers.entries()));
       
-      if (!response.ok) {
-        const errorData: ApiError = await response.json().catch(() => ({ detail: 'Network error' }));
-        throw new Error(errorData.detail || `HTTP error! status: ${response.status}`);
-      }
+        if (!response.ok) {
+          const errorData: ApiError = await response.json().catch(() => ({ detail: 'Network error' }));
+          console.log('Error response data:', errorData);
+          
+          // Handle different error formats
+          let errorMessage: string;
+          if (Array.isArray(errorData.detail)) {
+            // Validation errors - join all error messages
+            errorMessage = errorData.detail.map((err: ValidationError) => err.msg).join(', ');
+          } else {
+            // Simple string error
+            errorMessage = errorData.detail || `HTTP error! status: ${response.status}`;
+          }
+          
+          console.log('Processed error message:', errorMessage);
+          throw new Error(errorMessage);
+        }
 
       return await response.json();
     } catch (error) {
@@ -111,11 +135,15 @@ class CompetitionsAPI {
   }
 
   async createCompetition(data: CompetitionCreate, token: string): Promise<Competition> {
+    console.log('Creating competition with data:', data);
+    console.log('JSON stringified data:', JSON.stringify(data));
+    
     return this.request<Competition>('/api/v1/competitions/', {
       method: 'POST',
       body: JSON.stringify(data),
       headers: {
         Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
       },
     });
   }
