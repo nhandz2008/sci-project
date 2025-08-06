@@ -265,11 +265,6 @@ const CompetitionDetails: React.FC<CompetitionDetailsProps> = ({ competition }) 
                     <span className="text-sm font-medium text-gray-900">Official Website</span>
                   </a>
                 )}
-                
-                <div className="p-3 rounded-lg bg-gray-50">
-                  <p className="text-sm text-gray-500">Competition ID</p>
-                  <p className="text-sm font-mono text-gray-900">{competition.id}</p>
-                </div>
               </div>
             </div>
 

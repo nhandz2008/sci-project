@@ -126,6 +126,7 @@ interface Competition {
 - Retry functionality for failed requests
 - Fallback navigation to competitions list
 - Graceful handling of network issues
+- **Security**: Competition IDs and other sensitive data are hidden from the UI
 
 ### 3. Responsive Design
 - Mobile-first approach
@@ -192,6 +193,7 @@ interface Competition {
 - Special characters in titles
 - Very long URLs
 - Empty or null data fields
+- **Security**: Competition IDs and other sensitive data are hidden from the UI
 
 ### 3. Browser Compatibility
 - Modern browsers (Chrome, Firefox, Safari, Edge)

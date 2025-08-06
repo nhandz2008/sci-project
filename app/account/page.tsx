@@ -123,13 +123,12 @@ export default function AccountPage() {
         throw new Error('No authentication token found. Please log in again.');
       }
 
-      // Log API base URL for debugging
-      console.log('API Base URL:', process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000');
-
       // Test backend connectivity first
       try {
         const healthResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/v1/health/`);
-        console.log('Backend health check status:', healthResponse.status);
+        if (!healthResponse.ok) {
+          throw new Error('Backend server is not accessible. Please check if the server is running.');
+        }
       } catch (healthError) {
         console.error('Backend health check failed:', healthError);
         throw new Error('Backend server is not accessible. Please check if the server is running.');
@@ -169,13 +168,8 @@ export default function AccountPage() {
         }
       });
 
-      console.log('Final data to send:', finalData);
-
       // Call the API to create the competition
-      console.log('Sending competition data to API:', finalData);
       const createdCompetition = await competitionsAPI.createCompetition(finalData, token);
-      
-      console.log('Competition created successfully:', createdCompetition);
       
       // Show success message
       alert('Competition created successfully! You can now view it in your created competitions list.');
@@ -211,7 +205,6 @@ export default function AccountPage() {
 
   const handleEditCompetition = (competitionId: string) => {
     // TODO: Implement edit functionality
-    console.log('Edit competition:', competitionId);
     alert('Edit functionality coming soon!');
   };
 
