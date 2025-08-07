@@ -11,6 +11,10 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 from app.api.main import api_router
 from app.core.config import settings
 from app.core.db import create_db_and_tables
+from app.core.exceptions import (
+    SCIException,
+    format_error_response,
+)
 
 # Configure logging
 logging.basicConfig(
@@ -86,6 +90,14 @@ app.include_router(api_router, prefix=settings.API_V1_STR)
 
 
 # Global exception handlers
+@app.exception_handler(SCIException)
+async def sci_exception_handler(_request, exc):
+    """Handle custom SCI exceptions."""
+    logger.error(f"SCI Exception: {exc.error_code} - {exc.message}")
+    error_response = format_error_response(exc)
+    return JSONResponse(status_code=exc.status_code, content=error_response)
+
+
 @app.exception_handler(StarletteHTTPException)
 async def http_exception_handler(_request, exc):
     """Handle HTTP exceptions."""
