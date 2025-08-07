@@ -20,7 +20,8 @@ RUN --mount=type=cache,target=/root/.cache/uv \
 # Installing project files
 COPY ./app /app/app
 COPY ./scripts /app/scripts
-COPY ./alembic.ini ./pyproject.toml ./uv.lock /app/
+COPY ./pyproject.toml ./uv.lock /app/
+# ./alembic.ini # TODO: Add alembic.ini to the project
 
 # Sync the project
 RUN --mount=type=cache,target=/root/.cache/uv \

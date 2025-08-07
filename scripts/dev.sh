@@ -33,17 +33,17 @@ case "$1" in
         cd backend
         uv run ruff format .
         ;;
-    "docker")
+    "docker-start")
         echo "Starting with Docker..."
-        docker-compose up -d
+        docker compose up -d
         ;;
     "docker-logs")
         echo "Showing Docker logs..."
-        docker-compose logs -f
+        docker compose logs -f
         ;;
     "docker-stop")
         echo "Stopping Docker services..."
-        docker-compose down
+        docker compose down
         ;;
     "setup")
         echo "Setting up development environment..."
