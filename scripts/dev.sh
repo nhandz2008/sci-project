@@ -59,12 +59,17 @@ case "$1" in
         else
             echo "ℹ️  .env file already exists, skipping creation"
         fi
-        
+
         # Install dependencies
         cd backend
         uv sync
         echo "✅ Installed dependencies"
-        
+
+        # Install pre-commit hooks
+        echo "Installing pre-commit hooks..."
+        pre-commit install
+        echo "✅ Installed pre-commit hooks"
+
         echo "✅ Setup complete!"
         echo "Next steps:"
         echo "1. Edit .env file with your configuration"
@@ -85,4 +90,4 @@ case "$1" in
         echo "  setup       - Initial setup"
         exit 1
         ;;
-esac 
+esac

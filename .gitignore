@@ -162,4 +162,4 @@ cython_debug/
 .uv/
 
 # Alembic
-alembic.ini 
+alembic.ini

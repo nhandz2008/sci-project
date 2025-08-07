@@ -1,35 +1,35 @@
-FROM python:3.11-slim
+FROM python:3.12-slim
 
-WORKDIR /app/
+ENV PYTHONUNBUFFERED=1
+# Compile bytecode
+ENV UV_COMPILE_BYTECODE=1
+# uv Caching
+ENV UV_LINK_MODE=copy
 
-# Install system dependencies
-RUN apt-get update && apt-get install -y \
-    build-essential \
-    curl \
-    && rm -rf /var/lib/apt/lists/*
+WORKDIR /app
 
-# Install UV
-RUN pip install uv
-
-# Copy dependency files
-COPY pyproject.toml uv.lock* ./
+# Installing uv
+COPY --from=ghcr.io/astral-sh/uv:0.7.20 /uv /uvx /bin/
 
 # Install dependencies
-RUN uv sync --frozen
+RUN --mount=type=cache,target=/root/.cache/uv \
+    --mount=type=bind,source=uv.lock,target=uv.lock \
+    --mount=type=bind,source=pyproject.toml,target=pyproject.toml \
+    uv sync --frozen --no-install-project
 
-# Copy application code
-COPY . .
+# Installing project files
+COPY ./app /app/app
+COPY ./scripts /app/scripts
+COPY ./alembic.ini ./pyproject.toml ./uv.lock /app/
 
-# Create non-root user
-RUN useradd --create-home --shell /bin/bash app && chown -R app:app /app
-USER app
+# Sync the project
+RUN --mount=type=cache,target=/root/.cache/uv \
+    uv sync
 
-# Expose port
-EXPOSE 8000
+# Using the environment
+ENV PATH="/app/.venv/bin:$PATH"
 
-# Health check
-HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 \
-    CMD curl -f http://localhost:8000/api/v1/health || exit 1
+ENV PYTHONPATH=/app
 
-# Run the application
-CMD ["uv", "run", "python", "-m", "uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"] 
+# Default command to run the application
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]

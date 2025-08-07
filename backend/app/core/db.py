@@ -1,4 +1,5 @@
-from sqlmodel import SQLModel, create_engine, Session
+from sqlmodel import Session, SQLModel, create_engine
+
 from app.core.config import settings
 
 engine = create_engine(
@@ -18,4 +19,4 @@ def create_db_and_tables() -> None:
 def get_session() -> Session:
     """Get database session."""
     with Session(engine) as session:
-        yield session 
+        yield session

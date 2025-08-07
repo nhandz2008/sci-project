@@ -1,6 +1,6 @@
 # Database models
-from .user import User
-from .competition import Competition
 from .common import BaseModel
+from .competition import Competition
+from .user import User
 
-__all__ = ["User", "Competition", "BaseModel"] 
+__all__ = ["User", "Competition", "BaseModel"]

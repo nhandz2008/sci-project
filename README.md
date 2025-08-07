@@ -32,7 +32,7 @@ A full-stack web application for showcasing, managing, and recommending science 
    ```bash
    # Option 1: Local development (recommended)
    ./scripts/dev.sh start
-   
+
    # Option 2: Docker development
    ./scripts/dev.sh docker
    ```

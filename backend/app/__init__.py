@@ -1,1 +1,1 @@
-# Science Competitions Insight Backend 
+# Science Competitions Insight Backend

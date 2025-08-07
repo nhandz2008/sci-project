@@ -1,14 +1,19 @@
-from typing import List
+from typing import TYPE_CHECKING
+
 from pydantic import EmailStr
 from sqlmodel import Field, Relationship
 
 from app.models.common import BaseModel, UserRole
 
+if TYPE_CHECKING:
+    from app.models.competition import Competition
 
-class User(BaseModel, table=True):
+
+class User(BaseModel, table=True):  # type: ignore[call-arg]
     """User model for authentication and authorization."""
+
     __tablename__ = "users"
-    
+
     email: EmailStr = Field(unique=True, index=True)
     full_name: str = Field(min_length=1, max_length=100)
     organization: str = Field(min_length=1, max_length=100)
@@ -16,9 +21,9 @@ class User(BaseModel, table=True):
     role: UserRole = Field(default=UserRole.CREATOR)
     hashed_password: str = Field(min_length=1)
     is_active: bool = True
-    
+
     # Relationships
-    competitions: List["Competition"] = Relationship(back_populates="owner")
-    
+    competitions: list["Competition"] = Relationship(back_populates="owner")
+
     class Config:
-        from_attributes = True 
+        from_attributes = True

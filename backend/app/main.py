@@ -1,10 +1,11 @@
 import logging
 from contextlib import asynccontextmanager
+
 from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
-from fastapi.routing import APIRoute
-from fastapi.responses import JSONResponse
 from fastapi.exceptions import RequestValidationError
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
+from fastapi.routing import APIRoute
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from app.core.config import settings
@@ -13,7 +14,7 @@ from app.core.db import create_db_and_tables
 # Configure logging
 logging.basicConfig(
     level=getattr(logging, settings.LOG_LEVEL),
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
 )
 logger = logging.getLogger(__name__)
 
@@ -23,7 +24,7 @@ def custom_generate_unique_id(route: APIRoute) -> str:
 
 
 @asynccontextmanager
-async def lifespan(app: FastAPI):
+async def lifespan(_app: FastAPI):
     """Application lifespan events."""
     # Startup
     logger.info("🚀 Starting Science Competitions Insight API...")
@@ -81,30 +82,23 @@ async def api_health_check():
 
 # Global exception handlers
 @app.exception_handler(StarletteHTTPException)
-async def http_exception_handler(request, exc):
+async def http_exception_handler(_request, exc):
     """Handle HTTP exceptions."""
     logger.error(f"HTTP Exception: {exc.status_code} - {exc.detail}")
-    return JSONResponse(
-        status_code=exc.status_code,
-        content={"detail": exc.detail}
-    )
+    return JSONResponse(status_code=exc.status_code, content={"detail": exc.detail})
 
 
 @app.exception_handler(RequestValidationError)
-async def validation_exception_handler(request, exc):
+async def validation_exception_handler(_request, exc):
     """Handle validation errors."""
     logger.error(f"Validation Error: {exc.errors()}")
     return JSONResponse(
-        status_code=422,
-        content={"detail": "Validation error", "errors": exc.errors()}
+        status_code=422, content={"detail": "Validation error", "errors": exc.errors()}
     )
 
 
 @app.exception_handler(Exception)
-async def general_exception_handler(request, exc):
+async def general_exception_handler(_request, exc):
     """Handle general exceptions."""
     logger.error(f"Unhandled Exception: {str(exc)}", exc_info=True)
-    return JSONResponse(
-        status_code=500,
-        content={"detail": "Internal server error"}
-    ) 
+    return JSONResponse(status_code=500, content={"detail": "Internal server error"})
