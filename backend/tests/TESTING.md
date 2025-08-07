@@ -30,41 +30,29 @@ tests/
 
 ## 🚀 Running Tests
 
-### Prerequisites
-
-1. Install test dependencies:
-```bash
-pip install pytest pytest-cov
-```
-
-2. Ensure you're in the backend directory:
-```bash
-cd sci-project/backend
-```
-
 ### Running All Tests
 
 ```bash
-python run_tests.py
+uv run run_tests.py
 ```
 
 ### Running Specific Test Files
 
 ```bash
 # Run authentication tests only
-python run_tests.py test_auth_routes
+uv run run_tests.py test_auth_routes
 
 # Run user management tests only
-python run_tests.py test_user_routes
+uv run run_tests.py test_user_routes
 
 # Run security tests only
-python run_tests.py test_security
+uv run run_tests.py test_security
 ```
 
 ### View Test Summary
 
 ```bash
-python run_tests.py --summary
+uv run run_tests.py --summary
 ```
 
 ### Running with Coverage

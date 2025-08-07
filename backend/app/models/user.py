@@ -1,6 +1,6 @@
 from typing import TYPE_CHECKING
 
-from pydantic import EmailStr
+from pydantic import ConfigDict, EmailStr
 from sqlmodel import Field, Relationship
 
 from app.models.common import BaseModel, UserRole
@@ -25,5 +25,4 @@ class User(BaseModel, table=True):  # type: ignore[call-arg]
     # Relationships
     competitions: list["Competition"] = Relationship(back_populates="owner")
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)

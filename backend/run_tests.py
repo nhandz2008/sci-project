@@ -21,7 +21,7 @@ def run_tests():
     os.environ["POSTGRES_PASSWORD"] = "test-password"
     os.environ["FIRST_SUPERUSER_PASSWORD"] = "test-admin-password"
     
-    # Run pytest with coverage
+    # Run pytest with coverage and warning suppression
     cmd = [
         "python", "-m", "pytest",
         "tests/",
@@ -31,7 +31,9 @@ def run_tests():
         "--cov-report=term-missing",
         "--cov-report=html:htmlcov",
         "--cov-report=xml",
-        "--junitxml=test-results.xml"
+        "--junitxml=test-results.xml",
+        "-W", "ignore::DeprecationWarning:passlib.*",
+        "-W", "ignore::DeprecationWarning:crypt.*"
     ]
     
     print("🚀 Running SCI Backend Tests...")
@@ -66,7 +68,9 @@ def run_specific_test(test_file):
         "python", "-m", "pytest",
         f"tests/{test_file}",
         "-v",
-        "--tb=short"
+        "--tb=short",
+        "-W", "ignore::DeprecationWarning:passlib.*",
+        "-W", "ignore::DeprecationWarning:crypt.*"
     ]
     
     print(f"🚀 Running specific test: {test_file}")

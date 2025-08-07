@@ -5,7 +5,7 @@ from datetime import datetime
 from typing import Any
 from uuid import UUID
 
-from pydantic import BaseModel, EmailStr, Field, ValidationError, field_serializer, validator
+from pydantic import BaseModel, EmailStr, Field, ValidationError, field_serializer, field_validator, ConfigDict
 
 from app.core.security import validate_password_strength
 from app.models.common import UserRole
@@ -29,16 +29,18 @@ class UserCreate(BaseModel):
     )
     password: str = Field(..., min_length=8, description="User password")
 
-    @validator("password")
-    def validate_password_strength(cls, v):
+    @field_validator("password")
+    @classmethod
+    def validate_password_strength(cls, v: str) -> str:
         """Validate password strength."""
         is_valid, error_message = validate_password_strength(v)
         if not is_valid:
             raise ValueError(error_message)
         return v
 
-    @validator("phone_number")
-    def validate_phone_number(cls, v):
+    @field_validator("phone_number")
+    @classmethod
+    def validate_phone_number(cls, v: str) -> str:
         if not PHONE_REGEX.match(v):
             raise ValueError("Invalid phone number format")
         return v
@@ -68,8 +70,7 @@ class UserResponse(BaseModel):
     def serialize_id(self, value: UUID) -> str:
         return str(value)
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class TokenResponse(BaseModel):
@@ -92,8 +93,9 @@ class PasswordResetConfirm(BaseModel):
     token: str = Field(..., description="Password reset token")
     new_password: str = Field(..., min_length=8, description="New password")
 
-    @validator("new_password")
-    def validate_password_strength(cls, v):
+    @field_validator("new_password")
+    @classmethod
+    def validate_password_strength(cls, v: str) -> str:
         """Validate password strength."""
         is_valid, error_message = validate_password_strength(v)
         if not is_valid:

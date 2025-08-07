@@ -2,6 +2,7 @@ import json
 from datetime import datetime
 from typing import TYPE_CHECKING, Optional
 
+from pydantic import ConfigDict
 from sqlmodel import Field, Relationship
 
 from app.models.common import BaseModel, CompetitionFormat, CompetitionScale
@@ -57,5 +58,4 @@ class Competition(BaseModel, table=True):  # type: ignore[call-arg]
         """Set detail image URLs from a list."""
         self.detail_image_urls = json.dumps(value)
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)

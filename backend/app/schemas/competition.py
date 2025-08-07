@@ -1,9 +1,10 @@
 """Competition schemas for request/response validation."""
 
 from datetime import datetime
+from typing import Any
 from uuid import UUID
 
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field, field_serializer, field_validator, ConfigDict
 
 from app.models.common import CompetitionFormat, CompetitionScale
 
@@ -57,20 +58,22 @@ class CompetitionCreate(BaseModel):
         None, ge=0, le=100, description="Maximum target age"
     )
 
-    @validator("target_age_max")
-    def validate_age_range(cls, v, values):
+    @field_validator("target_age_max")
+    @classmethod
+    def validate_age_range(cls, v: int | None, info: Any) -> int | None:
         """Validate that max age is greater than min age."""
         if (
             v is not None
-            and "target_age_min" in values
-            and values["target_age_min"] is not None
+            and "target_age_min" in info.data
+            and info.data["target_age_min"] is not None
         ):
-            if v <= values["target_age_min"]:
+            if v <= info.data["target_age_min"]:
                 raise ValueError("Maximum age must be greater than minimum age")
         return v
 
-    @validator("registration_deadline")
-    def validate_deadline(cls, v):
+    @field_validator("registration_deadline")
+    @classmethod
+    def validate_deadline(cls, v: datetime) -> datetime:
         """Validate that deadline is in the future."""
         if v <= datetime.now():
             raise ValueError("Registration deadline must be in the future")
@@ -129,20 +132,22 @@ class CompetitionUpdate(BaseModel):
     )
     is_featured: bool | None = Field(None, description="Featured status")
 
-    @validator("target_age_max")
-    def validate_age_range(cls, v, values):
+    @field_validator("target_age_max")
+    @classmethod
+    def validate_age_range(cls, v: int | None, info: Any) -> int | None:
         """Validate that max age is greater than min age."""
         if (
             v is not None
-            and "target_age_min" in values
-            and values["target_age_min"] is not None
+            and "target_age_min" in info.data
+            and info.data["target_age_min"] is not None
         ):
-            if v <= values["target_age_min"]:
+            if v <= info.data["target_age_min"]:
                 raise ValueError("Maximum age must be greater than minimum age")
         return v
 
-    @validator("registration_deadline")
-    def validate_deadline(cls, v):
+    @field_validator("registration_deadline")
+    @classmethod
+    def validate_deadline(cls, v: datetime | None) -> datetime | None:
         """Validate that deadline is in the future."""
         if v is not None and v <= datetime.now():
             raise ValueError("Registration deadline must be in the future")
@@ -179,8 +184,11 @@ class CompetitionResponse(BaseModel):
     created_at: datetime
     updated_at: datetime | None = None
 
-    class Config:
-        from_attributes = True
+    @field_serializer('id')
+    def serialize_id(self, value: UUID) -> str:
+        return str(value)
+
+    model_config = ConfigDict(from_attributes=True)
 
 
 class CompetitionListResponse(BaseModel):
@@ -202,8 +210,11 @@ class CompetitionListResponse(BaseModel):
     owner_id: str | None
     created_at: datetime
 
-    class Config:
-        from_attributes = True
+    @field_serializer('id')
+    def serialize_id(self, value: UUID) -> str:
+        return str(value)
+
+    model_config = ConfigDict(from_attributes=True)
 
 
 class CompetitionListPaginatedResponse(BaseModel):
@@ -247,8 +258,11 @@ class CompetitionModerationResponse(BaseModel):
     created_at: datetime
     is_approved: bool
 
-    class Config:
-        from_attributes = True
+    @field_serializer('id')
+    def serialize_id(self, value: UUID) -> str:
+        return str(value)
+
+    model_config = ConfigDict(from_attributes=True)
 
 
 class CompetitionModerationListResponse(BaseModel):

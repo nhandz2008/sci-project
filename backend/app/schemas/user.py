@@ -1,13 +1,12 @@
-"""User management schemas for request/response validation."""
+"""User schemas for request/response validation."""
 
 import re
 from datetime import datetime
 from typing import Any
 from uuid import UUID
 
-from pydantic import BaseModel, EmailStr, Field, ValidationError, field_serializer, validator
+from pydantic import BaseModel, EmailStr, Field, field_serializer, field_validator, ConfigDict
 
-from app.core.security import validate_password_strength
 from app.models.common import UserRole
 
 # Phone number regex pattern
@@ -27,22 +26,25 @@ class UserUpdate(BaseModel):
         None, min_length=10, max_length=20, description="User phone number"
     )
 
-    @validator("full_name")
-    def validate_full_name_not_empty(cls, v):
+    @field_validator("full_name")
+    @classmethod
+    def validate_full_name_not_empty(cls, v: str | None) -> str | None:
         """Validate full name is not empty if provided."""
         if v is not None and not v.strip():
             raise ValueError("Full name cannot be empty")
         return v
 
-    @validator("organization")
-    def validate_organization_not_empty(cls, v):
+    @field_validator("organization")
+    @classmethod
+    def validate_organization_not_empty(cls, v: str | None) -> str | None:
         """Validate organization is not empty if provided."""
         if v is not None and not v.strip():
             raise ValueError("Organization cannot be empty")
         return v
 
-    @validator("phone_number")
-    def validate_phone_number(cls, v):
+    @field_validator("phone_number")
+    @classmethod
+    def validate_phone_number(cls, v: str | None) -> str | None:
         """Validate phone number format if provided."""
         if v is not None:
             if not v.strip():
@@ -58,8 +60,9 @@ class PasswordChange(BaseModel):
     current_password: str = Field(..., description="Current password")
     new_password: str = Field(..., min_length=8, description="New password")
 
-    @validator("new_password")
-    def validate_password_strength(cls, v):
+    @field_validator("new_password")
+    @classmethod
+    def validate_password_strength(cls, v: str) -> str:
         """Validate password strength."""
         if len(v) < 8:
             raise ValueError("Password must be at least 8 characters long")
@@ -87,8 +90,7 @@ class UserListResponse(BaseModel):
     def serialize_id(self, value: UUID) -> str:
         return str(value)
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class UserDetailResponse(BaseModel):
@@ -108,8 +110,7 @@ class UserDetailResponse(BaseModel):
     def serialize_id(self, value: UUID) -> str:
         return str(value)
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class UserListPaginatedResponse(BaseModel):
