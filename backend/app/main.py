@@ -8,6 +8,7 @@ from fastapi.responses import JSONResponse
 from fastapi.routing import APIRoute
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
+from app.api.main import api_router
 from app.core.config import settings
 from app.core.db import create_db_and_tables
 
@@ -78,6 +79,10 @@ async def health_check():
 async def api_health_check():
     """API health check endpoint."""
     return {"status": "healthy", "version": "1.0.0"}
+
+
+# Include API router
+app.include_router(api_router, prefix=settings.API_V1_STR)
 
 
 # Global exception handlers
