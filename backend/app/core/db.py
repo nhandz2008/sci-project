@@ -1,6 +1,7 @@
 """Database session management."""
 
 import logging
+import os
 from collections.abc import Generator
 from contextlib import contextmanager
 
@@ -13,14 +14,27 @@ from app.core.exceptions import DatabaseError
 logger = logging.getLogger(__name__)
 
 # Create database engine with enhanced configuration
+def get_database_url():
+    """Get database URL based on environment."""
+    if settings.ENVIRONMENT == "test":
+        return "sqlite:///./test.db"
+    return str(settings.SQLALCHEMY_DATABASE_URI)
+
+def get_search_operator():
+    """Get the appropriate search operator based on database type."""
+    if settings.ENVIRONMENT == "test":
+        # SQLite uses LIKE with COLLATE NOCASE for case-insensitive search
+        return "LIKE"
+    else:
+        # PostgreSQL uses ILIKE for case-insensitive search
+        return "ILIKE"
+
 engine = create_engine(
-    str(settings.SQLALCHEMY_DATABASE_URI),
+    get_database_url(),
     pool_pre_ping=True,
     pool_size=settings.DATABASE_POOL_SIZE,
     max_overflow=settings.DATABASE_MAX_OVERFLOW,
-    echo=settings.ENVIRONMENT == "local",
-    pool_recycle=3600,  # Recycle connections after 1 hour
-    pool_timeout=30,  # Timeout for getting connection from pool
+    echo=settings.DATABASE_ECHO,
 )
 
 
@@ -46,6 +60,13 @@ def get_session() -> Generator[Session, None, None]:
     except Exception as e:
         logger.error(f"❌ Database session error: {e}")
         session.rollback()
+        # Let custom exceptions pass through
+        if hasattr(e, 'error_code') and e.error_code.startswith(('USER_', 'AUTH_', 'COMP_')):
+            raise
+        # Let HTTPExceptions pass through
+        if hasattr(e, 'status_code'):
+            raise
+        # Only convert database-related errors to DatabaseError
         raise DatabaseError(
             message="Database session error",
             error_code="DB_014",

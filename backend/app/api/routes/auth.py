@@ -1,5 +1,6 @@
 """Authentication routes."""
 
+import logging
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, status
@@ -18,6 +19,7 @@ from app.crud.user import (
     get_user_by_email,
     update_user_password,
 )
+from app.core.exceptions import DuplicateUserError
 from app.models.user import User
 from app.schemas.auth import (
     MessageResponse,
@@ -30,6 +32,7 @@ from app.schemas.auth import (
 )
 
 router = APIRouter(prefix="/auth", tags=["authentication"])
+logger = logging.getLogger(__name__)
 
 
 @router.post("/signup", response_model=UserResponse)
@@ -40,12 +43,12 @@ async def signup(
     try:
         user = create_user(session, user_create)
         return UserResponse.model_validate(user)
+    except DuplicateUserError:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="User with this email already exists",
+        )
     except ValueError as e:
-        if "already exists" in str(e):
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="User with this email already exists",
-            )
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
 
 
@@ -85,9 +88,9 @@ async def forgot_password(
         # Generate password reset token
         reset_token = create_password_reset_token(password_reset.email)
 
-        # TODO: Send email with reset token
-        # For now, just log it
-        print(f"Password reset token for {password_reset.email}: {reset_token}")
+        # TODO: Implement email service integration
+        # For now, log the token for development purposes
+        logger.info(f"Password reset token generated for {password_reset.email}: {reset_token}")
 
     # Always return success to prevent email enumeration
     return MessageResponse(

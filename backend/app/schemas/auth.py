@@ -2,14 +2,16 @@
 
 import re
 from datetime import datetime
+from typing import Any
 from uuid import UUID
 
-from pydantic import BaseModel, EmailStr, Field, validator
+from pydantic import BaseModel, EmailStr, Field, ValidationError, field_serializer, validator
 
-from app.core.exceptions import ValidationError
+from app.core.security import validate_password_strength
 from app.models.common import UserRole
 
-PHONE_REGEX = re.compile(r"^\+?\d{10,20}$")
+# Phone number regex pattern
+PHONE_REGEX = re.compile(r"^\+?[1-9]\d{1,19}$")
 
 
 class UserCreate(BaseModel):
@@ -30,40 +32,15 @@ class UserCreate(BaseModel):
     @validator("password")
     def validate_password_strength(cls, v):
         """Validate password strength."""
-        if len(v) < 8:
-            raise ValidationError(
-                message="Password must be at least 8 characters long",
-                error_code="VAL_101",
-                details="Password too short",
-            )
-        if not any(c.isupper() for c in v):
-            raise ValidationError(
-                message="Password must contain at least one uppercase letter",
-                error_code="VAL_102",
-                details="Missing uppercase letter",
-            )
-        if not any(c.islower() for c in v):
-            raise ValidationError(
-                message="Password must contain at least one lowercase letter",
-                error_code="VAL_103",
-                details="Missing lowercase letter",
-            )
-        if not any(c.isdigit() for c in v):
-            raise ValidationError(
-                message="Password must contain at least one digit",
-                error_code="VAL_104",
-                details="Missing digit",
-            )
+        is_valid, error_message = validate_password_strength(v)
+        if not is_valid:
+            raise ValueError(error_message)
         return v
 
     @validator("phone_number")
     def validate_phone_number(cls, v):
         if not PHONE_REGEX.match(v):
-            raise ValidationError(
-                message="Invalid phone number format",
-                error_code="VAL_105",
-                details="Phone number must be 10-20 digits, may start with +",
-            )
+            raise ValueError("Invalid phone number format")
         return v
 
 
@@ -86,6 +63,10 @@ class UserResponse(BaseModel):
     is_active: bool
     created_at: datetime
     updated_at: datetime | None = None
+
+    @field_serializer('id')
+    def serialize_id(self, value: UUID) -> str:
+        return str(value)
 
     class Config:
         from_attributes = True
@@ -114,30 +95,9 @@ class PasswordResetConfirm(BaseModel):
     @validator("new_password")
     def validate_password_strength(cls, v):
         """Validate password strength."""
-        if len(v) < 8:
-            raise ValidationError(
-                message="Password must be at least 8 characters long",
-                error_code="VAL_101",
-                details="Password too short",
-            )
-        if not any(c.isupper() for c in v):
-            raise ValidationError(
-                message="Password must contain at least one uppercase letter",
-                error_code="VAL_102",
-                details="Missing uppercase letter",
-            )
-        if not any(c.islower() for c in v):
-            raise ValidationError(
-                message="Password must contain at least one lowercase letter",
-                error_code="VAL_103",
-                details="Missing lowercase letter",
-            )
-        if not any(c.isdigit() for c in v):
-            raise ValidationError(
-                message="Password must contain at least one digit",
-                error_code="VAL_104",
-                details="Missing digit",
-            )
+        is_valid, error_message = validate_password_strength(v)
+        if not is_valid:
+            raise ValueError(error_message)
         return v
 
 

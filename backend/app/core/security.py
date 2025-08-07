@@ -33,8 +33,15 @@ def verify_token(token: str) -> str | None:
             token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM]
         )
         subject: str = payload.get("sub")
+        exp: int = payload.get("exp")
+        
         if subject is None:
             return None
+            
+        # Check if token is expired
+        if exp is None or datetime.utcnow().timestamp() > exp:
+            return None
+            
         return subject
     except JWTError:
         return None
@@ -80,22 +87,31 @@ def verify_refresh_token(token: str) -> str | None:
         return None
 
 
+def validate_password_strength(password: str) -> tuple[bool, str | None]:
+    """Validate password strength and return (is_valid, error_message)."""
+    if len(password) < 8:
+        return False, "Password must be at least 8 characters long"
+    if not any(c.isupper() for c in password):
+        return False, "Password must contain at least one uppercase letter"
+    if not any(c.islower() for c in password):
+        return False, "Password must contain at least one lowercase letter"
+    if not any(c.isdigit() for c in password):
+        return False, "Password must contain at least one digit"
+    return True, None
+
+
 def validate_password(password: str) -> bool:
     """Validate password strength."""
-    if len(password) < 8:
-        return False
-    if not any(c.isupper() for c in password):
-        return False
-    if not any(c.islower() for c in password):
-        return False
-    if not any(c.isdigit() for c in password):
-        return False
-    return True
+    is_valid, _ = validate_password_strength(password)
+    return is_valid
 
 
-def create_password_reset_token(email: str) -> str:
+def create_password_reset_token(email: str, expires_delta: timedelta | None = None) -> str:
     """Create password reset token."""
-    expire = datetime.utcnow() + timedelta(minutes=30)  # 30 minutes
+    if expires_delta:
+        expire = datetime.utcnow() + expires_delta
+    else:
+        expire = datetime.utcnow() + timedelta(minutes=30)  # 30 minutes
     to_encode = {"exp": expire, "sub": email, "type": "password_reset"}
     encoded_jwt = jwt.encode(
         to_encode, settings.SECRET_KEY, algorithm=settings.ALGORITHM
@@ -111,8 +127,15 @@ def verify_password_reset_token(token: str) -> str | None:
         )
         email: str = payload.get("sub")
         token_type: str = payload.get("type")
+        exp: int = payload.get("exp")
+        
         if email is None or token_type != "password_reset":
             return None
+            
+        # Check if token is expired
+        if exp is None or datetime.utcnow().timestamp() > exp:
+            return None
+            
         return email
     except JWTError:
         return None

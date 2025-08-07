@@ -2,14 +2,16 @@
 
 import re
 from datetime import datetime
+from typing import Any
 from uuid import UUID
 
-from pydantic import BaseModel, EmailStr, Field, validator
+from pydantic import BaseModel, EmailStr, Field, ValidationError, field_serializer, validator
 
-from app.core.exceptions import ValidationError
+from app.core.security import validate_password_strength
 from app.models.common import UserRole
 
-PHONE_REGEX = re.compile(r"^\+?\d{10,20}$")
+# Phone number regex pattern
+PHONE_REGEX = re.compile(r"^\+?[1-9]\d{1,19}$")
 
 
 class UserUpdate(BaseModel):
@@ -27,38 +29,26 @@ class UserUpdate(BaseModel):
 
     @validator("full_name")
     def validate_full_name_not_empty(cls, v):
-        if v is not None and v.strip() == "":
-            raise ValidationError(
-                message="Full name cannot be empty",
-                error_code="VAL_201",
-                details="full_name is empty",
-            )
+        """Validate full name is not empty if provided."""
+        if v is not None and not v.strip():
+            raise ValueError("Full name cannot be empty")
         return v
 
     @validator("organization")
     def validate_organization_not_empty(cls, v):
-        if v is not None and v.strip() == "":
-            raise ValidationError(
-                message="Organization cannot be empty",
-                error_code="VAL_201",
-                details="organization is empty",
-            )
+        """Validate organization is not empty if provided."""
+        if v is not None and not v.strip():
+            raise ValueError("Organization cannot be empty")
         return v
 
     @validator("phone_number")
     def validate_phone_number(cls, v):
-        if v is not None and v.strip() == "":
-            raise ValidationError(
-                message="Phone number cannot be empty",
-                error_code="VAL_201",
-                details="phone_number is empty",
-            )
-        if v is not None and not PHONE_REGEX.match(v):
-            raise ValidationError(
-                message="Invalid phone number format",
-                error_code="VAL_202",
-                details="Phone number must be 10-20 digits, may start with +",
-            )
+        """Validate phone number format if provided."""
+        if v is not None:
+            if not v.strip():
+                raise ValueError("Phone number cannot be empty")
+            if not PHONE_REGEX.match(v):
+                raise ValueError("Invalid phone number format")
         return v
 
 
@@ -72,29 +62,13 @@ class PasswordChange(BaseModel):
     def validate_password_strength(cls, v):
         """Validate password strength."""
         if len(v) < 8:
-            raise ValidationError(
-                message="Password must be at least 8 characters long",
-                error_code="VAL_101",
-                details="Password too short",
-            )
+            raise ValueError("Password must be at least 8 characters long")
         if not any(c.isupper() for c in v):
-            raise ValidationError(
-                message="Password must contain at least one uppercase letter",
-                error_code="VAL_102",
-                details="Missing uppercase letter",
-            )
+            raise ValueError("Password must contain at least one uppercase letter")
         if not any(c.islower() for c in v):
-            raise ValidationError(
-                message="Password must contain at least one lowercase letter",
-                error_code="VAL_103",
-                details="Missing lowercase letter",
-            )
+            raise ValueError("Password must contain at least one lowercase letter")
         if not any(c.isdigit() for c in v):
-            raise ValidationError(
-                message="Password must contain at least one digit",
-                error_code="VAL_104",
-                details="Missing digit",
-            )
+            raise ValueError("Password must contain at least one digit")
         return v
 
 
@@ -108,6 +82,10 @@ class UserListResponse(BaseModel):
     role: UserRole
     is_active: bool
     created_at: datetime
+
+    @field_serializer('id')
+    def serialize_id(self, value: UUID) -> str:
+        return str(value)
 
     class Config:
         from_attributes = True
@@ -125,6 +103,10 @@ class UserDetailResponse(BaseModel):
     is_active: bool
     created_at: datetime
     updated_at: datetime | None = None
+
+    @field_serializer('id')
+    def serialize_id(self, value: UUID) -> str:
+        return str(value)
 
     class Config:
         from_attributes = True
