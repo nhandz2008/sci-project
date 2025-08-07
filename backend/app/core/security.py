@@ -27,7 +27,7 @@ def create_access_token(
 
 
 def verify_token(token: str) -> str | None:
-    """Verify JWT token and return subject."""
+    """Verify JWT token and return subject (user ID as string)."""
     try:
         payload = jwt.decode(
             token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM]
