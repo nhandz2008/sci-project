@@ -109,9 +109,21 @@ async def http_exception_handler(_request, exc):
 async def validation_exception_handler(_request, exc):
     """Handle validation errors."""
     logger.error(f"Validation Error: {exc.errors()}")
-    return JSONResponse(
-        status_code=422, content={"detail": "Validation error", "errors": exc.errors()}
-    )
+    field_errors = {}
+    for err in exc.errors():
+        loc = err.get("loc")
+        field = loc[-1] if loc else "unknown"
+        field_errors[field] = err.get("msg")
+    error_response = {
+        "error": {
+            "type": "validation_error",
+            "message": "Validation failed",
+            "code": "VAL_001",
+            "details": "Input validation failed. See field_errors for details.",
+            "field_errors": field_errors,
+        }
+    }
+    return JSONResponse(status_code=422, content=error_response)
 
 
 @app.exception_handler(Exception)
