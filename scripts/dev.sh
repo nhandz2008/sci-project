@@ -70,6 +70,13 @@ case "$1" in
         uv run pre-commit install || echo "⚠️  pre-commit not available; skipping hooks install"
         echo "✅ Installed pre-commit hooks"
 
+        # Create minimal alembic.ini if it doesn't exist
+        if [ ! -f backend/alembic.ini ]; then
+            echo "[alembic]" > backend/alembic.ini
+            echo "script_location = alembic" >> backend/alembic.ini
+            echo "✅ Created minimal alembic.ini"
+        fi
+
         echo "✅ Setup complete!"
         echo "Next steps:"
         echo "1. Edit .env file with your configuration"

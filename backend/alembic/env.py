@@ -14,8 +14,17 @@ from sqlmodel import SQLModel
 # access to the values within the .ini file in use.
 config = context.config
 
-# Interpret the config file for Python logging.
-fileConfig(config.config_file_name)
+# Ensure script_location is set even if no alembic.ini is present
+if not config.get_main_option("script_location"):
+    config.set_main_option("script_location", "alembic")
+
+# Interpret the config file for Python logging if available.
+try:
+    if config.config_file_name is not None:
+        fileConfig(config.config_file_name)
+except Exception:
+    # Minimal logging when no formatter/handlers are configured
+    pass
 
 # set target metadata
 target_metadata = SQLModel.metadata
@@ -60,4 +69,3 @@ if context.is_offline_mode():
     run_migrations_offline()
 else:
     run_migrations_online()
-
