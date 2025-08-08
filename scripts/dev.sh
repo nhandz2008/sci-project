@@ -26,7 +26,12 @@ case "$1" in
     "lint")
         echo "Running linting..."
         cd backend
-        uv run ruff check .
+        if [[ "$2" == "--fix" ]]; then
+            echo "Auto-fixing lint issues with ruff format..."
+            uv run ruff check . --fix
+        else
+            uv run ruff check .
+        fi
         ;;
     "format")
         echo "Formatting code..."
@@ -37,6 +42,10 @@ case "$1" in
         echo "Starting with Docker..."
         docker compose up -d
         ;;
+    "docker-build")
+        echo "Building with Docker..."
+        docker compose build
+        ;;
     "docker-logs")
         echo "Showing Docker logs..."
         docker compose logs -f
@@ -44,6 +53,25 @@ case "$1" in
     "docker-stop")
         echo "Stopping Docker services..."
         docker compose down
+        ;;
+    "clean")
+        echo "Cleaning project (docker, env, generated files)..."
+        # Stop and remove docker services, networks, and volumes
+        docker compose down -v --remove-orphans || true
+        docker compose rm -f -s -v || true
+        # Optionally remove built image (best-effort)
+        docker image rm -f sci-project-backend 2>/dev/null || true
+        # Remove environment file
+        rm -f .env
+        # Remove backend virtualenv and caches
+        rm -rf backend/.venv backend/.pytest_cache backend/.mypy_cache backend/.ruff_cache backend/htmlcov || true
+        # Remove coverage and test result artifacts
+        rm -f backend/.coverage backend/coverage.xml backend/test-results.xml || true
+        # Remove minimal alembic.ini (it will be re-created by setup)
+        rm -f backend/alembic.ini || true
+        # Remove python bytecode caches
+        find backend -type d -name "__pycache__" -prune -exec rm -rf {} + 2>/dev/null || true
+        echo "✅ Clean complete."
         ;;
     "setup")
         echo "Setting up development environment..."
@@ -83,7 +111,7 @@ case "$1" in
         echo "2. Run: ./scripts/dev.sh start"
         ;;
     *)
-        echo "Usage: $0 {start|install|test|lint|format|docker|docker-logs|docker-stop|setup}"
+        echo "Usage: $0 {start|install|test|lint|format|docker|docker-build|docker-logs|docker-stop|setup|clean}"
         echo ""
         echo "Commands:"
         echo "  start        - Start development server"
@@ -92,9 +120,11 @@ case "$1" in
         echo "  lint         - Run linting"
         echo "  format       - Format code"
         echo "  docker       - Start Docker services (alias of docker-start)"
+        echo "  docker-build - Build Docker images"
         echo "  docker-logs  - Show Docker logs"
         echo "  docker-stop  - Stop Docker services"
         echo "  setup        - Initial setup"
+        echo "  clean        - Remove docker resources, env, and generated files"
         exit 1
         ;;
 esac
