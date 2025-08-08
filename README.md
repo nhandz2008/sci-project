@@ -1,6 +1,6 @@
 # Science Competitions Insight (SCI)
 
-A full-stack web application for showcasing, managing, and recommending science & technology competitions worldwide.
+Full‑stack app for discovering and managing science & technology competitions.
 
 ## 🚀 Quick Start
 
@@ -12,30 +12,19 @@ A full-stack web application for showcasing, managing, and recommending science 
 
 ### Setup
 
-1. **Clone and navigate to the project**
-   ```bash
-   cd sci-project
-   ```
+```bash
+# Bootstrap: .env + deps + pre-commit
+./scripts/dev.sh setup
 
-2. **Run the development setup script**
-   ```bash
-   ./scripts/dev.sh setup
-   ```
+# Start docker services
+./scripts/dev.sh docker
 
-3. **Update environment variables**
-   Edit `.env` file and change the default values:
-   - `SECRET_KEY`: Generate a secure random key
-   - `POSTGRES_PASSWORD`: Set a strong database password
-   - `FIRST_SUPERUSER_PASSWORD`: Set admin password
+# Apply DB migrations
+cd backend && uv run -m alembic upgrade head && cd ..
 
-4. **Start the application**
-   ```bash
-   # Option 1: Local development (recommended)
-   ./scripts/dev.sh start
-
-   # Option 2: Docker development
-   ./scripts/dev.sh docker
-   ```
+# Start API
+./scripts/dev.sh start
+```
 
 5. **Verify the setup**
    - Backend API: http://localhost:8000
@@ -44,18 +33,18 @@ A full-stack web application for showcasing, managing, and recommending science 
 
 ## Backend
 
-### 1) Prereqs
+### Prereqs
 - Python 3.10+
 - UV package manager
 - PostgreSQL (or use `docker compose`)
 
-### 2) Environment
-- Copy `env.example` → `.env` and set at minimum:
+### Environment
+- Copy `env.example` → `.env`, set at least:
   - `SECRET_KEY` (32+ chars)
   - `POSTGRES_*` (server, port, user, password, db)
   - `FIRST_SUPERUSER_PASSWORD`
 
-### 3) Install & run (backend only)
+### Install & run (backend only)
 ```bash
 # Install dependencies
 ./scripts/dev.sh install
@@ -70,7 +59,7 @@ cd backend && uv run -m alembic upgrade head && cd ..
 ./scripts/dev.sh start
 ```
 
-### 4) Tests (PostgreSQL)
+### Tests (PostgreSQL)
 ```bash
 # Ensure DB is running
 ./scripts/dev.sh docker
@@ -86,7 +75,7 @@ Note: On first run, create the test database once if missing:
 createdb -h localhost -U postgres sci_test_db
 ```
 
-### 5) Docker helpers
+### Docker helpers
 - Start/stop services: `./scripts/dev.sh docker` | `./scripts/dev.sh docker-stop`
 - Logs: `./scripts/dev.sh docker-logs`
 
@@ -118,15 +107,6 @@ sci-project/
 
 ## 🛠️ Development
 
-### Backend Development
-
-The backend is built with:
-- **FastAPI**: Modern, fast web framework
-- **SQLModel**: Type-safe database ORM (SQLAlchemy + Pydantic)
-- **PostgreSQL**: Database
-- **UV**: Fast Python package manager
-- **Docker**: Containerization
-
 ### Useful Scripts
 ```bash
 ./scripts/dev.sh setup      # bootstrap: .env + deps + pre-commit
@@ -149,33 +129,18 @@ curl -LsSf https://astral.sh/uv/install.sh | sh
 ```
 
 ### Code Quality
-
-The project uses several tools for code quality:
-
-- **Ruff**: Fast Python linter and formatter
-- **MyPy**: Static type checking
-- **Pre-commit**: Git hooks for code quality
-
-To set up pre-commit hooks:
-```bash
-cd backend
-uv run pre-commit install
-```
+- Ruff (lint/format), MyPy, pre-commit (installed by `./scripts/dev.sh setup`).
 
 ### Database & Migrations
-PostgreSQL + SQLModel with Alembic migrations (`backend/alembic`).
+PostgreSQL + SQLModel with Alembic (`backend/alembic`).
 
 ## 🔧 Configuration
 
-### Environment Variables
-
-Key environment variables in `.env`:
-
-- `SECRET_KEY`: JWT token secret
-- `POSTGRES_*`: Database configuration
-- `AWS_*`: S3 configuration for file uploads
-- `LLM_API_*`: LLM API for recommendations
-- `FIRST_SUPERUSER_*`: Admin user credentials
+Key `.env` variables:
+- `SECRET_KEY`: JWT token secret (32+ chars)
+- `POSTGRES_*`: DB configuration
+- `FIRST_SUPERUSER_*`: Admin credentials
+(- `AWS_*`, `LLM_API_*` optional for later features)
 
 #### Database Migrations (Alembic)
 
@@ -202,71 +167,3 @@ uv run -m alembic stamp head
 Notes:
 - Ensure `.env` is configured (`POSTGRES_*`, `SECRET_KEY` 32+ chars).
 - Tests run against PostgreSQL (Docker `db` service). Schema is managed by Alembic; `TEST_POSTGRES_DB` defaults to `sci_test_db`.
-
-### API
-- Docs: `http://localhost:8000/docs`
-- Health: `http://localhost:8000/api/v1/health`
-
-## 🚀 Deployment
-
-### Docker
-Use helper commands under Useful Scripts. If you prefer raw commands:
-```bash
-docker compose up -d
-docker compose logs -f
-docker compose down
-```
-
-### Production Considerations
-
-For production deployment:
-
-1. **Security**: Change all default passwords and secrets
-2. **SSL**: Configure HTTPS with proper certificates
-3. **Database**: Use managed PostgreSQL service
-4. **Storage**: Configure AWS S3 for file uploads
-5. **Monitoring**: Set up logging and monitoring
-6. **Backup**: Implement database backup strategy
-
-## 📋 Status
-
-Backend:
-- Phase 1 ✅ (foundation)
-- Phase 2 ✅ (auth & users)
-- Phase 3 ✅ (competitions, moderation, sorting/search, migrations, tests)
-- Phase 4–6 🔜 (uploads, recommendations, analytics)
-
-## 🧪 Testing
-
-The application is ready for testing:
-
-```bash
-# Test the API locally
-curl http://localhost:8000/
-
-# Check health
-curl http://localhost:8000/api/v1/health
-
-# View API docs
-open http://localhost:8000/docs
-```
-
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Run tests and linting: `./scripts/dev.sh lint && ./scripts/dev.sh test`
-5. Submit a pull request
-
-## 📄 License
-
-This project is licensed under the MIT License.
-
-## 🆘 Support
-
-For support and questions:
-- Create an issue in the repository
-- Check the API documentation at `/docs`
-- Review the project structure and configuration
-- Use the development scripts for common tasks
