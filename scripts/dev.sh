@@ -71,9 +71,9 @@ case "$1" in
         echo "✅ Installed pre-commit hooks"
 
         # Create minimal alembic.ini if it doesn't exist
-        if [ ! -f backend/alembic.ini ]; then
-            echo "[alembic]" > backend/alembic.ini
-            echo "script_location = alembic" >> backend/alembic.ini
+        if [ ! -f alembic.ini ]; then
+            echo "[alembic]" > alembic.ini
+            echo "script_location = alembic" >> alembic.ini
             echo "✅ Created minimal alembic.ini"
         fi
 
