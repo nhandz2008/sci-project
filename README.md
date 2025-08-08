@@ -42,6 +42,46 @@ A full-stack web application for showcasing, managing, and recommending science 
    - API Documentation: http://localhost:8000/docs
    - Health Check: http://localhost:8000/api/v1/health
 
+## 🔹 Focused Backend Setup (What you need most)
+
+### 1) Prereqs
+- Python 3.10+
+- UV package manager
+- PostgreSQL (or use `docker-compose`)
+
+### 2) Environment
+- Copy `env.example` → `.env` and set at minimum:
+  - `SECRET_KEY` (32+ chars)
+  - `POSTGRES_*` (server, port, user, password, db)
+  - `FIRST_SUPERUSER_PASSWORD`
+
+### 3) Install & run (backend only)
+```bash
+cd backend
+uv sync
+
+# Run DB migrations (Alembic)
+uv run -m alembic upgrade head
+
+# Start API
+uv run python -m uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+```
+
+### 4) Tests
+```bash
+cd backend
+ENVIRONMENT=test SECRET_KEY=0123456789abcdef0123456789abcdef \
+POSTGRES_PASSWORD=test FIRST_SUPERUSER_PASSWORD=test-admin \
+uv run -m pytest -q
+```
+
+### 5) Docker (DB + backend)
+```bash
+docker-compose up -d
+# apply migrations (from another terminal)
+cd backend && uv run -m alembic upgrade head
+```
+
 ## 🏗️ Project Structure
 
 ```
@@ -79,33 +119,18 @@ The backend is built with:
 - **UV**: Fast Python package manager
 - **Docker**: Containerization
 
-### Development Scripts
-
-Use the development script for common tasks:
-
+### Useful Scripts
 ```bash
-# Initial setup
-./scripts/dev.sh setup
+# Backend dev helpers
+./scripts/dev.sh setup     # one-time bootstrap
+./scripts/dev.sh install   # install deps
+./scripts/dev.sh start     # run API
+./scripts/dev.sh test      # run tests
+./scripts/dev.sh lint      # lint
+./scripts/dev.sh format    # format code
 
-# Start development server
-./scripts/dev.sh start
-
-# Install dependencies
-./scripts/dev.sh install
-
-# Run tests
-./scripts/dev.sh test
-
-# Lint code
-./scripts/dev.sh lint
-
-# Format code
-./scripts/dev.sh format
-
-# Docker commands
-./scripts/dev.sh docker      # Start with Docker
-./scripts/dev.sh docker-logs # View logs
-./scripts/dev.sh docker-stop # Stop services
+# DB migrations
+cd backend && ./scripts/migrate.sh upgrade head
 ```
 
 ### Local Development Setup
@@ -194,19 +219,9 @@ Notes:
 - Ensure `.env` is configured (DB URL, credentials). `SECRET_KEY` must be 32+ chars.
 - In tests, SQLite (`test.db`) is used when `ENVIRONMENT=test`.
 
-### API Endpoints
-
-**Current Endpoints**:
-- `GET /`: Root endpoint with API info
-- `GET /health`: Health check
-- `GET /api/v1/health`: API health check
-- `GET /docs`: Interactive API documentation
-
-**Planned Endpoints** (Phase 2):
-- Authentication endpoints
-- Competition CRUD operations
-- User management
-- File upload system
+### API
+- Docs: `http://localhost:8000/docs`
+- Health: `http://localhost:8000/api/v1/health`
 
 ## 🚀 Deployment
 
@@ -236,36 +251,13 @@ For production deployment:
 5. **Monitoring**: Set up logging and monitoring
 6. **Backup**: Implement database backup strategy
 
-## 📋 Roadmap
+## 📋 Status
 
-### Phase 1: Foundation ✅
-- [x] FastAPI backend setup
-- [x] PostgreSQL database
-- [x] Basic models (User, Competition)
-- [x] Docker Compose development environment
-- [x] Code quality tools
-- [x] Development scripts
-- [x] Health check endpoints
-
-### Phase 2: Authentication & Core API
-- [ ] JWT authentication
-- [ ] User registration/login endpoints
-- [ ] Role-based authorization
-- [ ] Competition CRUD endpoints
-- [ ] File upload system
-
-### Phase 3: Advanced Features
-- [ ] Recommendation system (LLM integration)
-- [ ] Content moderation workflow
-- [ ] Search functionality
-- [ ] Basic analytics
-
-### Phase 4: Frontend
-- [ ] React + TypeScript setup
-- [ ] Authentication flow
-- [ ] Competition listing and details
-- [ ] Recommendation wizard
-- [ ] Admin dashboard
+Backend:
+- Phase 1 ✅ (foundation)
+- Phase 2 ✅ (auth & users)
+- Phase 3 ✅ (competitions, moderation, sorting/search, migrations, tests)
+- Phase 4–6 🔜 (uploads, recommendations, analytics)
 
 ## 🧪 Testing
 
