@@ -1,7 +1,8 @@
 """Competition schemas for request/response validation."""
 
-from datetime import datetime
-from typing import Any
+import json
+from datetime import datetime, timezone
+from typing import Any, Literal
 from uuid import UUID
 
 from pydantic import BaseModel, Field, field_serializer, field_validator, ConfigDict
@@ -75,9 +76,33 @@ class CompetitionCreate(BaseModel):
     @classmethod
     def validate_deadline(cls, v: datetime) -> datetime:
         """Validate that deadline is in the future."""
-        if v <= datetime.now():
+        if v.tzinfo is None:
+            # Treat naive as UTC
+            v = v.replace(tzinfo=timezone.utc)
+        if v <= datetime.now(timezone.utc):
             raise ValueError("Registration deadline must be in the future")
         return v
+
+    @field_validator("competition_link", "background_image_url")
+    @classmethod
+    def validate_optional_url(cls, v: str | None) -> str | None:
+        if v is None:
+            return v
+        value = v.strip()
+        if not (value.startswith("http://") or value.startswith("https://")):
+            raise ValueError("URL must start with http:// or https://")
+        return value
+
+    @field_validator("detail_image_urls")
+    @classmethod
+    def validate_detail_image_urls(cls, v: list[str]) -> list[str]:
+        cleaned: list[str] = []
+        for url in v:
+            value = url.strip()
+            if not (value.startswith("http://") or value.startswith("https://")):
+                raise ValueError("Image URL must start with http:// or https://")
+            cleaned.append(value)
+        return cleaned
 
 
 class CompetitionUpdate(BaseModel):
@@ -149,9 +174,36 @@ class CompetitionUpdate(BaseModel):
     @classmethod
     def validate_deadline(cls, v: datetime | None) -> datetime | None:
         """Validate that deadline is in the future."""
-        if v is not None and v <= datetime.now():
+        if v is None:
+            return v
+        if v.tzinfo is None:
+            v = v.replace(tzinfo=timezone.utc)
+        if v <= datetime.now(timezone.utc):
             raise ValueError("Registration deadline must be in the future")
         return v
+
+    @field_validator("competition_link", "background_image_url")
+    @classmethod
+    def validate_optional_url(cls, v: str | None) -> str | None:
+        if v is None:
+            return v
+        value = v.strip()
+        if not (value.startswith("http://") or value.startswith("https://")):
+            raise ValueError("URL must start with http:// or https://")
+        return value
+
+    @field_validator("detail_image_urls")
+    @classmethod
+    def validate_detail_image_urls(cls, v: list[str] | None) -> list[str] | None:
+        if v is None:
+            return v
+        cleaned: list[str] = []
+        for url in v:
+            value = url.strip()
+            if not (value.startswith("http://") or value.startswith("https://")):
+                raise ValueError("Image URL must start with http:// or https://")
+            cleaned.append(value)
+        return cleaned
 
 
 class CompetitionResponse(BaseModel):
@@ -187,6 +239,21 @@ class CompetitionResponse(BaseModel):
     @field_serializer('id')
     def serialize_id(self, value: UUID) -> str:
         return str(value)
+
+    @field_validator("detail_image_urls", mode="before")
+    @classmethod
+    def coerce_detail_images(cls, v: Any) -> list[str]:
+        if isinstance(v, str):
+            try:
+                loaded = json.loads(v)
+                if isinstance(loaded, list):
+                    return [str(x) for x in loaded]
+            except Exception:
+                return []
+            return []
+        if isinstance(v, list):
+            return [str(x) for x in v]
+        return []
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -246,6 +313,12 @@ class CompetitionFilterParams(BaseModel):
     is_featured: bool | None = Field(None, description="Filter by featured status")
     search: str | None = Field(None, description="Search in title and description")
     owner_id: str | None = Field(None, description="Filter by owner ID")
+    sort_by: Literal["created_at", "registration_deadline", "title"] | None = Field(
+        default=None, description="Sort by field"
+    )
+    order: Literal["asc", "desc"] | None = Field(
+        default=None, description="Sort order"
+    )
 
 
 class CompetitionModerationResponse(BaseModel):
@@ -274,3 +347,11 @@ class CompetitionModerationListResponse(BaseModel):
     total: int = Field(..., description="Total number of competitions")
     skip: int = Field(..., description="Number of competitions skipped")
     limit: int = Field(..., description="Number of competitions returned")
+
+
+class CompetitionRejectRequest(BaseModel):
+    """Schema for rejecting a competition with optional reason."""
+
+    rejection_reason: str | None = Field(
+        default=None, max_length=500, description="Reason for rejection"
+    )

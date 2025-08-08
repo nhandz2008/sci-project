@@ -23,6 +23,9 @@ class User(BaseModel, table=True):  # type: ignore[call-arg]
     is_active: bool = True
 
     # Relationships
-    competitions: list["Competition"] = Relationship(back_populates="owner")
+    competitions: list["Competition"] = Relationship(
+        back_populates="owner",
+        sa_relationship_kwargs={"primaryjoin": "User.id==Competition.owner_id"},
+    )
 
     model_config = ConfigDict(from_attributes=True)

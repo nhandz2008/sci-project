@@ -154,7 +154,7 @@ The application uses PostgreSQL with SQLModel for type-safe database operations.
 - `User`: Authentication and user management
 - `Competition`: Science competition data
 
-**Migrations**: Alembic will be set up in the next phase for database migrations.
+**Migrations**: Alembic is configured in `backend/alembic`. See usage below.
 
 ## 🔧 Configuration
 
@@ -167,6 +167,32 @@ Key environment variables in `.env`:
 - `AWS_*`: S3 configuration for file uploads
 - `LLM_API_*`: LLM API for recommendations
 - `FIRST_SUPERUSER_*`: Admin user credentials
+
+#### Database Migrations (Alembic)
+
+From the project root:
+```bash
+cd backend
+
+# Create a new migration from current models
+uv run -m alembic revision -m "describe change" --autogenerate
+
+# Upgrade to latest
+uv run -m alembic upgrade head
+
+# Downgrade one step
+uv run -m alembic downgrade -1
+
+# If your DB was created without Alembic, align the revision (no schema change)
+uv run -m alembic stamp head
+
+# Alternatively, use helper script
+./scripts/migrate.sh upgrade head
+./scripts/migrate.sh downgrade -1
+```
+Notes:
+- Ensure `.env` is configured (DB URL, credentials). `SECRET_KEY` must be 32+ chars.
+- In tests, SQLite (`test.db`) is used when `ENVIRONMENT=test`.
 
 ### API Endpoints
 

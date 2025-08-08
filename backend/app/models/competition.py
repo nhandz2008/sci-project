@@ -29,8 +29,8 @@ class Competition(BaseModel, table=True):  # type: ignore[call-arg]
     background_image_url: str | None = Field(default=None, max_length=500)
     detail_image_urls: str = Field(default="[]", max_length=2000)  # JSON string
     location: str | None = Field(default=None, max_length=100)
-    format: CompetitionFormat | None = None
-    scale: CompetitionScale | None = None
+    format: CompetitionFormat | None = Field(default=None, index=True)
+    scale: CompetitionScale | None = Field(default=None, index=True)
     registration_deadline: datetime = Field(index=True)
     size: int | None = Field(default=None, ge=1)
     target_age_min: int | None = Field(default=None, ge=0, le=100)
@@ -39,11 +39,19 @@ class Competition(BaseModel, table=True):  # type: ignore[call-arg]
     is_featured: bool = Field(default=False, index=True)
     is_approved: bool = Field(default=False, index=True)  # For content moderation
 
+    # Moderation audit fields (optional)
+    approved_by: str | None = Field(default=None, foreign_key="users.id")
+    approved_at: datetime | None = Field(default=None, index=True)
+    rejection_reason: str | None = Field(default=None, max_length=500)
+
     # Foreign key
-    owner_id: str | None = Field(default=None, foreign_key="users.id")
+    owner_id: str | None = Field(default=None, foreign_key="users.id", index=True)
 
     # Relationships
-    owner: Optional["User"] = Relationship(back_populates="competitions")
+    owner: Optional["User"] = Relationship(
+        back_populates="competitions",
+        sa_relationship_kwargs={"foreign_keys": "Competition.owner_id"},
+    )
 
     @property
     def detail_image_urls_list(self) -> list[str]:

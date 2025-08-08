@@ -14,6 +14,7 @@ from app.crud.competition import (
     delete_competition,
     get_competition_by_id,
     get_competitions,
+    get_featured_competitions,
     update_competition,
 )
 from app.models.user import User
@@ -21,8 +22,10 @@ from app.schemas.auth import MessageResponse
 from app.schemas.competition import (
     CompetitionCreate,
     CompetitionListPaginatedResponse,
+    CompetitionListResponse,
     CompetitionResponse,
     CompetitionUpdate,
+    CompetitionFilterParams,
 )
 
 router = APIRouter(prefix="/competitions", tags=["competitions"])
@@ -43,6 +46,10 @@ async def get_competitions_list(
     search: str | None = Query(
         default=None, description="Search in title and description"
     ),
+    sort_by: str | None = Query(
+        default=None, description="Sort by: created_at | registration_deadline | title"
+    ),
+    order: str | None = Query(default=None, description="Sort order: asc | desc"),
 ) -> CompetitionListPaginatedResponse:
     """Get competitions list (public - only approved competitions)."""
     competitions, total = get_competitions(
@@ -53,12 +60,47 @@ async def get_competitions_list(
         scale=scale,
         location=location,
         search=search,
-        is_approved=True,  # Only show approved competitions
+        is_approved=True,
+        sort_by=sort_by,
+        order=order,
     )
 
     return CompetitionListPaginatedResponse(
         competitions=[
-            CompetitionResponse.model_validate(comp) for comp in competitions
+            CompetitionListResponse.model_validate(comp) for comp in competitions
+        ],
+        total=total,
+        skip=skip,
+        limit=limit,
+    )
+
+
+@router.get("/featured", response_model=CompetitionListPaginatedResponse)
+async def get_featured_competitions_list(
+    session: Annotated[Session, Depends(get_session)],
+    skip: int = Query(default=0, ge=0, description="Number of competitions to skip"),
+    limit: int = Query(
+        default=10, ge=1, le=1000, description="Number of competitions to return"
+    ),
+    sort_by: str | None = Query(
+        default=None, description="Sort by: created_at | registration_deadline | title"
+    ),
+    order: str | None = Query(default=None, description="Sort order: asc | desc"),
+) -> CompetitionListPaginatedResponse:
+    """Get featured competitions (approved + featured)."""
+    competitions, total = get_competitions(
+        session=session,
+        skip=skip,
+        limit=limit,
+        is_approved=True,
+        is_featured=True,
+        sort_by=sort_by,
+        order=order,
+    )
+
+    return CompetitionListPaginatedResponse(
+        competitions=[
+            CompetitionListResponse.model_validate(comp) for comp in competitions
         ],
         total=total,
         skip=skip,
@@ -94,7 +136,6 @@ async def get_competition_details(
         )
 
     return CompetitionResponse.model_validate(competition)
-
 
 @router.post("", response_model=CompetitionResponse)
 async def create_new_competition(
@@ -205,7 +246,7 @@ async def get_my_competitions(
 
     return CompetitionListPaginatedResponse(
         competitions=[
-            CompetitionResponse.model_validate(comp) for comp in competitions
+            CompetitionListResponse.model_validate(comp) for comp in competitions
         ],
         total=total,
         skip=skip,

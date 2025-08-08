@@ -3,7 +3,10 @@
 from typing import cast
 from uuid import UUID
 
-from sqlalchemy import text
+from sqlalchemy import text, func
+from sqlalchemy import asc, desc
+from sqlalchemy import or_ as sa_or
+from datetime import datetime, timezone
 from sqlalchemy.sql.schema import Column
 from sqlmodel import Session, select
 
@@ -68,9 +71,11 @@ def get_competitions(
     is_featured: bool | None = None,
     search: str | None = None,
     owner_id: str | None = None,
+    sort_by: str | None = None,
+    order: str | None = None,
 ) -> tuple[list[Competition], int]:
     """Get competitions with pagination and filtering."""
-    # Build query
+    # Build base query with filters only (no sort/pagination yet)
     query = select(Competition)
 
     # Add filters
@@ -79,7 +84,8 @@ def get_competitions(
     if scale is not None:
         query = query.where(Competition.scale == scale)
     if location is not None:
-        query = query.where(cast(Column, Competition.location).ilike(f"%{location}%"))
+        location_value = location.lower()
+        query = query.where(func.lower(Competition.location).like(f"%{location_value}%"))
     if is_approved is not None:
         query = query.where(Competition.is_approved == is_approved)
     if is_featured is not None:
@@ -87,18 +93,50 @@ def get_competitions(
     if owner_id is not None:
         query = query.where(Competition.owner_id == owner_id)
     if search:
-        search_term = f"%{search}%"
+        search_value = search.lower()
+        # Case-insensitive search that works across SQLite/Postgres
         query = query.where(
-            text("title ILIKE :search OR introduction ILIKE :search").bindparams(
-                search=search_term
+            sa_or(
+                func.lower(Competition.title).like(f"%{search_value}%"),
+                func.lower(Competition.introduction).like(f"%{search_value}%"),
             )
         )
 
-    # Get total count
+    # Sorting
+    if sort_by is not None:
+        sort_key = sort_by.strip().lower()
+        sort_column = None
+        if sort_key == "created_at":
+            sort_column = Competition.created_at
+        elif sort_key == "registration_deadline":
+            sort_column = Competition.registration_deadline
+        elif sort_key == "title":
+            sort_column = Competition.title
+
+        if sort_column is not None:
+            is_desc = (order or "").strip().lower() == "desc"
+            query = query.order_by(desc(sort_column) if is_desc else asc(sort_column))
+
+    # Get total count before sorting/pagination
     count_query = select(text("COUNT(*)")).select_from(query.subquery())
     total = session.exec(count_query).first() or 0
 
-    # Add pagination
+    # Sorting
+    if sort_by is not None:
+        sort_key = sort_by.strip().lower()
+        sort_column = None
+        if sort_key == "created_at":
+            sort_column = Competition.created_at
+        elif sort_key == "registration_deadline":
+            sort_column = Competition.registration_deadline
+        elif sort_key == "title":
+            sort_column = Competition.title
+
+        if sort_column is not None:
+            is_desc = (order or "").strip().lower() == "desc"
+            query = query.order_by(desc(sort_column) if is_desc else asc(sort_column))
+
+    # Pagination
     query = query.offset(skip).limit(limit)
 
     # Execute query
@@ -143,7 +181,8 @@ def get_pending_competitions(
 ) -> tuple[list[Competition], int]:
     """Get competitions pending approval."""
     # Build query for pending competitions
-    query = select(Competition).where(Competition.is_approved.is_(None))  # type: ignore[attr-defined]
+    # Newly created competitions default to is_approved=False → treat as pending
+    query = select(Competition).where(Competition.is_approved == False)  # noqa: E712
 
     # Get total count
     count_query = select(text("COUNT(*)")).select_from(query.subquery())
@@ -158,25 +197,56 @@ def get_pending_competitions(
     return competitions, total
 
 
-def approve_competition(session: Session, competition_id: UUID) -> bool:
+def approve_competition(session: Session, competition_id: UUID, admin_user_id: UUID) -> bool:
     """Approve competition."""
     competition = get_competition_by_id(session, competition_id)
     if not competition:
         return False
 
     competition.is_approved = True
+    competition.approved_by = str(admin_user_id)
+    competition.approved_at = datetime.now(timezone.utc)
+    competition.rejection_reason = None
     session.add(competition)
     session.commit()
     return True
 
 
-def reject_competition(session: Session, competition_id: UUID) -> bool:
+def reject_competition(
+    session: Session, competition_id: UUID, admin_user_id: UUID, rejection_reason: str | None = None
+) -> bool:
     """Reject competition."""
     competition = get_competition_by_id(session, competition_id)
     if not competition:
         return False
 
     competition.is_approved = False
+    competition.is_featured = False
+    competition.approved_by = str(admin_user_id)
+    competition.approved_at = datetime.now(timezone.utc)
+    competition.rejection_reason = (rejection_reason or "")[:500] if rejection_reason else None
+    session.add(competition)
+    session.commit()
+    return True
+
+
+def set_competition_featured(session: Session, competition_id: UUID, is_featured: bool) -> bool:
+    """Toggle featured flag (admin only)."""
+    competition = get_competition_by_id(session, competition_id)
+    if not competition:
+        return False
+    competition.is_featured = bool(is_featured)
+    session.add(competition)
+    session.commit()
+    return True
+
+
+def set_competition_active(session: Session, competition_id: UUID, is_active: bool) -> bool:
+    """Toggle active flag (admin only)."""
+    competition = get_competition_by_id(session, competition_id)
+    if not competition:
+        return False
+    competition.is_active = bool(is_active)
     session.add(competition)
     session.commit()
     return True
