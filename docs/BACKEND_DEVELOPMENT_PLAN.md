@@ -59,25 +59,82 @@ This document provides a high-level, sequential plan for developing the backend 
 
 ## Phase 3: Competition Management
 
-1. **CRUD Endpoints for Competitions** ❌
-   - ❌ Implement endpoint to create a competition (authenticated users).
-   - ❌ Add endpoint to list competitions with filtering, pagination, and search.
-   - ❌ Implement endpoint to retrieve competition details by ID.
-   - ❌ Add endpoints to update and delete competitions (owner/admin only).
-   - ❌ Enforce permissions for modification/deletion.
+1. CRUD Endpoints for Competitions ✅/➕
+   - ✅ Public listing and detail (approved only):
+     - `GET /competitions` with pagination, search, filters (format, scale, location)
+     - `GET /competitions/{id}` returns details if `is_approved=True`
+   - ✅ Authenticated creator/admin actions:
+     - `POST /competitions` create competition (owner = current user; `is_approved=False` by default)
+     - `PUT /competitions/{id}` update competition (owner/admin only)
+     - `DELETE /competitions/{id}` delete competition (owner/admin only)
+     - `GET /competitions/my/competitions` list current user’s competitions
+   - ➕ Enhancements to implement:
+     - Add `GET /competitions/featured` to list featured, approved competitions
+     - Add sorting (`sort_by=created_at|registration_deadline|title`, `order=asc|desc`)
+     - Validate and normalize `location` (trim, case-insensitive search), ensure SQLite/Postgres compatibility for search
+     - Enforce a max `limit` of 1000 consistently via schema (already applied)
 
-2. **Content Moderation Workflow** ❌
-   - ❌ Add status fields to Competition model (pending, approved, rejected).
-   - ❌ Implement endpoints for admin to review, approve, or reject competitions.
-   - ❌ Add moderation logic to ensure only approved competitions are public.
-   - ❌ Notify creators of approval/rejection (log or email).
+2. Content Moderation Workflow ✅/➕
+   - ✅ Admin moderation endpoints:
+     - `GET /admin/competitions/pending` — list pending (to be adjusted; see below)
+     - `PUT /admin/competitions/{id}/approve`
+     - `PUT /admin/competitions/{id}/reject`
+   - ➕ Adjustments:
+     - Pending definition: update `get_pending_competitions` to use `is_approved=False` for newly created competitions (currently checks `is_approved IS NULL`)
+     - Add moderation audit fields on `Competition` (optional): `approved_by`, `approved_at`, `rejection_reason`
+     - Ensure public endpoints only show `is_approved=True`; creators can view their own regardless of approval
 
-3. **Testing Competition Management** ❌
-   - ❌ Write tests for all competition endpoints (CRUD, moderation).
-   - ❌ Test permissions, filtering, pagination, and search.
-   - ❌ Cover edge cases: unauthorized access, invalid data, etc.
+3. Schemas & Validation ✅/➕
+   - ✅ Request models: `CompetitionCreate`, `CompetitionUpdate` with validators:
+     - `registration_deadline` must be in the future
+     - `target_age_max > target_age_min` when both provided
+     - `detail_image_urls` handled as list in schema and stored as JSON string in model
+   - ✅ Response models: `CompetitionResponse`, `CompetitionListResponse`, `CompetitionListPaginatedResponse`, moderation responses
+   - ➕ Add `CompetitionSearchParams` (alias of existing filter params) with `sort_by`, `order`
+   - ➕ Add strict URL validation for `competition_link`, image URLs (length and basic format)
 
-**Phase 3 Status: NOT STARTED** ❌
+4. Permissions & Security ✅
+   - Admin can modify/delete any competition
+   - Owner can modify/delete only own competition (`can_modify_competition`, `can_delete_competition`)
+   - Public can only see approved competitions; authenticated users see their own
+
+5. Business Rules ✅/➕
+   - ✅ Creation defaults: `is_active=True`, `is_featured=False`, `is_approved=False`
+   - ✅ Update supports partial fields; image list merged via setter
+   - ➕ Prevent updates that set past `registration_deadline`
+   - ➕ Optional toggle endpoints (admin only): feature/unfeature, activate/deactivate
+
+6. Testing Plan (to expand) ➕
+   - Unit tests (CRUD):
+     - Create/read/update/delete competition
+     - Filters: `format`, `scale`, `location`, `is_approved`, `is_featured`, `owner_id`
+     - Search behavior (case-insensitive; SQLite vs Postgres)
+     - Pagination and total counts
+     - Permission checks for owner vs admin on update/delete
+   - Route tests:
+     - Public list shows only approved; detail returns 404 for unapproved
+     - Creator create/update/delete and list their competitions
+     - Admin can update/delete any; can approve/reject; pending list correctness
+     - New: featured listing and sorting combinations
+   - Moderation tests:
+     - Approve/reject transitions; public visibility toggling
+     - Optional audit fields (if implemented)
+   - Edge cases:
+     - Invalid UUIDs, empty/overlong titles, invalid URLs
+     - Past `registration_deadline` on create/update (reject)
+     - Large `detail_image_urls` arrays and JSON serialization
+
+7. Implementation Tasks (ordered) ➕
+   - [ ] Update `get_pending_competitions` to treat `is_approved=False` as pending (or introduce `approval_status` enum)
+   - [ ] Add sorting params to `get_competitions` and surface in `/competitions`
+   - [ ] Add `GET /competitions/featured` (approved + featured)
+   - [ ] Strengthen URL validation for `competition_link` and images in schemas
+   - [ ] Enforce future `registration_deadline` in update path
+   - [ ] Optional: add `approved_by`, `approved_at`, `rejection_reason` fields; persist in moderation endpoints
+   - [ ] Optional admin endpoints: `PUT /admin/competitions/{id}/feature`, `PUT /admin/competitions/{id}/unfeature`
+   - [ ] Add comprehensive tests covering all above
+
+**Phase 3 Status: IN PROGRESS (core CRUD and moderation endpoints exist; enhancements and robustness improvements pending)**
 
 ---
 
