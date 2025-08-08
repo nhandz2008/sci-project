@@ -143,7 +143,7 @@ def auth_headers(client):
 
 
 @pytest.fixture
-def admin_headers(client):
+def admin_headers(client, session):
     """Create authenticated admin user and return headers."""
     # Create admin user directly in database
     from app.crud.user import create_user

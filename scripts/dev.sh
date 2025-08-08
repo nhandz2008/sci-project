@@ -33,7 +33,7 @@ case "$1" in
         cd backend
         uv run ruff format .
         ;;
-    "docker-start")
+    "docker")
         echo "Starting with Docker..."
         docker compose up -d
         ;;
@@ -65,9 +65,9 @@ case "$1" in
         uv sync
         echo "✅ Installed dependencies"
 
-        # Install pre-commit hooks
+        # Install pre-commit hooks inside the virtual environment
         echo "Installing pre-commit hooks..."
-        pre-commit install
+        uv run pre-commit install || echo "⚠️  pre-commit not available; skipping hooks install"
         echo "✅ Installed pre-commit hooks"
 
         echo "✅ Setup complete!"
@@ -79,15 +79,15 @@ case "$1" in
         echo "Usage: $0 {start|install|test|lint|format|docker|docker-logs|docker-stop|setup}"
         echo ""
         echo "Commands:"
-        echo "  start       - Start development server"
-        echo "  install     - Install dependencies"
-        echo "  test        - Run tests"
-        echo "  lint        - Run linting"
-        echo "  format      - Format code"
-        echo "  docker      - Start with Docker"
-        echo "  docker-logs - Show Docker logs"
-        echo "  docker-stop - Stop Docker services"
-        echo "  setup       - Initial setup"
+        echo "  start        - Start development server"
+        echo "  install      - Install dependencies"
+        echo "  test         - Run tests"
+        echo "  lint         - Run linting"
+        echo "  format       - Format code"
+        echo "  docker       - Start Docker services (alias of docker-start)"
+        echo "  docker-logs  - Show Docker logs"
+        echo "  docker-stop  - Stop Docker services"
+        echo "  setup        - Initial setup"
         exit 1
         ;;
 esac

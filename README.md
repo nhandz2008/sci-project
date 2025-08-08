@@ -6,9 +6,9 @@ A full-stack web application for showcasing, managing, and recommending science 
 
 ### Prerequisites
 
-- Docker and Docker Compose
+- Docker (with `docker compose`)
 - Python 3.10+ (for local development)
-- UV package manager (recommended)
+- UV package manager
 
 ### Setup
 
@@ -42,12 +42,12 @@ A full-stack web application for showcasing, managing, and recommending science 
    - API Documentation: http://localhost:8000/docs
    - Health Check: http://localhost:8000/api/v1/health
 
-## 🔹 Focused Backend Setup (What you need most)
+## Backend
 
 ### 1) Prereqs
 - Python 3.10+
 - UV package manager
-- PostgreSQL (or use `docker-compose`)
+- PostgreSQL (or use `docker compose`)
 
 ### 2) Environment
 - Copy `env.example` → `.env` and set at minimum:
@@ -57,35 +57,38 @@ A full-stack web application for showcasing, managing, and recommending science 
 
 ### 3) Install & run (backend only)
 ```bash
-cd backend
-uv sync
+# Install dependencies
+./scripts/dev.sh install
 
-# Ensure Postgres is running (via Docker Compose)
-cd .. && docker-compose up -d db && cd backend
+# Start Postgres (Docker)
+./scripts/dev.sh docker
 
 # Apply DB migrations (Alembic)
-uv run -m alembic upgrade head
+cd backend && uv run -m alembic upgrade head && cd ..
 
 # Start API
-uv run python -m uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+./scripts/dev.sh start
 ```
 
 ### 4) Tests (PostgreSQL)
 ```bash
+# Ensure DB is running
+./scripts/dev.sh docker
+
+# Run the suite against Postgres test DB
 cd backend
-# Start DB (if not running) and run the suite against Postgres test DB
-cd .. && docker-compose up -d db && cd backend
 ENVIRONMENT=test TEST_POSTGRES_DB=sci_test_db \
 POSTGRES_SERVER=localhost POSTGRES_USER=postgres POSTGRES_PASSWORD=changethis \
 uv run -m pytest -q
 ```
-
-### 5) Docker (DB + backend)
+Note: On first run, create the test database once if missing:
 ```bash
-docker-compose up -d
-# apply migrations (from another terminal)
-cd backend && uv run -m alembic upgrade head
+createdb -h localhost -U postgres sci_test_db
 ```
+
+### 5) Docker helpers
+- Start/stop services: `./scripts/dev.sh docker` | `./scripts/dev.sh docker-stop`
+- Logs: `./scripts/dev.sh docker-logs`
 
 ## 🏗️ Project Structure
 
@@ -126,39 +129,24 @@ The backend is built with:
 
 ### Useful Scripts
 ```bash
-# Backend dev helpers
-./scripts/dev.sh setup     # one-time bootstrap
-./scripts/dev.sh install   # install deps
-./scripts/dev.sh start     # run API
-./scripts/dev.sh test      # run tests
-./scripts/dev.sh lint      # lint
-./scripts/dev.sh format    # format code
+./scripts/dev.sh setup      # bootstrap: .env + deps + pre-commit
+./scripts/dev.sh install    # install deps
+./scripts/dev.sh start      # run API locally
+./scripts/dev.sh test       # run tests (requires DB running)
+./scripts/dev.sh lint       # lint (ruff)
+./scripts/dev.sh format     # format (ruff)
+./scripts/dev.sh docker     # start Docker services (db)
+./scripts/dev.sh docker-logs
+./scripts/dev.sh docker-stop
 
 # DB migrations
 cd backend && ./scripts/migrate.sh upgrade head
 ```
 
-### Local Development Setup
-
-1. **Install UV** (if not already installed)
-   ```bash
-   curl -LsSf https://astral.sh/uv/install.sh | sh
-   ```
-
-2. **Navigate to backend**
-   ```bash
-   cd backend
-   ```
-
-3. **Install dependencies**
-   ```bash
-   uv sync
-   ```
-
-4. **Run the application**
-   ```bash
-   uv run python -m uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
-   ```
+### Install UV (if needed)
+```bash
+curl -LsSf https://astral.sh/uv/install.sh | sh
+```
 
 ### Code Quality
 
@@ -174,17 +162,8 @@ cd backend
 uv run pre-commit install
 ```
 
-### Database
-
-The application uses PostgreSQL with SQLModel for type-safe database operations.
-
-**Database URL**: `postgresql+psycopg://user:password@localhost:5432/sci_db`
-
-**Current Models**:
-- `User`: Authentication and user management
-- `Competition`: Science competition data
-
-**Migrations**: Alembic is configured in `backend/alembic`. See usage below.
+### Database & Migrations
+PostgreSQL + SQLModel with Alembic migrations (`backend/alembic`).
 
 ## 🔧 Configuration
 
@@ -221,7 +200,7 @@ uv run -m alembic stamp head
 ./scripts/migrate.sh downgrade -1
 ```
 Notes:
-- Ensure `.env` is configured (DB URL, credentials). `SECRET_KEY` must be 32+ chars.
+- Ensure `.env` is configured (`POSTGRES_*`, `SECRET_KEY` 32+ chars).
 - Tests run against PostgreSQL (Docker `db` service). Schema is managed by Alembic; `TEST_POSTGRES_DB` defaults to `sci_test_db`.
 
 ### API
@@ -230,19 +209,12 @@ Notes:
 
 ## 🚀 Deployment
 
-### Docker Deployment
-
-The application is containerized with Docker:
-
+### Docker
+Use helper commands under Useful Scripts. If you prefer raw commands:
 ```bash
-# Build and start all services
-docker-compose up -d
-
-# View logs
-docker-compose logs -f
-
-# Stop services
-docker-compose down
+docker compose up -d
+docker compose logs -f
+docker compose down
 ```
 
 ### Production Considerations
