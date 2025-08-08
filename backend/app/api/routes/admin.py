@@ -35,7 +35,9 @@ async def get_pending_competitions_list(
     ),
 ) -> CompetitionModerationListResponse:
     """Get pending competitions for moderation (admin only)."""
-    competitions, total = get_pending_competitions(session=session, skip=skip, limit=limit)
+    competitions, total = get_pending_competitions(
+        session=session, skip=skip, limit=limit
+    )
 
     return CompetitionModerationListResponse(
         competitions=[

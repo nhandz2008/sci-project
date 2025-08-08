@@ -14,7 +14,6 @@ from app.crud.competition import (
     delete_competition,
     get_competition_by_id,
     get_competitions,
-    get_featured_competitions,
     update_competition,
 )
 from app.models.user import User
@@ -25,7 +24,6 @@ from app.schemas.competition import (
     CompetitionListResponse,
     CompetitionResponse,
     CompetitionUpdate,
-    CompetitionFilterParams,
 )
 
 router = APIRouter(prefix="/competitions", tags=["competitions"])
@@ -136,6 +134,7 @@ async def get_competition_details(
         )
 
     return CompetitionResponse.model_validate(competition)
+
 
 @router.post("", response_model=CompetitionResponse)
 async def create_new_competition(

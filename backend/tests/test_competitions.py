@@ -1,7 +1,7 @@
-import pytest
 from datetime import datetime, timedelta, timezone
+from typing import TypedDict
+
 from fastapi.testclient import TestClient
-from sqlmodel import Session
 
 from app.models.common import CompetitionFormat, CompetitionScale
 
@@ -51,9 +51,14 @@ class TestPublicCompetitions:
         client.post("/api/v1/auth/signup", json=creator_login)
         login_resp = client.post(
             "/api/v1/auth/login",
-            json={"email": creator_login["email"], "password": creator_login["password"]},
+            json={
+                "email": creator_login["email"],
+                "password": creator_login["password"],
+            },
         )
-        creator_headers = {"Authorization": f"Bearer {login_resp.json()['access_token']}"}
+        creator_headers = {
+            "Authorization": f"Bearer {login_resp.json()['access_token']}"
+        }
 
         c1_resp = client.post(
             "/api/v1/competitions",
@@ -98,14 +103,40 @@ class TestPublicCompetitions:
         client.post("/api/v1/auth/signup", json=creator_login)
         login_resp = client.post(
             "/api/v1/auth/login",
-            json={"email": creator_login["email"], "password": creator_login["password"]},
+            json={
+                "email": creator_login["email"],
+                "password": creator_login["password"],
+            },
         )
-        creator_headers = {"Authorization": f"Bearer {login_resp.json()['access_token']}"}
+        creator_headers = {
+            "Authorization": f"Bearer {login_resp.json()['access_token']}"
+        }
 
-        specs = [
-            {"title": "Alpha Robotics", "location": "Hanoi", "format": CompetitionFormat.ONLINE, "days": 40},
-            {"title": "beta biology", "location": "Saigon", "format": CompetitionFormat.OFFLINE, "days": 50},
-            {"title": "Gamma Math", "location": "Da Nang", "format": CompetitionFormat.HYBRID, "days": 60},
+        class Spec(TypedDict):
+            title: str
+            location: str
+            format: CompetitionFormat
+            days: int
+
+        specs: list[Spec] = [
+            {
+                "title": "Alpha Robotics",
+                "location": "Hanoi",
+                "format": CompetitionFormat.ONLINE,
+                "days": 40,
+            },
+            {
+                "title": "beta biology",
+                "location": "Saigon",
+                "format": CompetitionFormat.OFFLINE,
+                "days": 50,
+            },
+            {
+                "title": "Gamma Math",
+                "location": "Da Nang",
+                "format": CompetitionFormat.HYBRID,
+                "days": 60,
+            },
         ]
         created_ids = []
         for spec in specs:
@@ -115,14 +146,16 @@ class TestPublicCompetitions:
                     title=spec["title"],
                     location=spec["location"],
                     format=spec["format"],
-                    registration_deadline=_future_deadline(spec["days"]),
+                    registration_deadline=_future_deadline(days=spec["days"]),
                 ),
                 headers=creator_headers,
             )
             assert resp.status_code == 200
             cid = resp.json()["id"]
             created_ids.append(cid)
-            client.put(f"/api/v1/admin/competitions/{cid}/approve", headers=admin_headers)
+            client.put(
+                f"/api/v1/admin/competitions/{cid}/approve", headers=admin_headers
+            )
 
         s = client.get("/api/v1/competitions", params={"search": "BeTa"})
         assert s.status_code == 200
@@ -143,7 +176,9 @@ class TestPublicCompetitions:
 
 
 class TestCreatorAndAdminFlows:
-    def test_creator_my_competitions_and_moderation(self, client: TestClient, admin_headers):
+    def test_creator_my_competitions_and_moderation(
+        self, client: TestClient, admin_headers
+    ):
         creator_login = {
             "email": "creator3@example.com",
             "full_name": "Creator Three",
@@ -154,9 +189,14 @@ class TestCreatorAndAdminFlows:
         client.post("/api/v1/auth/signup", json=creator_login)
         login_resp = client.post(
             "/api/v1/auth/login",
-            json={"email": creator_login["email"], "password": creator_login["password"]},
+            json={
+                "email": creator_login["email"],
+                "password": creator_login["password"],
+            },
         )
-        creator_headers = {"Authorization": f"Bearer {login_resp.json()['access_token']}"}
+        creator_headers = {
+            "Authorization": f"Bearer {login_resp.json()['access_token']}"
+        }
 
         c1 = client.post(
             "/api/v1/competitions",
@@ -172,12 +212,16 @@ class TestCreatorAndAdminFlows:
         c1_id = c1.json()["id"]
         c2_id = c2.json()["id"]
 
-        my_list = client.get("/api/v1/competitions/my/competitions", headers=creator_headers)
+        my_list = client.get(
+            "/api/v1/competitions/my/competitions", headers=creator_headers
+        )
         assert my_list.status_code == 200
         my_ids = [c["id"] for c in my_list.json()["competitions"]]
         assert c1_id in my_ids and c2_id in my_ids
 
-        pending = client.get("/api/v1/admin/competitions/pending", headers=admin_headers)
+        pending = client.get(
+            "/api/v1/admin/competitions/pending", headers=admin_headers
+        )
         assert pending.status_code == 200
         pend_ids = [c["id"] for c in pending.json()["competitions"]]
         assert c1_id in pend_ids and c2_id in pend_ids
@@ -225,6 +269,7 @@ class TestCreatorAndAdminFlows:
                 datetime.now(timezone.utc) - timedelta(days=1)
             ).isoformat()
         )
-        r2 = client.post("/api/v1/competitions", json=bad_deadline, headers=auth_headers)
+        r2 = client.post(
+            "/api/v1/competitions", json=bad_deadline, headers=auth_headers
+        )
         assert r2.status_code == 422
-

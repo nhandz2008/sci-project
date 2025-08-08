@@ -1,9 +1,9 @@
 """Tests for Pydantic schemas."""
 
-import pytest
 from datetime import datetime
 from uuid import uuid4
 
+import pytest
 from pydantic import ValidationError
 
 from app.models.common import UserRole
@@ -20,7 +20,6 @@ from app.schemas.user import (
     PasswordChange,
     UserDetailResponse,
     UserListPaginatedResponse,
-    UserListResponse,
     UserUpdate,
 )
 
@@ -35,11 +34,11 @@ class TestUserCreateSchema:
             "full_name": "Test User",
             "organization": "Test Org",
             "phone_number": "+1234567890",
-            "password": "TestPass123"
+            "password": "TestPass123",
         }
-        
+
         user_create = UserCreate(**user_data)
-        
+
         assert user_create.email == user_data["email"]
         assert user_create.full_name == user_data["full_name"]
         assert user_create.organization == user_data["organization"]
@@ -53,9 +52,9 @@ class TestUserCreateSchema:
             "full_name": "Test User",
             "organization": "Test Org",
             "phone_number": "+1234567890",
-            "password": "TestPass123"
+            "password": "TestPass123",
         }
-        
+
         with pytest.raises(ValidationError):
             UserCreate(**user_data)
 
@@ -66,9 +65,9 @@ class TestUserCreateSchema:
             "full_name": "Test User",
             "organization": "Test Org",
             "phone_number": "+1234567890",
-            "password": "weak"
+            "password": "weak",
         }
-        
+
         with pytest.raises(ValidationError):
             UserCreate(**user_data)
 
@@ -79,9 +78,9 @@ class TestUserCreateSchema:
             "full_name": "Test User",
             "organization": "Test Org",
             "phone_number": "invalid-phone",
-            "password": "TestPass123"
+            "password": "TestPass123",
         }
-        
+
         with pytest.raises(ValidationError):
             UserCreate(**user_data)
 
@@ -92,9 +91,9 @@ class TestUserCreateSchema:
             "full_name": "",
             "organization": "Test Org",
             "phone_number": "+1234567890",
-            "password": "TestPass123"
+            "password": "TestPass123",
         }
-        
+
         with pytest.raises(ValidationError):
             UserCreate(**user_data)
 
@@ -105,9 +104,9 @@ class TestUserCreateSchema:
             "full_name": "A" * 101,  # Exceeds max_length=100
             "organization": "Test Org",
             "phone_number": "+1234567890",
-            "password": "TestPass123"
+            "password": "TestPass123",
         }
-        
+
         with pytest.raises(ValidationError):
             UserCreate(**user_data)
 
@@ -117,33 +116,24 @@ class TestUserLoginSchema:
 
     def test_user_login_valid(self):
         """Test valid user login data."""
-        login_data = {
-            "email": "test@example.com",
-            "password": "TestPass123"
-        }
-        
+        login_data = {"email": "test@example.com", "password": "TestPass123"}
+
         user_login = UserLogin(**login_data)
-        
+
         assert user_login.email == login_data["email"]
         assert user_login.password == login_data["password"]
 
     def test_user_login_invalid_email(self):
         """Test user login with invalid email."""
-        login_data = {
-            "email": "invalid-email",
-            "password": "TestPass123"
-        }
-        
+        login_data = {"email": "invalid-email", "password": "TestPass123"}
+
         with pytest.raises(ValidationError):
             UserLogin(**login_data)
 
     def test_user_login_empty_password(self):
         """Test user login with empty password."""
-        login_data = {
-            "email": "test@example.com",
-            "password": ""
-        }
-        
+        login_data = {"email": "test@example.com", "password": ""}
+
         # This should be valid as password is not validated for length in login
         user_login = UserLogin(**login_data)
         assert user_login.password == ""
@@ -156,7 +146,7 @@ class TestUserResponseSchema:
         """Test valid user response data."""
         user_id = uuid4()
         now = datetime.now()
-        
+
         user_data = {
             "id": user_id,
             "email": "test@example.com",
@@ -166,11 +156,11 @@ class TestUserResponseSchema:
             "role": UserRole.CREATOR,
             "is_active": True,
             "created_at": now,
-            "updated_at": None
+            "updated_at": None,
         }
-        
+
         user_response = UserResponse(**user_data)
-        
+
         assert user_response.id == user_id
         assert user_response.email == user_data["email"]
         assert user_response.full_name == user_data["full_name"]
@@ -184,7 +174,7 @@ class TestUserResponseSchema:
     def test_user_response_from_attributes(self):
         """Test user response creation from model attributes."""
         from app.models.user import User
-        
+
         # Create a mock user object
         user = User(
             id=uuid4(),
@@ -196,11 +186,11 @@ class TestUserResponseSchema:
             hashed_password="hashed_password",
             is_active=True,
             created_at=datetime.now(),
-            updated_at=None
+            updated_at=None,
         )
-        
+
         user_response = UserResponse.model_validate(user)
-        
+
         assert user_response.id == user.id
         assert user_response.email == user.email
         assert user_response.full_name == user.full_name
@@ -217,7 +207,7 @@ class TestTokenResponseSchema:
         """Test valid token response data."""
         user_id = uuid4()
         now = datetime.now()
-        
+
         user_data = {
             "id": user_id,
             "email": "test@example.com",
@@ -227,17 +217,17 @@ class TestTokenResponseSchema:
             "role": UserRole.CREATOR,
             "is_active": True,
             "created_at": now,
-            "updated_at": None
+            "updated_at": None,
         }
-        
+
         token_data = {
             "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
             "token_type": "bearer",
-            "user": UserResponse(**user_data)
+            "user": UserResponse(**user_data),
         }
-        
+
         token_response = TokenResponse(**token_data)
-        
+
         assert token_response.access_token == token_data["access_token"]
         assert token_response.token_type == "bearer"
         assert token_response.user.id == user_id
@@ -247,7 +237,7 @@ class TestTokenResponseSchema:
         """Test token response with default token type."""
         user_id = uuid4()
         now = datetime.now()
-        
+
         user_data = {
             "id": user_id,
             "email": "test@example.com",
@@ -257,16 +247,16 @@ class TestTokenResponseSchema:
             "role": UserRole.CREATOR,
             "is_active": True,
             "created_at": now,
-            "updated_at": None
+            "updated_at": None,
         }
-        
+
         token_data = {
             "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
-            "user": UserResponse(**user_data)
+            "user": UserResponse(**user_data),
         }
-        
+
         token_response = TokenResponse(**token_data)
-        
+
         assert token_response.token_type == "bearer"
 
 
@@ -275,20 +265,16 @@ class TestPasswordResetSchemas:
 
     def test_password_reset_request_valid(self):
         """Test valid password reset request."""
-        request_data = {
-            "email": "test@example.com"
-        }
-        
+        request_data = {"email": "test@example.com"}
+
         reset_request = PasswordResetRequest(**request_data)
-        
+
         assert reset_request.email == request_data["email"]
 
     def test_password_reset_request_invalid_email(self):
         """Test password reset request with invalid email."""
-        request_data = {
-            "email": "invalid-email"
-        }
-        
+        request_data = {"email": "invalid-email"}
+
         with pytest.raises(ValidationError):
             PasswordResetRequest(**request_data)
 
@@ -296,11 +282,11 @@ class TestPasswordResetSchemas:
         """Test valid password reset confirmation."""
         confirm_data = {
             "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
-            "new_password": "NewPass123"
+            "new_password": "NewPass123",
         }
-        
+
         reset_confirm = PasswordResetConfirm(**confirm_data)
-        
+
         assert reset_confirm.token == confirm_data["token"]
         assert reset_confirm.new_password == confirm_data["new_password"]
 
@@ -308,9 +294,9 @@ class TestPasswordResetSchemas:
         """Test password reset confirmation with weak password."""
         confirm_data = {
             "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
-            "new_password": "weak"
+            "new_password": "weak",
         }
-        
+
         with pytest.raises(ValidationError):
             PasswordResetConfirm(**confirm_data)
 
@@ -320,22 +306,18 @@ class TestMessageResponseSchema:
 
     def test_message_response_valid(self):
         """Test valid message response."""
-        message_data = {
-            "message": "Operation completed successfully"
-        }
-        
+        message_data = {"message": "Operation completed successfully"}
+
         message_response = MessageResponse(**message_data)
-        
+
         assert message_response.message == message_data["message"]
 
     def test_message_response_empty_message(self):
         """Test message response with empty message."""
-        message_data = {
-            "message": ""
-        }
-        
+        message_data = {"message": ""}
+
         message_response = MessageResponse(**message_data)
-        
+
         assert message_response.message == ""
 
 
@@ -347,34 +329,29 @@ class TestUserUpdateSchema:
         update_data = {
             "full_name": "Updated Name",
             "organization": "Updated Org",
-            "phone_number": "+1987654321"  # Valid phone number format
+            "phone_number": "+1987654321",  # Valid phone number format
         }
-        
+
         user_update = UserUpdate(**update_data)
-        
+
         assert user_update.full_name == update_data["full_name"]
         assert user_update.organization == update_data["organization"]
         assert user_update.phone_number == update_data["phone_number"]
 
     def test_user_update_partial(self):
         """Test partial user update data."""
-        update_data = {
-            "full_name": "Updated Name"
-        }
-        
+        update_data = {"full_name": "Updated Name"}
+
         user_update = UserUpdate(**update_data)
-        
+
         assert user_update.full_name == update_data["full_name"]
         assert user_update.organization is None
         assert user_update.phone_number is None
 
     def test_user_update_invalid_phone(self):
         """Test user update with invalid phone number."""
-        update_data = {
-            "full_name": "Updated Name",
-            "phone_number": "invalid-phone"
-        }
-        
+        update_data = {"full_name": "Updated Name", "phone_number": "invalid-phone"}
+
         with pytest.raises(ValidationError):
             UserUpdate(**update_data)
 
@@ -382,9 +359,9 @@ class TestUserUpdateSchema:
         """Test user update with fields exceeding max length."""
         update_data = {
             "full_name": "A" * 101,  # Exceeds max_length=100
-            "organization": "Updated Org"
+            "organization": "Updated Org",
         }
-        
+
         with pytest.raises(ValidationError):
             UserUpdate(**update_data)
 
@@ -394,35 +371,26 @@ class TestPasswordChangeSchema:
 
     def test_password_change_valid(self):
         """Test valid password change data."""
-        password_data = {
-            "current_password": "OldPass123",
-            "new_password": "NewPass123"
-        }
-        
+        password_data = {"current_password": "OldPass123", "new_password": "NewPass123"}
+
         password_change = PasswordChange(**password_data)
-        
+
         assert password_change.current_password == password_data["current_password"]
         assert password_change.new_password == password_data["new_password"]
 
     def test_password_change_weak_new_password(self):
         """Test password change with weak new password."""
-        password_data = {
-            "current_password": "OldPass123",
-            "new_password": "weak"
-        }
-        
+        password_data = {"current_password": "OldPass123", "new_password": "weak"}
+
         with pytest.raises(ValidationError):
             PasswordChange(**password_data)
 
     def test_password_change_empty_passwords(self):
         """Test password change with empty passwords."""
-        password_data = {
-            "current_password": "",
-            "new_password": "NewPass123"
-        }
-        
+        password_data = {"current_password": "", "new_password": "NewPass123"}
+
         password_change = PasswordChange(**password_data)
-        
+
         assert password_change.current_password == ""
         assert password_change.new_password == "NewPass123"
 
@@ -434,7 +402,7 @@ class TestUserDetailResponseSchema:
         """Test valid user detail response data."""
         user_id = uuid4()
         now = datetime.now()
-        
+
         user_data = {
             "id": user_id,
             "email": "test@example.com",
@@ -444,11 +412,11 @@ class TestUserDetailResponseSchema:
             "role": UserRole.CREATOR,
             "is_active": True,
             "created_at": now,
-            "updated_at": None
+            "updated_at": None,
         }
-        
+
         user_detail_response = UserDetailResponse(**user_data)
-        
+
         assert user_detail_response.id == user_id
         assert user_detail_response.email == user_data["email"]
         assert user_detail_response.full_name == user_data["full_name"]
@@ -467,7 +435,7 @@ class TestUserListPaginatedResponseSchema:
         """Test valid user list paginated response data."""
         user_id = uuid4()
         now = datetime.now()
-        
+
         user_data = {
             "id": user_id,
             "email": "test@example.com",
@@ -477,18 +445,18 @@ class TestUserListPaginatedResponseSchema:
             "role": UserRole.CREATOR,
             "is_active": True,
             "created_at": now,
-            "updated_at": None
+            "updated_at": None,
         }
-        
+
         list_data = {
             "users": [UserResponse(**user_data)],
             "total": 1,
             "skip": 0,
-            "limit": 10
+            "limit": 10,
         }
-        
+
         user_list_response = UserListPaginatedResponse(**list_data)
-        
+
         assert len(user_list_response.users) == 1
         assert user_list_response.total == 1
         assert user_list_response.skip == 0
@@ -497,15 +465,10 @@ class TestUserListPaginatedResponseSchema:
 
     def test_user_list_paginated_response_empty(self):
         """Test user list paginated response with empty users."""
-        list_data = {
-            "users": [],
-            "total": 0,
-            "skip": 0,
-            "limit": 10
-        }
-        
+        list_data = {"users": [], "total": 0, "skip": 0, "limit": 10}
+
         user_list_response = UserListPaginatedResponse(**list_data)
-        
+
         assert len(user_list_response.users) == 0
         assert user_list_response.total == 0
         assert user_list_response.skip == 0
@@ -522,12 +485,12 @@ class TestSchemaSerialization:
             "full_name": "Test User",
             "organization": "Test Org",
             "phone_number": "+1234567890",
-            "password": "TestPass123"
+            "password": "TestPass123",
         }
-        
+
         user_create = UserCreate(**user_data)
         serialized = user_create.model_dump()
-        
+
         assert serialized["email"] == user_data["email"]
         assert serialized["full_name"] == user_data["full_name"]
         assert serialized["organization"] == user_data["organization"]
@@ -538,7 +501,7 @@ class TestSchemaSerialization:
         """Test UserResponse schema serialization."""
         user_id = uuid4()
         now = datetime.now()
-        
+
         user_data = {
             "id": user_id,
             "email": "test@example.com",
@@ -548,12 +511,12 @@ class TestSchemaSerialization:
             "role": UserRole.CREATOR,
             "is_active": True,
             "created_at": now,
-            "updated_at": None
+            "updated_at": None,
         }
-        
+
         user_response = UserResponse(**user_data)
         serialized = user_response.model_dump()
-        
+
         assert serialized["id"] == str(user_id)
         assert serialized["email"] == user_data["email"]
         assert serialized["full_name"] == user_data["full_name"]
@@ -566,7 +529,7 @@ class TestSchemaSerialization:
         """Test TokenResponse schema serialization."""
         user_id = uuid4()
         now = datetime.now()
-        
+
         user_data = {
             "id": user_id,
             "email": "test@example.com",
@@ -576,18 +539,18 @@ class TestSchemaSerialization:
             "role": UserRole.CREATOR,
             "is_active": True,
             "created_at": now,
-            "updated_at": None
+            "updated_at": None,
         }
-        
+
         token_data = {
             "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
             "token_type": "bearer",
-            "user": UserResponse(**user_data)
+            "user": UserResponse(**user_data),
         }
-        
+
         token_response = TokenResponse(**token_data)
         serialized = token_response.model_dump()
-        
+
         assert serialized["access_token"] == token_data["access_token"]
         assert serialized["token_type"] == "bearer"
         assert "user" in serialized
@@ -602,23 +565,19 @@ class TestSchemaEdgeCases:
         """Test user creation with missing required fields."""
         user_data = {
             "email": "test@example.com",
-            "full_name": "Test User"
+            "full_name": "Test User",
             # Missing organization, phone_number, password
         }
-        
+
         with pytest.raises(ValidationError):
             UserCreate(**user_data)
 
     def test_user_update_all_none(self):
         """Test user update with all fields as None."""
-        update_data = {
-            "full_name": None,
-            "organization": None,
-            "phone_number": None
-        }
-        
+        update_data = {"full_name": None, "organization": None, "phone_number": None}
+
         user_update = UserUpdate(**update_data)
-        
+
         assert user_update.full_name is None
         assert user_update.organization is None
         assert user_update.phone_number is None
@@ -627,11 +586,11 @@ class TestSchemaEdgeCases:
         """Test password change with same current and new password."""
         password_data = {
             "current_password": "SamePass123",
-            "new_password": "SamePass123"
+            "new_password": "SamePass123",
         }
-        
+
         password_change = PasswordChange(**password_data)
-        
+
         assert password_change.current_password == password_data["current_password"]
         assert password_change.new_password == password_data["new_password"]
 
@@ -639,7 +598,7 @@ class TestSchemaEdgeCases:
         """Test user response with unicode characters."""
         user_id = uuid4()
         now = datetime.now()
-        
+
         user_data = {
             "id": user_id,
             "email": "test🚀@example.com",
@@ -649,11 +608,11 @@ class TestSchemaEdgeCases:
             "role": UserRole.CREATOR,
             "is_active": True,
             "created_at": now,
-            "updated_at": None
+            "updated_at": None,
         }
-        
+
         user_response = UserResponse(**user_data)
-        
+
         assert user_response.email == user_data["email"]
         assert user_response.full_name == user_data["full_name"]
-        assert user_response.organization == user_data["organization"] 
+        assert user_response.organization == user_data["organization"]

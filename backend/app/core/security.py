@@ -34,14 +34,14 @@ def verify_token(token: str) -> str | None:
         )
         subject: str = payload.get("sub")
         exp: int = payload.get("exp")
-        
+
         if subject is None:
             return None
-            
+
         # Check if token is expired
         if exp is None or datetime.now(timezone.utc).timestamp() > exp:
             return None
-            
+
         return subject
     except JWTError:
         return None
@@ -64,7 +64,9 @@ def create_refresh_token(
     if expires_delta:
         expire = datetime.now(timezone.utc) + expires_delta
     else:
-        expire = datetime.now(timezone.utc) + timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS)
+        expire = datetime.now(timezone.utc) + timedelta(
+            days=settings.REFRESH_TOKEN_EXPIRE_DAYS
+        )
     to_encode = {"exp": expire, "sub": str(subject), "type": "refresh"}
     encoded_jwt = jwt.encode(
         to_encode, settings.SECRET_KEY, algorithm=settings.ALGORITHM
@@ -106,7 +108,9 @@ def validate_password(password: str) -> bool:
     return is_valid
 
 
-def create_password_reset_token(email: str, expires_delta: timedelta | None = None) -> str:
+def create_password_reset_token(
+    email: str, expires_delta: timedelta | None = None
+) -> str:
     """Create password reset token."""
     if expires_delta:
         expire = datetime.now(timezone.utc) + expires_delta
@@ -128,14 +132,14 @@ def verify_password_reset_token(token: str) -> str | None:
         email: str = payload.get("sub")
         token_type: str = payload.get("type")
         exp: int = payload.get("exp")
-        
+
         if email is None or token_type != "password_reset":
             return None
-            
+
         # Check if token is expired
         if exp is None or datetime.now(timezone.utc).timestamp() > exp:
             return None
-            
+
         return email
     except JWTError:
         return None

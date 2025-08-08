@@ -3,6 +3,7 @@
 import logging
 from typing import Any
 from uuid import UUID
+
 from fastapi import HTTPException, status
 
 logger = logging.getLogger(__name__)
@@ -15,7 +16,7 @@ def validate_uuid(uuid_str: str, entity_name: str = "entity") -> UUID:
     except ValueError:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Invalid {entity_name} ID format"
+            detail=f"Invalid {entity_name} ID format",
         )
 
 
@@ -31,7 +32,9 @@ def log_security_event(event_type: str, details: dict[str, Any]) -> None:
     logger.warning(f"Security event - {event_type}: {details}")
 
 
-def validate_pagination_params(skip: int, limit: int, max_limit: int = 1000) -> tuple[int, int]:
+def validate_pagination_params(
+    skip: int, limit: int, max_limit: int = 1000
+) -> tuple[int, int]:
     """Validate and normalize pagination parameters."""
     if skip < 0:
         skip = 0
@@ -39,4 +42,4 @@ def validate_pagination_params(skip: int, limit: int, max_limit: int = 1000) -> 
         limit = 10
     if limit > max_limit:
         limit = max_limit
-    return skip, limit 
+    return skip, limit

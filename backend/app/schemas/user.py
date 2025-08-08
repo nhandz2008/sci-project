@@ -2,10 +2,16 @@
 
 import re
 from datetime import datetime
-from typing import Any
 from uuid import UUID
 
-from pydantic import BaseModel, EmailStr, Field, field_serializer, field_validator, ConfigDict
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+    EmailStr,
+    Field,
+    field_serializer,
+    field_validator,
+)
 
 from app.models.common import UserRole
 
@@ -86,7 +92,7 @@ class UserListResponse(BaseModel):
     is_active: bool
     created_at: datetime
 
-    @field_serializer('id')
+    @field_serializer("id")
     def serialize_id(self, value: UUID) -> str:
         return str(value)
 
@@ -106,7 +112,7 @@ class UserDetailResponse(BaseModel):
     created_at: datetime
     updated_at: datetime | None = None
 
-    @field_serializer('id')
+    @field_serializer("id")
     def serialize_id(self, value: UUID) -> str:
         return str(value)
 
