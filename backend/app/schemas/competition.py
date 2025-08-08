@@ -5,7 +5,7 @@ from datetime import datetime, timezone
 from typing import Any, Literal
 from uuid import UUID
 
-from pydantic import BaseModel, Field, field_serializer, field_validator, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field, field_serializer, field_validator
 
 from app.models.common import CompetitionFormat, CompetitionScale
 
@@ -232,13 +232,17 @@ class CompetitionResponse(BaseModel):
     is_active: bool
     is_featured: bool
     is_approved: bool
-    owner_id: str | None
+    owner_id: UUID | None
     created_at: datetime
     updated_at: datetime | None = None
 
-    @field_serializer('id')
+    @field_serializer("id")
     def serialize_id(self, value: UUID) -> str:
         return str(value)
+
+    @field_serializer("owner_id")
+    def serialize_owner_id(self, value: UUID | None) -> str | None:
+        return str(value) if value is not None else None
 
     @field_validator("detail_image_urls", mode="before")
     @classmethod
@@ -274,12 +278,16 @@ class CompetitionListResponse(BaseModel):
     target_age_max: int | None
     is_featured: bool
     is_approved: bool
-    owner_id: str | None
+    owner_id: UUID | None
     created_at: datetime
 
-    @field_serializer('id')
+    @field_serializer("id")
     def serialize_id(self, value: UUID) -> str:
         return str(value)
+
+    @field_serializer("owner_id")
+    def serialize_owner_id(self, value: UUID | None) -> str | None:
+        return str(value) if value is not None else None
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -316,9 +324,7 @@ class CompetitionFilterParams(BaseModel):
     sort_by: Literal["created_at", "registration_deadline", "title"] | None = Field(
         default=None, description="Sort by field"
     )
-    order: Literal["asc", "desc"] | None = Field(
-        default=None, description="Sort order"
-    )
+    order: Literal["asc", "desc"] | None = Field(default=None, description="Sort order")
 
 
 class CompetitionModerationResponse(BaseModel):
@@ -327,11 +333,11 @@ class CompetitionModerationResponse(BaseModel):
     id: UUID
     title: str
     introduction: str | None
-    owner_id: str | None
+    owner_id: UUID | None
     created_at: datetime
     is_approved: bool
 
-    @field_serializer('id')
+    @field_serializer("id")
     def serialize_id(self, value: UUID) -> str:
         return str(value)
 

@@ -1,6 +1,7 @@
 import json
 from datetime import datetime
 from typing import TYPE_CHECKING, Optional
+from uuid import UUID
 
 from pydantic import ConfigDict
 from sqlmodel import Field, Relationship
@@ -40,12 +41,12 @@ class Competition(BaseModel, table=True):  # type: ignore[call-arg]
     is_approved: bool = Field(default=False, index=True)  # For content moderation
 
     # Moderation audit fields (optional)
-    approved_by: str | None = Field(default=None, foreign_key="users.id")
+    approved_by: UUID | None = Field(default=None, foreign_key="users.id")
     approved_at: datetime | None = Field(default=None, index=True)
     rejection_reason: str | None = Field(default=None, max_length=500)
 
     # Foreign key
-    owner_id: str | None = Field(default=None, foreign_key="users.id", index=True)
+    owner_id: UUID | None = Field(default=None, foreign_key="users.id", index=True)
 
     # Relationships
     owner: Optional["User"] = Relationship(

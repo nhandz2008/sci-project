@@ -34,8 +34,10 @@ async def lifespan(_app: FastAPI):
     # Startup
     logger.info("🚀 Starting Science Competitions Insight API...")
     try:
-        create_db_and_tables()
-        logger.info("✅ Database tables created successfully")
+        # Tables should exist from Alembic, but ensure availability in local dev/tests
+        if settings.ENVIRONMENT != "production":
+            create_db_and_tables()
+            logger.info("✅ Database tables ensured (non-production)")
     except Exception as e:
         logger.error(f"❌ Database initialization failed: {e}")
         # In production, you might want to exit here

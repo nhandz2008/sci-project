@@ -66,11 +66,10 @@ uv run pytest tests/ -v --tb=short \
 ---
 
 ### Test environment
-- **DB**: SQLite `test.db`
-- **Isolation**: Tables created/dropped via fixtures; data cleaned between tests
+- **DB**: PostgreSQL (Docker Compose `db` service)
+- **Schema**: Managed via Alembic migrations at test session start; tables truncated between tests
 - **Env vars**: Set automatically by `run_tests.py` and `tests/conftest.py`:
-  - `ENVIRONMENT=test`
-  - `SECRET_KEY`, `POSTGRES_PASSWORD`, `FIRST_SUPERUSER_PASSWORD`
+  - `ENVIRONMENT=test`, `TEST_POSTGRES_DB` (default: `sci_test_db`), and required `POSTGRES_*`
 
 ---
 

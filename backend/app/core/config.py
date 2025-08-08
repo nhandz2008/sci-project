@@ -1,9 +1,9 @@
+# Set test environment variables early
+import os
 import secrets
 import warnings
 from typing import Literal
 
-# Set test environment variables early
-import os
 if os.getenv("ENVIRONMENT") == "test":
     os.environ.setdefault("SECRET_KEY", "test-secret-key-for-testing-only")
     os.environ.setdefault("POSTGRES_PASSWORD", "test-password")
@@ -23,7 +23,8 @@ from typing_extensions import Self
 
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(
-        env_file=".env",
+        # Use the project root .env (one level above ./backend/)
+        env_file="../.env",
         env_ignore_empty=True,
         extra="ignore",
         case_sensitive=False,
@@ -34,7 +35,9 @@ class Settings(BaseSettings):
     # =============================================================================
     API_V1_STR: str = "/api/v1"
     PROJECT_NAME: str = "Science Competitions Insight"
-    ENVIRONMENT: Literal["local", "development", "staging", "production", "test"] = "local"
+    ENVIRONMENT: Literal["local", "development", "staging", "production", "test"] = (
+        "local"
+    )
     DEBUG: bool = True
     LOG_LEVEL: str = "INFO"
 
@@ -82,17 +85,20 @@ class Settings(BaseSettings):
 
     @property
     def SQLALCHEMY_DATABASE_URI(self) -> PostgresDsn:
-        # Use SQLite for test environment
-        if self.ENVIRONMENT == "test":
-            return "sqlite:///./test.db"
-        
+        # In test, prefer TEST_POSTGRES_DB when provided; otherwise use main DB
+        db_name = (
+            self.TEST_POSTGRES_DB
+            if self.ENVIRONMENT == "test" and self.TEST_POSTGRES_DB
+            else self.POSTGRES_DB
+        )
+
         return MultiHostUrl.build(
-            scheme="postgresql+psycopg2",
+            scheme="postgresql+psycopg",
             username=self.POSTGRES_USER,
             password=self.POSTGRES_PASSWORD,
             host=self.POSTGRES_SERVER,
             port=self.POSTGRES_PORT,
-            path=self.POSTGRES_DB,
+            path=db_name,
         )
 
     @property
@@ -100,7 +106,7 @@ class Settings(BaseSettings):
         if not self.TEST_POSTGRES_DB:
             return None
         return MultiHostUrl.build(
-            scheme="postgresql+psycopg2",
+            scheme="postgresql+psycopg",
             username=self.POSTGRES_USER,
             password=self.POSTGRES_PASSWORD,
             host=self.POSTGRES_SERVER,
@@ -156,6 +162,7 @@ class Settings(BaseSettings):
                 f"⚠️  {var_name} is using a default value. "
                 "Please set a proper secret for production.",
                 UserWarning,
+                stacklevel=2,
             )
 
     def _check_production_requirements(self) -> None:
@@ -164,33 +171,51 @@ class Settings(BaseSettings):
             # Check for default secrets
             self._check_default_secret("SECRET_KEY", self.SECRET_KEY)
             self._check_default_secret("POSTGRES_PASSWORD", self.POSTGRES_PASSWORD)
-            self._check_default_secret("FIRST_SUPERUSER_PASSWORD", self.FIRST_SUPERUSER_PASSWORD)
-            
+            self._check_default_secret(
+                "FIRST_SUPERUSER_PASSWORD", self.FIRST_SUPERUSER_PASSWORD
+            )
+
             # Check for required production settings
             if not self.AWS_ACCESS_KEY_ID:
-                warnings.warn("⚠️  AWS_ACCESS_KEY_ID not set for production", UserWarning)
+                warnings.warn(
+                    "⚠️  AWS_ACCESS_KEY_ID not set for production",
+                    UserWarning,
+                    stacklevel=2,
+                )
             if not self.AWS_SECRET_ACCESS_KEY:
-                warnings.warn("⚠️  AWS_SECRET_ACCESS_KEY not set for production", UserWarning)
+                warnings.warn(
+                    "⚠️  AWS_SECRET_ACCESS_KEY not set for production",
+                    UserWarning,
+                    stacklevel=2,
+                )
             if not self.S3_BUCKET_NAME:
-                warnings.warn("⚠️  S3_BUCKET_NAME not set for production", UserWarning)
+                warnings.warn(
+                    "⚠️  S3_BUCKET_NAME not set for production",
+                    UserWarning,
+                    stacklevel=2,
+                )
             if not self.LLM_API_KEY:
-                warnings.warn("⚠️  LLM_API_KEY not set for production", UserWarning)
+                warnings.warn(
+                    "⚠️  LLM_API_KEY not set for production", UserWarning, stacklevel=2
+                )
 
     @model_validator(mode="after")
     def _enforce_non_default_secrets(self) -> Self:
         # Check for placeholder values
         self._check_default_secret("SECRET_KEY", self.SECRET_KEY)
         self._check_default_secret("POSTGRES_PASSWORD", self.POSTGRES_PASSWORD)
-        self._check_default_secret("FIRST_SUPERUSER_PASSWORD", self.FIRST_SUPERUSER_PASSWORD)
-        
+        self._check_default_secret(
+            "FIRST_SUPERUSER_PASSWORD", self.FIRST_SUPERUSER_PASSWORD
+        )
+
         # Check production requirements
         self._check_production_requirements()
-        
+
         return self
 
     @field_validator("SECRET_KEY", mode="before")
     @classmethod
-    def generate_secret_key_if_needed(cls, v):
+    def generate_secret_key_if_needed(cls, v: str | None) -> str:
         """Generate a secret key if not provided."""
         if not v or v == "your-secret-key-here":
             return secrets.token_urlsafe(32)

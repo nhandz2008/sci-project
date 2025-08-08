@@ -60,18 +60,23 @@ A full-stack web application for showcasing, managing, and recommending science 
 cd backend
 uv sync
 
-# Run DB migrations (Alembic)
+# Ensure Postgres is running (via Docker Compose)
+cd .. && docker-compose up -d db && cd backend
+
+# Apply DB migrations (Alembic)
 uv run -m alembic upgrade head
 
 # Start API
 uv run python -m uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 ```
 
-### 4) Tests
+### 4) Tests (PostgreSQL)
 ```bash
 cd backend
-ENVIRONMENT=test SECRET_KEY=0123456789abcdef0123456789abcdef \
-POSTGRES_PASSWORD=test FIRST_SUPERUSER_PASSWORD=test-admin \
+# Start DB (if not running) and run the suite against Postgres test DB
+cd .. && docker-compose up -d db && cd backend
+ENVIRONMENT=test TEST_POSTGRES_DB=sci_test_db \
+POSTGRES_SERVER=localhost POSTGRES_USER=postgres POSTGRES_PASSWORD=changethis \
 uv run -m pytest -q
 ```
 
@@ -217,7 +222,7 @@ uv run -m alembic stamp head
 ```
 Notes:
 - Ensure `.env` is configured (DB URL, credentials). `SECRET_KEY` must be 32+ chars.
-- In tests, SQLite (`test.db`) is used when `ENVIRONMENT=test`.
+- Tests run against PostgreSQL (Docker `db` service). Schema is managed by Alembic; `TEST_POSTGRES_DB` defaults to `sci_test_db`.
 
 ### API
 - Docs: `http://localhost:8000/docs`

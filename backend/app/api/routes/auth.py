@@ -8,6 +8,7 @@ from sqlmodel import Session
 
 from app.api.deps import get_current_active_user
 from app.core.db import get_session
+from app.core.exceptions import DuplicateUserError
 from app.core.security import (
     create_access_token,
     create_password_reset_token,
@@ -19,7 +20,6 @@ from app.crud.user import (
     get_user_by_email,
     update_user_password,
 )
-from app.core.exceptions import DuplicateUserError
 from app.models.user import User
 from app.schemas.auth import (
     MessageResponse,
@@ -88,9 +88,10 @@ async def forgot_password(
         # Generate password reset token
         reset_token = create_password_reset_token(password_reset.email)
 
-        # TODO: Implement email service integration
-        # For now, log the token for development purposes
-        logger.info(f"Password reset token generated for {password_reset.email}: {reset_token}")
+        # Email service integration can be added later; for now, log for dev only
+        logger.info(
+            f"Password reset token generated for {password_reset.email}: {reset_token}"
+        )
 
     # Always return success to prevent email enumeration
     return MessageResponse(

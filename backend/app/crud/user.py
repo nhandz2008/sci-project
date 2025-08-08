@@ -5,10 +5,8 @@ from uuid import UUID
 from sqlalchemy import text
 from sqlmodel import Session, select
 
-from app.core.db import get_session, get_search_operator
+from app.core.db import get_search_operator
 from app.core.exceptions import (
-    AuthenticationError,
-    AuthorizationError,
     DatabaseError,
     DuplicateUserError,
     UserNotFoundError,
@@ -18,7 +16,6 @@ from app.models.common import UserRole
 from app.models.user import User
 from app.schemas.auth import UserCreate
 from app.schemas.user import UserUpdate
-from app.core.config import settings
 
 
 def create_user(session: Session, user_create: UserCreate) -> User:
@@ -177,20 +174,12 @@ def get_users(
         if search:
             search_term = f"%{search}%"
             search_op = get_search_operator()
-            if settings.ENVIRONMENT == "test":
-                # SQLite uses LIKE with COLLATE NOCASE
-                query = query.where(
-                    text(f"full_name LIKE :search COLLATE NOCASE OR email LIKE :search COLLATE NOCASE").bindparams(
-                        search=search_term
-                    )
-                )
-            else:
-                # PostgreSQL uses ILIKE
-                query = query.where(
-                    text(f"full_name {search_op} :search OR email {search_op} :search").bindparams(
-                        search=search_term
-                    )
-                )
+            # PostgreSQL uses ILIKE for case-insensitive search
+            query = query.where(
+                text(
+                    f"full_name {search_op} :search OR email {search_op} :search"
+                ).bindparams(search=search_term)
+            )
 
         # Get total count
         count_query = select(text("COUNT(*)")).select_from(query.subquery())
@@ -410,17 +399,11 @@ def search_users_by_name(
         query = select(User)
         search_term = f"%{name}%"
         search_op = get_search_operator()
-        
-        if settings.ENVIRONMENT == "test":
-            # SQLite uses LIKE with COLLATE NOCASE
-            query = query.where(
-                text(f"full_name LIKE :search COLLATE NOCASE").bindparams(search=search_term)
-            )
-        else:
-            # PostgreSQL uses ILIKE
-            query = query.where(
-                text(f"full_name {search_op} :search").bindparams(search=search_term)
-            )
+
+        # PostgreSQL uses ILIKE for case-insensitive search
+        query = query.where(
+            text(f"full_name {search_op} :search").bindparams(search=search_term)
+        )
 
         # Get total count
         count_query = select(text("COUNT(*)")).select_from(query.subquery())

@@ -1,13 +1,10 @@
 """Competition CRUD operations."""
 
-from typing import cast
+from datetime import datetime, timezone
 from uuid import UUID
 
-from sqlalchemy import text, func
-from sqlalchemy import asc, desc
+from sqlalchemy import asc, desc, text
 from sqlalchemy import or_ as sa_or
-from datetime import datetime, timezone
-from sqlalchemy.sql.schema import Column
 from sqlmodel import Session, select
 
 from app.models.competition import Competition
@@ -84,8 +81,8 @@ def get_competitions(
     if scale is not None:
         query = query.where(Competition.scale == scale)
     if location is not None:
-        location_value = location.lower()
-        query = query.where(func.lower(Competition.location).like(f"%{location_value}%"))
+        # Case-insensitive match on PostgreSQL
+        query = query.where(text("location ILIKE :loc").bindparams(loc=f"%{location}%"))
     if is_approved is not None:
         query = query.where(Competition.is_approved == is_approved)
     if is_featured is not None:
@@ -93,14 +90,13 @@ def get_competitions(
     if owner_id is not None:
         query = query.where(Competition.owner_id == owner_id)
     if search:
-        search_value = search.lower()
-        # Case-insensitive search that works across SQLite/Postgres
+        search_term = f"%{search}%"
         query = query.where(
             sa_or(
-                func.lower(Competition.title).like(f"%{search_value}%"),
-                func.lower(Competition.introduction).like(f"%{search_value}%"),
+                text("title ILIKE :s"),
+                text("introduction ILIKE :s"),
             )
-        )
+        ).params(s=search_term)
 
     # Sorting
     if sort_by is not None:
@@ -111,7 +107,8 @@ def get_competitions(
         elif sort_key == "registration_deadline":
             sort_column = Competition.registration_deadline
         elif sort_key == "title":
-            sort_column = Competition.title
+            # Use deterministic ASCII collation to match Python's default ordering
+            sort_column = text('title COLLATE "C"')
 
         if sort_column is not None:
             is_desc = (order or "").strip().lower() == "desc"
@@ -130,7 +127,7 @@ def get_competitions(
         elif sort_key == "registration_deadline":
             sort_column = Competition.registration_deadline
         elif sort_key == "title":
-            sort_column = Competition.title
+            sort_column = text('title COLLATE "C"')
 
         if sort_column is not None:
             is_desc = (order or "").strip().lower() == "desc"
@@ -197,14 +194,16 @@ def get_pending_competitions(
     return competitions, total
 
 
-def approve_competition(session: Session, competition_id: UUID, admin_user_id: UUID) -> bool:
+def approve_competition(
+    session: Session, competition_id: UUID, admin_user_id: UUID
+) -> bool:
     """Approve competition."""
     competition = get_competition_by_id(session, competition_id)
     if not competition:
         return False
 
     competition.is_approved = True
-    competition.approved_by = str(admin_user_id)
+    competition.approved_by = admin_user_id
     competition.approved_at = datetime.now(timezone.utc)
     competition.rejection_reason = None
     session.add(competition)
@@ -213,7 +212,10 @@ def approve_competition(session: Session, competition_id: UUID, admin_user_id: U
 
 
 def reject_competition(
-    session: Session, competition_id: UUID, admin_user_id: UUID, rejection_reason: str | None = None
+    session: Session,
+    competition_id: UUID,
+    admin_user_id: UUID,
+    rejection_reason: str | None = None,
 ) -> bool:
     """Reject competition."""
     competition = get_competition_by_id(session, competition_id)
@@ -222,15 +224,19 @@ def reject_competition(
 
     competition.is_approved = False
     competition.is_featured = False
-    competition.approved_by = str(admin_user_id)
+    competition.approved_by = admin_user_id
     competition.approved_at = datetime.now(timezone.utc)
-    competition.rejection_reason = (rejection_reason or "")[:500] if rejection_reason else None
+    competition.rejection_reason = (
+        (rejection_reason or "")[:500] if rejection_reason else None
+    )
     session.add(competition)
     session.commit()
     return True
 
 
-def set_competition_featured(session: Session, competition_id: UUID, is_featured: bool) -> bool:
+def set_competition_featured(
+    session: Session, competition_id: UUID, is_featured: bool
+) -> bool:
     """Toggle featured flag (admin only)."""
     competition = get_competition_by_id(session, competition_id)
     if not competition:
@@ -241,7 +247,9 @@ def set_competition_featured(session: Session, competition_id: UUID, is_featured
     return True
 
 
-def set_competition_active(session: Session, competition_id: UUID, is_active: bool) -> bool:
+def set_competition_active(
+    session: Session, competition_id: UUID, is_active: bool
+) -> bool:
     """Toggle active flag (admin only)."""
     competition = get_competition_by_id(session, competition_id)
     if not competition:
