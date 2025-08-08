@@ -20,11 +20,12 @@ from app.crud.user import (
 )
 from app.models.common import UserRole
 from app.models.user import User
-from app.schemas.auth import MessageResponse, UserResponse
+from app.schemas.auth import MessageResponse
 from app.schemas.user import (
     PasswordChange,
     UserDetailResponse,
     UserListPaginatedResponse,
+    UserListResponse,
     UserUpdate,
 )
 
@@ -95,7 +96,7 @@ async def get_users_list(
     )
 
     return UserListPaginatedResponse(
-        users=[UserResponse.model_validate(user) for user in users],
+        users=[UserListResponse.model_validate(user) for user in users],
         total=total,
         skip=skip,
         limit=limit,
