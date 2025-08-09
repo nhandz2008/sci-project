@@ -78,10 +78,10 @@ const CompetitionDetails: React.FC<CompetitionDetailsProps> = ({ competition }) 
         <div className="bg-white rounded-xl shadow-lg overflow-hidden mb-8">
           <div className="relative">
             {/* Hero Image */}
-            {competition.image_url && (
+            {competition.background_image_url && (
               <div className="h-64 bg-gradient-to-r from-blue-600 to-purple-600 relative">
                 <img
-                  src={competition.image_url}
+                  src={competition.background_image_url}
                   alt={competition.title}
                   className="w-full h-full object-cover"
                   onError={(e) => {
@@ -144,11 +144,11 @@ const CompetitionDetails: React.FC<CompetitionDetailsProps> = ({ competition }) 
           {/* Main Content */}
           <div className="lg:col-span-2 space-y-8">
             {/* Description */}
-            {competition.description && (
+            {competition.introduction && (
               <div className="bg-white rounded-xl shadow-lg p-8">
                 <h2 className="text-2xl font-bold text-gray-900 mb-6">About this Competition</h2>
                 <div className="prose prose-lg max-w-none text-gray-700">
-                  <p className="leading-relaxed">{competition.description}</p>
+                  <p className="leading-relaxed">{competition.introduction}</p>
                 </div>
               </div>
             )}
@@ -277,7 +277,7 @@ const CompetitionDetails: React.FC<CompetitionDetailsProps> = ({ competition }) 
                     if (navigator.share) {
                       navigator.share({
                         title: competition.title,
-                        text: competition.description || '',
+                        text: competition.introduction || '',
                         url: window.location.href,
                       });
                     } else {

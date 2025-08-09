@@ -10,6 +10,7 @@ interface ValidationErrors {
   password?: string;
   confirmPassword?: string;
   name?: string;
+  phoneNumber?: string;
 }
 
 interface PasswordStrength {
@@ -24,6 +25,8 @@ export default function SignupPage() {
     email: '',
     password: '',
     confirmPassword: '',
+    organization: '',
+    phoneNumber: '',
   });
   const [errors, setErrors] = useState<ValidationErrors>({});
   const [passwordStrength, setPasswordStrength] = useState<PasswordStrength>({
@@ -92,6 +95,13 @@ export default function SignupPage() {
     return undefined;
   };
 
+  const validatePhoneNumber = (phoneNumber: string): string | undefined => {
+    if (!phoneNumber) return undefined; // Optional field
+    const phoneRegex = /^\+?[1-9]\d{1,19}$/;
+    if (!phoneRegex.test(phoneNumber)) return 'Please enter a valid phone number (e.g., +1234567890)';
+    return undefined;
+  };
+
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
     setErrors(prev => ({ ...prev, [field]: undefined }));
@@ -107,6 +117,11 @@ export default function SignupPage() {
     } else if (field === 'confirmPassword' && formData.password) {
       if (value !== formData.password) {
         setErrors(prev => ({ ...prev, confirmPassword: 'Passwords do not match' }));
+      }
+    } else if (field === 'phoneNumber') {
+      const phoneError = validatePhoneNumber(value);
+      if (phoneError) {
+        setErrors(prev => ({ ...prev, phoneNumber: phoneError }));
       }
     }
   };
@@ -136,6 +151,10 @@ export default function SignupPage() {
       newErrors.name = 'Name is required';
     }
 
+    // Validate phone number if provided
+    const phoneError = validatePhoneNumber(formData.phoneNumber);
+    if (phoneError) newErrors.phoneNumber = phoneError;
+
     setErrors(newErrors);
 
     if (Object.keys(newErrors).length === 0) {
@@ -143,7 +162,13 @@ export default function SignupPage() {
       setSubmitMessage(null);
 
       try {
-        await signup(formData.email, formData.password, formData.name);
+        await signup(
+          formData.email, 
+          formData.password, 
+          formData.name,
+          formData.organization || undefined,
+          formData.phoneNumber || undefined
+        );
         setSubmitMessage({ type: 'success', message: 'Account created successfully! Redirecting...' });
         
         // Redirect to home page after successful signup
@@ -182,7 +207,7 @@ export default function SignupPage() {
           {/* Name Input */}
           <div>
             <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-2">
-              Full Name
+              Full Name *
             </label>
             <input
               id="name"
@@ -200,7 +225,7 @@ export default function SignupPage() {
           {/* Email Input */}
           <div>
             <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
-              Email
+              Email *
             </label>
             <input
               id="email"
@@ -215,10 +240,43 @@ export default function SignupPage() {
             {errors.email && <p className="text-red-500 text-sm mt-1">{errors.email}</p>}
           </div>
 
+          {/* Organization Input */}
+          <div>
+            <label htmlFor="organization" className="block text-sm font-medium text-gray-700 mb-2">
+              Organization
+            </label>
+            <input
+              id="organization"
+              type="text"
+              placeholder="Enter your organization (optional)"
+              value={formData.organization}
+              onChange={(e) => handleInputChange('organization', e.target.value)}
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
+            />
+          </div>
+
+          {/* Phone Number Input */}
+          <div>
+            <label htmlFor="phoneNumber" className="block text-sm font-medium text-gray-700 mb-2">
+              Phone Number
+            </label>
+            <input
+              id="phoneNumber"
+              type="tel"
+              placeholder="Enter your phone number (optional)"
+              value={formData.phoneNumber}
+              onChange={(e) => handleInputChange('phoneNumber', e.target.value)}
+              className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 ${
+                errors.phoneNumber ? 'border-red-500' : 'border-gray-300'
+              }`}
+            />
+            {errors.phoneNumber && <p className="text-red-500 text-sm mt-1">{errors.phoneNumber}</p>}
+          </div>
+
           {/* Password Input */}
           <div>
             <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
-              Password
+              Password *
             </label>
             <input
               id="password"
@@ -258,7 +316,7 @@ export default function SignupPage() {
           {/* Confirm Password Input */}
           <div>
             <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 mb-2">
-              Confirm Password
+              Confirm Password *
             </label>
             <input
               id="confirmPassword"

@@ -8,7 +8,7 @@ interface AuthContextType {
   isLoading: boolean;
   login: (email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
-  signup: (email: string, password: string, fullName: string) => Promise<void>;
+  signup: (email: string, password: string, fullName: string, organization?: string, phoneNumber?: string) => Promise<void>;
   updateUser: (userData: Partial<User>) => void;
 }
 
@@ -54,10 +54,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     try {
       const response = await authAPI.login({ email, password });
       localStorage.setItem('auth_token', response.access_token);
-      
-      // Get user data
-      const userData = await authAPI.getCurrentUser(response.access_token);
-      setUser(userData);
+      setUser(response.user);
     } catch (error) {
       console.error('Login failed:', error);
       throw error;
@@ -65,25 +62,19 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   };
 
   const logout = async () => {
-    try {
-      const token = localStorage.getItem('auth_token');
-      if (token) {
-        await authAPI.logout(token);
-      }
-    } catch (error) {
-      console.error('Logout failed:', error);
-    } finally {
-      localStorage.removeItem('auth_token');
-      setUser(null);
-    }
+    // Backend doesn't have a logout endpoint, so we just clear local storage
+    localStorage.removeItem('auth_token');
+    setUser(null);
   };
 
-  const signup = async (email: string, password: string, fullName: string) => {
+  const signup = async (email: string, password: string, fullName: string, organization?: string, phoneNumber?: string) => {
     try {
       const userData = await authAPI.signUp({
         email,
         password,
         full_name: fullName,
+        organization,
+        phone_number: phoneNumber,
       });
       setUser(userData);
     } catch (error) {

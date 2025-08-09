@@ -167,7 +167,7 @@ export default function ResetPasswordPage() {
         setMessage("Password reset successfully! You can now sign in with your new password.");
         // Redirect to login after a delay
         setTimeout(() => {
-          window.location.href = "/registration";
+          window.location.href = "/login";
         }, 3000);
       }, 2000);
     }
@@ -330,7 +330,7 @@ export default function ResetPasswordPage() {
 
         <div className="mt-6 text-center">
           <Link 
-            href="/registration" 
+            href="/login" 
             className="text-pink-600 hover:text-pink-700 text-sm font-medium"
           >
             Back to Sign In

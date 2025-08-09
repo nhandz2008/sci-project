@@ -4,15 +4,20 @@ export interface User {
   id: string;
   email: string;
   full_name: string;
+  organization?: string;
+  phone_number?: string;
+  role: 'ADMIN' | 'CREATOR';
   is_active: boolean;
   created_at: string;
-  avatar_url?: string;
+  updated_at: string;
 }
 
 export interface SignUpData {
   email: string;
   password: string;
   full_name: string;
+  organization?: string;
+  phone_number?: string;
 }
 
 export interface LoginData {
@@ -23,11 +28,18 @@ export interface LoginData {
 export interface AuthResponse {
   access_token: string;
   token_type: string;
-  expires_in: number;
+  user: User;
 }
 
 export interface ApiError {
-  detail: string;
+  detail?: string;
+  error?: {
+    type: string;
+    message: string;
+    code: string;
+    details: string;
+    field_errors?: Record<string, string>;
+  };
 }
 
 class AuthAPI {
@@ -45,6 +57,7 @@ class AuthAPI {
     const config: RequestInit = {
       headers: {
         'Content-Type': 'application/json',
+        'Accept': 'application/json',
         ...options.headers,
       },
       ...options,
@@ -55,7 +68,17 @@ class AuthAPI {
       
       if (!response.ok) {
         const errorData: ApiError = await response.json().catch(() => ({ detail: 'Network error' }));
-        throw new Error(errorData.detail || `HTTP error! status: ${response.status}`);
+        
+        // Handle different error formats from the API
+        if (errorData.error) {
+          // Custom application error
+          throw new Error(errorData.error.message);
+        } else if (errorData.detail) {
+          // HTTP exception
+          throw new Error(errorData.detail);
+        } else {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
       }
 
       return await response.json();
@@ -73,16 +96,9 @@ class AuthAPI {
   }
 
   async login(data: LoginData): Promise<AuthResponse> {
-    const formData = new FormData();
-    formData.append('username', data.email); // OAuth2 uses 'username' field
-    formData.append('password', data.password);
-
     return this.request<AuthResponse>('/api/v1/auth/login', {
       method: 'POST',
-      body: formData,
-      headers: {
-        // Remove Content-Type for FormData
-      },
+      body: JSON.stringify(data),
     });
   }
 
@@ -94,17 +110,8 @@ class AuthAPI {
     });
   }
 
-  async logout(token: string): Promise<{ message: string }> {
-    return this.request<{ message: string }>('/api/v1/auth/logout', {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
-  }
-
-  async forgotPassword(email: string): Promise<{ message: string; token?: string }> {
-    return this.request<{ message: string; token?: string }>('/api/v1/auth/forgot-password', {
+  async forgotPassword(email: string): Promise<{ message: string }> {
+    return this.request<{ message: string }>('/api/v1/auth/forgot-password', {
       method: 'POST',
       body: JSON.stringify({ email }),
     });

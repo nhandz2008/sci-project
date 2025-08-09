@@ -18,7 +18,6 @@ export const useCompetitions = (initialFilters: CompetitionFilters = {}): UseCom
   const [totalCount, setTotalCount] = useState(0);
   const [filters, setFilters] = useState<CompetitionFilters>({
     limit: 100, // Get more competitions by default
-    is_active: true, // Only show active competitions
     ...initialFilters
   });
 
@@ -29,8 +28,15 @@ export const useCompetitions = (initialFilters: CompetitionFilters = {}): UseCom
       
       const response: CompetitionsResponse = await competitionsAPI.getCompetitions(filters);
       
-      setCompetitions(response.data);
-      setTotalCount(response.count);
+      // Handle the new response format
+      if (response && response.competitions) {
+        setCompetitions(response.competitions);
+        setTotalCount(response.total || 0);
+      } else {
+        // Fallback for unexpected response format
+        setCompetitions([]);
+        setTotalCount(0);
+      }
     } catch (err) {
       console.error('Failed to fetch competitions:', err);
       setError(err instanceof Error ? err.message : 'Failed to fetch competitions');

@@ -42,12 +42,12 @@ const mapCompetitionToDisplay = (competition: Competition) => {
   return {
     id: competition.id,
     name: competition.title,
-    overview: competition.description || "No description available",
-    scale: competition.scale ? competition.scale.charAt(0).toUpperCase() + competition.scale.slice(1) : "Unknown",
+    overview: competition.introduction || "No description available",
+    scale: competition.scale ? competition.scale.charAt(0).toUpperCase() + competition.scale.slice(1).toLowerCase() : "Unknown",
     location: competition.location || "TBD",
-    modes: competition.format ? [competition.format.charAt(0).toUpperCase() + competition.format.slice(1)] : ["TBD"],
+    modes: competition.format ? [competition.format.charAt(0).toUpperCase() + competition.format.slice(1).toLowerCase()] : ["TBD"],
     homepage: competition.competition_link || "#",
-    image: isValidImageUrl(competition.image_url) ? competition.image_url : getFallbackImage(competition),
+    image: isValidImageUrl(competition.background_image_url) ? competition.background_image_url : getFallbackImage(competition),
   };
 };
 
@@ -60,10 +60,14 @@ export default function CompetitionsPage() {
   // Fetch competitions from API
   const { competitions, loading, error, totalCount } = useCompetitions();
 
-  // Get unique values for filters from API data
+  // Get unique values for filters from API data with proper null checks
   const { scales, modes, locations } = useMemo(() => {
-    const uniqueScales = [...new Set(competitions.map(c => c.scale ? c.scale.charAt(0).toUpperCase() + c.scale.slice(1) : '').filter(Boolean))];
-    const uniqueModes = [...new Set(competitions.map(c => c.format ? c.format.charAt(0).toUpperCase() + c.format.slice(1) : '').filter(Boolean))];
+    if (!competitions || !Array.isArray(competitions)) {
+      return { scales: [], modes: [], locations: [] };
+    }
+
+    const uniqueScales = [...new Set(competitions.map(c => c.scale ? c.scale.charAt(0).toUpperCase() + c.scale.slice(1).toLowerCase() : '').filter(Boolean))];
+    const uniqueModes = [...new Set(competitions.map(c => c.format ? c.format.charAt(0).toUpperCase() + c.format.slice(1).toLowerCase() : '').filter(Boolean))];
     const uniqueLocations = [...new Set(competitions.map(c => c.location).filter(Boolean))];
     
     return {
@@ -73,8 +77,12 @@ export default function CompetitionsPage() {
     };
   }, [competitions]);
 
-  // Filter competitions based on search and filters
+  // Filter competitions based on search and filters with proper null checks
   const filteredCompetitions = useMemo(() => {
+    if (!competitions || !Array.isArray(competitions)) {
+      return [];
+    }
+
     return competitions
       .map(mapCompetitionToDisplay)
       .filter((c) => {
