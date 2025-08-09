@@ -2,18 +2,18 @@ import Image from "next/image";
 import Link from "next/link";
 
 const logos = [
-  { src: "/logos/IMO_logo.svg", alt: "IMO" },
-  { src: "/logos/FIRST_Robotics_Competition_(logo).svg.png", alt: "FIRST Robotics" },
-  { src: "/logos/logoWeb.png", alt: "SCI Web" },
-  { src: "/logos/images.png", alt: "General Science" },
-  { src: "/logos/2021_ISEF_Logo.png", alt: "ISEF" },
+  { src: "/assets/logos/IMO_logo.svg", alt: "IMO" },
+  { src: "/assets/logos/FIRST_Robotics_Competition_(logo).svg.png", alt: "FIRST Robotics" },
+  { src: "/assets/logos/logoWeb.png", alt: "SCI Web" },
+  { src: "/assets/logos/images.png", alt: "General Science" },
+  { src: "/assets/logos/2021_ISEF_Logo.png", alt: "ISEF" },
 ];
 
 const Hero = () => (
   <div className="relative flex h-[55vh] w-full items-center justify-between px-10 overflow-hidden pb-40">
     {/* Background image, right-aligned, rounded bottom-left */}
     <Image
-      src="/images/image1.jpeg"
+      src="/assets/images/image1.jpeg"
       alt="STEM students working on robotics"
       width={1200}
       height={1200}

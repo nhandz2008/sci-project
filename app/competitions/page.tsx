@@ -11,17 +11,17 @@ const getFallbackImage = (competition: Competition) => {
   const title = competition.title.toLowerCase();
   
   if (title.includes('mathematical') || title.includes('imo')) {
-    return "/logos/IMO_logo.svg";
+    return "/assets/logos/IMO_logo.svg";
   } else if (title.includes('robotics') || title.includes('first')) {
-    return "/logos/FIRST_Robotics_Competition_(logo).svg.png";
+    return "/assets/logos/FIRST_Robotics_Competition_(logo).svg.png";
   } else if (title.includes('isef') || title.includes('science and engineering')) {
-    return "/logos/2021_ISEF_Logo.png";
+    return "/assets/logos/2021_ISEF_Logo.png";
   } else if (title.includes('coding') || title.includes('programming')) {
-    return "/logos/images.png";
+    return "/assets/logos/images.png";
   } else if (title.includes('vietnam') || title.includes('national')) {
-    return "/images/image1.jpeg";
+    return "/assets/images/image1.jpeg";
   } else {
-    return "/logos/logoWeb.png";
+    return "/assets/logos/logoWeb.png";
   }
 };
 
@@ -181,7 +181,7 @@ export default function CompetitionsPage() {
         {/* Search and Filter Section */}
         <div className="bg-white rounded-xl shadow-lg p-8 mb-8">
           <div className="mb-6">
-            <h2 className="text-2xl font-bold text-gray-900 mb-2">Filter competitions</h2>
+            <h2 className="text-2xl font-bold text-gray-900 mb-2">Browse competitions</h2>
             <p className="text-gray-600">Find the perfect competition for you</p>
           </div>
           

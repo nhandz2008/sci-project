@@ -11,7 +11,7 @@ export const metadata: Metadata = {
   title: "SCI - Science Competition Insights",
   description: "Discover and explore science competitions worldwide",
   icons: {
-    icon: "/assets/icons/Ava.jpg",
+            icon: "/assets/images/Ava.jpg",
   },
 };
 

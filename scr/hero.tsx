@@ -1,11 +1,11 @@
 import Image from "next/image";
 
 const logos = [
-  { src: "/logos/IMO_logo.svg", alt: "IMO" },
-  { src: "/logos/FIRST_Robotics_Competition_(logo).svg.png", alt: "FIRST Robotics" },
-  { src: "/logos/logoWeb.png", alt: "SCI Web" },
-  { src: "/logos/images.png", alt: "General Science" },
-  { src: "/logos/2021_ISEF_Logo.png", alt: "ISEF" },
+  { src: "/assets/logos/IMO_logo.svg", alt: "IMO" },
+  { src: "/assets/logos/FIRST_Robotics_Competition_(logo).svg.png", alt: "FIRST Robotics" },
+  { src: "/assets/logos/logoWeb.png", alt: "SCI Web" },
+  { src: "/assets/logos/images.png", alt: "General Science" },
+  { src: "/assets/logos/2021_ISEF_Logo.png", alt: "ISEF" },
 ];
 
 const Hero = () => (
