@@ -18,12 +18,12 @@ export default function CreateCompetitionForm({
 }: CreateCompetitionFormProps) {
   const [formData, setFormData] = useState<CompetitionCreate>({
     title: '',
-    description: '',
+    introduction: '',
     competition_link: '',
-    image_url: '',
+    background_image_url: '',
     location: '',
-    format: 'online',
-    scale: 'provincial',
+    format: 'ONLINE',
+    scale: 'PROVINCIAL',
     registration_deadline: '',
     target_age_min: undefined,
     target_age_max: undefined,
@@ -44,12 +44,12 @@ export default function CreateCompetitionForm({
   const handleClose = () => {
     setFormData({
       title: '',
-      description: '',
+      introduction: '',
       competition_link: '',
-      image_url: '',
+      background_image_url: '',
       location: '',
-      format: 'online',
-      scale: 'provincial',
+      format: 'ONLINE',
+      scale: 'PROVINCIAL',
       registration_deadline: '',
       target_age_min: undefined,
       target_age_max: undefined,
@@ -97,13 +97,13 @@ export default function CreateCompetitionForm({
               </div>
 
               <div>
-                <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-1">
+                <label htmlFor="introduction" className="block text-sm font-medium text-gray-700 mb-1">
                   Description
                 </label>
                 <textarea
-                  id="description"
-                  value={formData.description || ''}
-                  onChange={(e) => handleInputChange('description', e.target.value)}
+                  id="introduction"
+                  value={formData.introduction || ''}
+                  onChange={(e) => handleInputChange('introduction', e.target.value)}
                   rows={4}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   placeholder="Describe the competition..."
@@ -125,14 +125,14 @@ export default function CreateCompetitionForm({
               </div>
 
               <div>
-                <label htmlFor="image_url" className="block text-sm font-medium text-gray-700 mb-1">
+                <label htmlFor="background_image_url" className="block text-sm font-medium text-gray-700 mb-1">
                   Image URL
                 </label>
                 <input
                   type="url"
-                  id="image_url"
-                  value={formData.image_url || ''}
-                  onChange={(e) => handleInputChange('image_url', e.target.value)}
+                  id="background_image_url"
+                  value={formData.background_image_url || ''}
+                  onChange={(e) => handleInputChange('background_image_url', e.target.value)}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   placeholder="https://example.com/image.jpg"
                 />

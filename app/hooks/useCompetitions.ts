@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { competitionsAPI, Competition, CompetitionFilters, CompetitionsResponse } from '../api/competitions';
+import { competitionsAPI, Competition, CompetitionListResponse } from '../api/competitions';
 
 interface UseCompetitionsReturn {
   competitions: Competition[];
@@ -7,26 +7,20 @@ interface UseCompetitionsReturn {
   error: string | null;
   totalCount: number;
   refetch: () => Promise<void>;
-  filters: CompetitionFilters;
-  setFilters: (filters: CompetitionFilters) => void;
 }
 
-export const useCompetitions = (initialFilters: CompetitionFilters = {}): UseCompetitionsReturn => {
+export const useCompetitions = (): UseCompetitionsReturn => {
   const [competitions, setCompetitions] = useState<Competition[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [totalCount, setTotalCount] = useState(0);
-  const [filters, setFilters] = useState<CompetitionFilters>({
-    limit: 100, // Get more competitions by default
-    ...initialFilters
-  });
 
   const fetchCompetitions = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
       
-      const response: CompetitionsResponse = await competitionsAPI.getCompetitions(filters);
+      const response: CompetitionListResponse = await competitionsAPI.getCompetitions();
       
       // Handle the new response format
       if (response && response.competitions) {
@@ -45,7 +39,7 @@ export const useCompetitions = (initialFilters: CompetitionFilters = {}): UseCom
     } finally {
       setLoading(false);
     }
-  }, [filters]);
+  }, []);
 
   const refetch = useCallback(async () => {
     await fetchCompetitions();
@@ -61,7 +55,5 @@ export const useCompetitions = (initialFilters: CompetitionFilters = {}): UseCom
     error,
     totalCount,
     refetch,
-    filters,
-    setFilters,
   };
 }; 

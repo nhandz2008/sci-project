@@ -58,39 +58,48 @@ const CompetitionCard: React.FC<CompetitionCardProps> = ({
 
 
   return (
-    <div className={`bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition-shadow duration-300 ${className}`}>
+    <Link
+      href={`/competitions/${competition.id}`}
+      className={`block rounded-xl shadow-lg overflow-hidden hover:shadow-xl focus:shadow-xl transition-all duration-300 hover:scale-105 hover:-translate-y-1 focus:scale-105 focus:-translate-y-1 group cursor-pointer bg-white hover:bg-gray-50 focus:bg-gray-50 border border-gray-100 hover:border-blue-200 focus:border-blue-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 ${className}`}
+    >
       {/* Image */}
-      {competition.image_url && (
-        <div className="relative h-48 bg-gradient-to-r from-blue-600 to-purple-600">
+      <div className="relative h-48">
+        {competition.background_image_url ? (
           <img
-            src={competition.image_url}
+            src={competition.background_image_url}
             alt={competition.title}
-            className="w-full h-full object-cover"
+            className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
             onError={(e) => {
               const target = e.target as HTMLImageElement;
               target.style.display = 'none';
             }}
           />
-          <div className="absolute inset-0 bg-black bg-opacity-20"></div>
-          
-          {/* Badges */}
-          <div className="absolute top-3 left-3 flex gap-2">
-            {getStatusBadge(competition.is_active)}
+        ) : (
+          <div className="w-full h-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
+            <span className="text-white text-2xl font-bold">{competition.title.charAt(0)}</span>
           </div>
+        )}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-black/10 to-transparent group-hover:from-black/40 group-hover:via-black/20 transition-opacity duration-300"></div>
+        
+        {/* Badges */}
+        <div className="absolute top-3 left-3 flex gap-2 transform group-hover:scale-110 transition-transform duration-300">
+          {getStatusBadge(competition.is_active)}
         </div>
-      )}
+      </div>
       
       {/* Content */}
       <div className="p-6">
         <div className="flex items-start justify-between mb-3">
-          <h3 className="text-xl font-bold text-gray-900 line-clamp-2">
+          <h3 className="text-xl font-bold text-gray-900 line-clamp-2 group-hover:text-blue-600 transition-colors duration-200">
             {competition.title}
           </h3>
-          <LikeButton competitionId={competition.id} competition={competition} />
+          <div onClick={(e) => e.preventDefault()}>
+            <LikeButton competitionId={competition.id} competition={competition} />
+          </div>
         </div>
         
         {competition.location && (
-          <div className="flex items-center gap-2 text-gray-600 mb-3">
+          <div className="flex items-center gap-2 text-gray-600 mb-3 group-hover:text-gray-700 transition-colors duration-200">
             <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
               <path fillRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" />
             </svg>
@@ -98,33 +107,33 @@ const CompetitionCard: React.FC<CompetitionCardProps> = ({
           </div>
         )}
         
-        {competition.description && (
-          <p className="text-gray-600 text-sm mb-4 line-clamp-3">
-            {competition.description}
+        {competition.introduction && (
+          <p className="text-gray-600 text-sm mb-4 line-clamp-3 group-hover:text-gray-700 transition-colors duration-200">
+            {competition.introduction}
           </p>
         )}
         
         {/* Quick Facts */}
         <div className="grid grid-cols-2 gap-3 mb-4 text-sm">
-          <div>
+          <div className="group-hover:bg-gray-50 p-2 rounded-lg transition-colors duration-200">
             <span className="text-gray-500">Format:</span>
             <span className="ml-1 font-medium text-gray-900">
               {getFormatDisplay(competition.format)}
             </span>
           </div>
-          <div>
+          <div className="group-hover:bg-gray-50 p-2 rounded-lg transition-colors duration-200">
             <span className="text-gray-500">Scale:</span>
             <span className="ml-1 font-medium text-gray-900">
               {getScaleDisplay(competition.scale)}
             </span>
           </div>
-          <div>
+          <div className="group-hover:bg-gray-50 p-2 rounded-lg transition-colors duration-200">
             <span className="text-gray-500">Age:</span>
             <span className="ml-1 font-medium text-gray-900">
               {formatAgeRange(competition.target_age_min, competition.target_age_max)}
             </span>
           </div>
-          <div>
+          <div className="group-hover:bg-gray-50 p-2 rounded-lg transition-colors duration-200">
             <span className="text-gray-500">Deadline:</span>
             <span className="ml-1 font-medium text-gray-900">
               {formatDate(competition.registration_deadline)}
@@ -133,19 +142,17 @@ const CompetitionCard: React.FC<CompetitionCardProps> = ({
         </div>
         
         {/* Actions */}
-        <div className="flex gap-2">
-          <Link
-            href={`/competitions/${competition.id}`}
-            className="flex-1 inline-flex items-center justify-center px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors"
-          >
+        <div className="flex gap-2" onClick={(e) => e.preventDefault()}>
+          <div className="flex-1 inline-flex items-center justify-center px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg group-hover:bg-blue-700 transition-colors">
             View Details
-          </Link>
+          </div>
           {competition.competition_link && (
             <a
               href={competition.competition_link}
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center justify-center px-4 py-2 border border-gray-300 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-50 transition-colors"
+              onClick={(e) => e.stopPropagation()}
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
@@ -154,7 +161,7 @@ const CompetitionCard: React.FC<CompetitionCardProps> = ({
           )}
         </div>
       </div>
-    </div>
+    </Link>
   );
 };
 

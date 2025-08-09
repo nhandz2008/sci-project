@@ -68,11 +68,11 @@ const CompetitionDetails: React.FC<CompetitionDetailsProps> = ({ competition }) 
         </div>
         
         {/* Header Section */}
-        <div className="bg-white rounded-xl shadow-lg overflow-hidden mb-8">
+        <div className="rounded-xl shadow-lg overflow-hidden mb-8">
           <div className="relative">
             {/* Hero Image */}
             {competition.background_image_url && (
-              <div className="h-64 bg-gradient-to-r from-blue-600 to-purple-600 relative">
+              <div className="h-64 relative">
                 <img
                   src={competition.background_image_url}
                   alt={competition.title}
@@ -139,7 +139,7 @@ const CompetitionDetails: React.FC<CompetitionDetailsProps> = ({ competition }) 
             {(competition.introduction || competition.question_type || competition.selection_process || 
               competition.history || competition.scoring_and_format || competition.awards || 
               competition.penalties_and_bans || competition.notable_achievements) && (
-              <div className="bg-white rounded-xl shadow-lg p-8">
+              <div className="rounded-xl shadow-lg p-8">
                 <h2 className="text-2xl font-bold text-gray-900 mb-6">About this Competition</h2>
                 <div className="space-y-6">
                   {/* Introduction */}
@@ -229,7 +229,7 @@ const CompetitionDetails: React.FC<CompetitionDetailsProps> = ({ competition }) 
           {/* Sidebar */}
           <div className="space-y-6">
             {/* Quick Facts */}
-            <div className="bg-white rounded-xl shadow-lg p-6">
+            <div className="rounded-xl shadow-lg p-6">
               <h3 className="text-xl font-bold text-gray-900 mb-4">Quick Facts</h3>
               <div className="space-y-4">
                 <div className="flex items-center gap-3">
@@ -271,7 +271,7 @@ const CompetitionDetails: React.FC<CompetitionDetailsProps> = ({ competition }) 
             </div>
 
             {/* Contact & Links */}
-            <div className="bg-white rounded-xl shadow-lg p-6">
+            <div className="rounded-xl shadow-lg p-6">
               <h3 className="text-xl font-bold text-gray-900 mb-4">Links & Information</h3>
               <div className="space-y-3">
                 {competition.competition_link && (
@@ -291,7 +291,7 @@ const CompetitionDetails: React.FC<CompetitionDetailsProps> = ({ competition }) 
             </div>
 
             {/* Share */}
-            <div className="bg-white rounded-xl shadow-lg p-6">
+            <div className="rounded-xl shadow-lg p-6">
               <h3 className="text-xl font-bold text-gray-900 mb-4">Share</h3>
               <div className="flex gap-3">
                 <button

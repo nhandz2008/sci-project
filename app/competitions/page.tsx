@@ -2,7 +2,6 @@
 import { useState, useMemo } from "react";
 import Link from "next/link";
 import LikeButton from "../../components/like-button";
-import Image from "next/image";
 import { useCompetitions } from "../hooks/useCompetitions";
 import { Competition } from "../api/competitions";
 
@@ -39,6 +38,15 @@ const isValidImageUrl = (url: string | undefined): boolean => {
 
 // Helper function to map backend format to frontend display format
 const mapCompetitionToDisplay = (competition: Competition) => {
+  // Try to use the background image URL first, then fallback to local images
+  let imageUrl = null;
+  
+  if (isValidImageUrl(competition.background_image_url)) {
+    imageUrl = competition.background_image_url;
+  } else {
+    imageUrl = getFallbackImage(competition);
+  }
+  
   return {
     id: competition.id,
     name: competition.title,
@@ -47,7 +55,7 @@ const mapCompetitionToDisplay = (competition: Competition) => {
     location: competition.location || "TBD",
     modes: competition.format ? [competition.format.charAt(0).toUpperCase() + competition.format.slice(1).toLowerCase()] : ["TBD"],
     homepage: competition.competition_link || "#",
-    image: isValidImageUrl(competition.background_image_url) ? competition.background_image_url : getFallbackImage(competition),
+    image: imageUrl,
   };
 };
 
@@ -56,6 +64,7 @@ export default function CompetitionsPage() {
   const [scaleFilter, setScaleFilter] = useState("");
   const [modeFilter, setModeFilter] = useState("");
   const [locationFilter, setLocationFilter] = useState("");
+  const [imageErrors, setImageErrors] = useState<Set<string>>(new Set());
 
   // Fetch competitions from API
   const { competitions, loading, error, totalCount } = useCompetitions();
@@ -228,42 +237,42 @@ export default function CompetitionsPage() {
             </div>
           ) : (
             filteredCompetitions.map((c) => (
-              <div key={c.id} className="bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition-all duration-500 ease-out transform hover:scale-105 hover:-translate-y-3 hover:shadow-2xl group">
+              <Link
+                key={c.id}
+                href={`/competitions/${c.id}`}
+                className="block rounded-xl shadow-lg overflow-hidden hover:shadow-xl focus:shadow-xl transition-all duration-500 ease-out transform hover:scale-105 hover:-translate-y-3 focus:scale-105 focus:-translate-y-3 hover:shadow-2xl focus:shadow-2xl group cursor-pointer bg-white hover:bg-gray-50 focus:bg-gray-50 border border-gray-100 hover:border-blue-200 focus:border-blue-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50"
+              >
                 {/* Image Section */}
-                <div className="relative h-48 bg-gradient-to-br from-blue-500 to-purple-600 rounded-t-xl flex items-center justify-center overflow-hidden">
-                  <div className="absolute inset-0 bg-gradient-to-br from-blue-600 to-purple-700 opacity-0 group-hover:opacity-20 transition-opacity duration-300"></div>
-                  <Image
-                    src={c.image || "/logos/logoWeb.png"}
-                    alt={`${c.name} logo`}
-                    width={120}
-                    height={120}
-                    className="object-contain transition-transform duration-300 group-hover:scale-110 z-10"
-                    onError={(e) => {
-                      // Fallback to a placeholder if image fails to load
-                      const target = e.target as HTMLImageElement;
-                      target.style.display = 'none';
-                      const parent = target.parentElement;
-                      if (parent) {
-                        parent.innerHTML = `
-                          <div class="w-24 h-24 bg-white rounded-full flex items-center justify-center text-blue-600 text-3xl font-bold z-10">
-                            ${c.name.charAt(0)}
-                          </div>
-                        `;
-                      }
-                    }}
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                <div className="relative h-48 rounded-t-xl overflow-hidden">
+                  {c.image && !imageErrors.has(c.id) ? (
+                    <img
+                      src={c.image}
+                      alt={`${c.name} logo`}
+                      className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
+                      onError={() => {
+                        setImageErrors(prev => new Set(prev).add(c.id));
+                      }}
+                    />
+                  ) : (
+                    <div className="w-full h-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
+                      <span className="text-white text-3xl font-bold">{c.name.charAt(0)}</span>
+                    </div>
+                  )}
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-black/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                   
                   {/* Like Button - Top Right Corner */}
-                  <div className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-20">
+                  <div 
+                    className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-all duration-300 z-20 transform group-hover:scale-110"
+                    onClick={(e) => e.preventDefault()}
+                  >
                     <LikeButton 
                       competitionId={c.id} 
                       competition={{
                         id: c.id,
-                        name: c.name,
+                        title: c.name,
                         location: c.location,
-                        description: c.overview,
-                        homepage: c.homepage,
+                        introduction: c.overview,
+                        competition_link: c.homepage,
                       }} 
                     />
                   </div>
@@ -272,32 +281,29 @@ export default function CompetitionsPage() {
                 {/* Content Section */}
                 <div className="p-6 relative">
                   <div className="mb-4">
-                    <h2 className="text-xl font-bold text-gray-900 leading-tight mb-3">{c.name}</h2>
+                    <h2 className="text-xl font-bold text-gray-900 leading-tight mb-3 group-hover:text-blue-600 transition-colors duration-200">{c.name}</h2>
                   </div>
                   
-                  <p className="text-gray-700 text-base mb-4 leading-relaxed">{c.overview}</p>
+                  <p className="text-gray-700 text-base mb-4 leading-relaxed line-clamp-3">{c.overview}</p>
                   
                   <div className="flex flex-wrap gap-2 mb-4">
-                    <span className="px-3 py-1 text-sm rounded-full bg-blue-100 text-blue-800 font-medium">{c.scale}</span>
-                    <span className="px-3 py-1 text-sm rounded-full bg-green-100 text-green-800 font-medium">{c.location}</span>
+                    <span className="px-3 py-1 text-sm rounded-full bg-blue-100 text-blue-800 font-medium group-hover:bg-blue-200 transition-colors duration-200">{c.scale}</span>
+                    <span className="px-3 py-1 text-sm rounded-full bg-green-100 text-green-800 font-medium group-hover:bg-green-200 transition-colors duration-200">{c.location}</span>
                     {c.modes.map((m) => (
-                      <span key={m} className="px-3 py-1 text-sm rounded-full bg-purple-100 text-purple-800 font-medium">{m}</span>
+                      <span key={m} className="px-3 py-1 text-sm rounded-full bg-purple-100 text-purple-800 font-medium group-hover:bg-purple-200 transition-colors duration-200">{m}</span>
                     ))}
                   </div>
 
                   <div className="pt-4 border-t border-gray-100">
-                    <Link
-                      href={`/competitions/${c.id}`}
-                      className="inline-flex items-center text-blue-600 hover:text-blue-800 font-semibold text-sm transition-colors duration-200"
-                    >
-                      Learn More
-                      <svg className="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <div className="inline-flex items-center text-blue-600 group-hover:text-blue-800 font-semibold text-sm transition-colors duration-200">
+                      View Details
+                      <svg className="w-4 h-4 ml-1 transform group-hover:translate-x-1 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                       </svg>
-                    </Link>
+                    </div>
                   </div>
                 </div>
-              </div>
+              </Link>
             ))
           )}
         </div>
