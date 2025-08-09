@@ -28,6 +28,8 @@ Verify:
 - Docs: http://localhost:8000/api/v1/docs
 - Health: http://localhost:8000/api/v1/health
 
+**Note**: The `run-start` command starts the full stack in Docker containers. For local development with automatic admin user creation, use `dev-start` instead.
+
 To run tests in production environment:
 ```bash
 # Run tests (automatically creates test database if needed)
@@ -43,12 +45,18 @@ Common commands:
 ```bash
 ./scripts/dev.sh setup            # bootstrap: .env + backend/alembic.ini
 ./scripts/dev.sh dev-install      # install backend deps + pre-commit
-./scripts/dev.sh dev-start        # start db, apply migrations, run API locally
+./scripts/dev.sh dev-start        # start db, apply migrations, create admin, run API locally
+./scripts/dev.sh dev-stop         # stop development server (kills processes on port 8000)
 ./scripts/dev.sh dev-test [args]  # run tests (ensures db is running)
 ./scripts/dev.sh dev-lint [--fix] # ruff check (optionally --fix)
 ./scripts/dev.sh dev-format       # ruff format
+./scripts/dev.sh dev-populate     # populate database with dummy data (admin + creators + competitions)
 ./scripts/dev.sh migrate ...      # alembic via backend/scripts/migrate.sh
 ```
+
+**Note**: The `dev-start` command automatically creates an admin user using credentials from your `.env` file:
+- Email: `FIRST_SUPERUSER` (default: `admin@sci.com`)
+- Password: `FIRST_SUPERUSER_PASSWORD` (default: `Admin123`)
 
 ### Database Migrations
 
@@ -105,6 +113,30 @@ cd backend && uv run pytest tests/ -v --tb=short \
 - Loads environment variables from `.env`
 - Runs tests with proper isolation
 
+### Populating with Dummy Data
+
+To populate the database with dummy data for development and testing:
+
+```bash
+./scripts/dev.sh dev-populate
+```
+
+This will create:
+- **Admin user**: Using credentials from `.env` file
+- **5 Creator users**: With sample organizations and contact information
+- **15 Competitions**: Diverse science competitions with different formats, scales, and approval statuses
+
+The dummy data includes:
+- Featured and non-featured competitions
+- Approved and pending competitions
+- Various formats (ONLINE, OFFLINE, HYBRID)
+- Different scales (PROVINCIAL, REGIONAL, INTERNATIONAL)
+- Realistic competition details with deadlines, prizes, and requirements
+
+**Creator user credentials** (for testing):
+- Email: `creator1@sci.com` through `creator5@sci.com`
+- Password: `Creator123`
+
 See `backend/tests/TESTING.md` for detailed testing guidelines.
 
 ## 🐳 Docker Helpers
@@ -113,7 +145,7 @@ Docker is used to run the full application stack (PostgreSQL database + FastAPI 
 
 ### Common Commands
 ```bash
-# Start the full stack (database + backend API)
+# Start the full stack (database + backend API) in Docker containers
 ./scripts/dev.sh run-start
 
 # View real-time logs from all services
@@ -125,6 +157,8 @@ Docker is used to run the full application stack (PostgreSQL database + FastAPI 
 # Build Docker images (useful for production deployment)
 ./scripts/dev.sh run-build
 ```
+
+**Note**: The `run-start` command starts both database and backend in Docker containers. For local development with live code reloading and automatic admin user creation, use `dev-start` instead.
 
 ### What's Running
 - **PostgreSQL Database**: Port 5432 (accessible at `localhost:5432`)

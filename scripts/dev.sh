@@ -10,11 +10,26 @@ echo "========================"
 case "$1" in
     "dev-start")
         echo "Starting local development (db + API with reload)..."
+
+        # Check if port 8000 is already in use and clean it up
+        if lsof -ti:8000 > /dev/null 2>&1; then
+            echo "⚠️  Port 8000 is already in use. Stopping existing processes..."
+            lsof -ti:8000 | xargs kill -9 2>/dev/null || true
+            sleep 2
+            echo "✅ Cleaned up port 8000"
+        fi
+
         # Ensure database is running
         docker compose up -d db
+        # Wait for database to be ready
+        echo "Waiting for database to be ready..."
+        sleep 5
         # Apply migrations and start API (auto-reload)
         cd backend
         ./scripts/migrate.sh upgrade head
+        # Create admin user if it doesn't exist
+        echo "Ensuring admin user exists..."
+        uv run python scripts/populate_data.py --admin-only || echo "⚠️  Admin user creation failed, continuing..."
         echo "Starting development server (Uvicorn on port 8000)..."
         uv run uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
         ;;
@@ -65,6 +80,39 @@ case "$1" in
         echo "Formatting code (ruff format)..."
         cd backend
         uv run ruff format .
+        ;;
+
+    "dev-populate")
+        echo "Populating database with dummy data..."
+
+        # Check if port 8000 is already in use and warn user
+        if lsof -ti:8000 > /dev/null 2>&1; then
+            echo "⚠️  Warning: Port 8000 is already in use. Population will continue but may conflict with running server."
+            echo "   Consider stopping the server first with: pkill -f uvicorn"
+        fi
+
+        # Ensure database is running
+        docker compose up -d db
+        # Wait for database to be ready
+        echo "Waiting for database to be ready..."
+        sleep 5
+        # Apply migrations first
+        cd backend
+        ./scripts/migrate.sh upgrade head
+        # Run population script
+        uv run python scripts/populate_data.py
+        cd ..
+        ;;
+
+    "dev-stop")
+        echo "Stopping development server..."
+        if lsof -ti:8000 > /dev/null 2>&1; then
+            echo "Stopping processes on port 8000..."
+            lsof -ti:8000 | xargs kill -9 2>/dev/null || true
+            echo "✅ Stopped development server"
+        else
+            echo "ℹ️  No processes found on port 8000"
+        fi
         ;;
 
     # Run (Docker): full stack - no local code changes required
@@ -165,10 +213,12 @@ case "$1" in
         echo ""
         echo "Development (local code):"
         echo "  dev-install      - Install backend dependencies"
-        echo "  dev-start        - Run API locally on http://localhost:8000 (starts db + applies migrations)"
+        echo "  dev-start        - Run API locally on http://localhost:8000 (starts db + applies migrations + creates admin)"
+        echo "  dev-stop         - Stop development server (kills processes on port 8000)"
         echo "  dev-test [args]  - Run tests (ensures db is running)"
         echo "  dev-lint [--fix] - Lint code with ruff (optionally --fix)"
         echo "  dev-format       - Format code with ruff"
+        echo "  dev-populate     - Populate database with dummy data (admin + creators + competitions)"
         echo "  migrate ...      - Run Alembic via backend/scripts/migrate.sh (e.g., 'migrate upgrade head')"
         echo ""
         echo "Run (Docker):"
