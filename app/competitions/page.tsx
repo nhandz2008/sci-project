@@ -179,50 +179,131 @@ export default function CompetitionsPage() {
         </div>
         
         {/* Search and Filter Section */}
-        <div className="bg-white rounded-xl shadow-lg p-6 mb-8">
-          <div className="flex flex-col lg:flex-row lg:items-end gap-4">
-            <input
-              type="text"
-              placeholder="Search competitions..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="w-full lg:w-1/3 px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 text-lg"
-              aria-label="Search competitions"
-            />
-            <select
-              value={scaleFilter}
-              onChange={(e) => setScaleFilter(e.target.value)}
-              className="w-full lg:w-1/6 px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 text-lg"
-              aria-label="Filter by scale"
-            >
-              <option value="">All Scales</option>
-              {scales.map((s) => (
-                <option key={s} value={s}>{s}</option>
-              ))}
-            </select>
-            <select
-              value={locationFilter}
-              onChange={(e) => setLocationFilter(e.target.value)}
-              className="w-full lg:w-1/4 px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 text-lg"
-              aria-label="Filter by location"
-            >
-              <option value="">All Locations</option>
-              {locations.map((l) => (
-                <option key={l} value={l}>{l}</option>
-              ))}
-            </select>
-            <select
-              value={modeFilter}
-              onChange={(e) => setModeFilter(e.target.value)}
-              className="w-full lg:w-1/6 px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 text-lg"
-              aria-label="Filter by mode"
-            >
-              <option value="">All Modes</option>
-              {modes.map((m) => (
-                <option key={m} value={m}>{m}</option>
-              ))}
-            </select>
+        <div className="bg-white rounded-xl shadow-lg p-8 mb-8">
+          <div className="mb-6">
+            <h2 className="text-2xl font-bold text-gray-900 mb-2">Filter competitions</h2>
+            <p className="text-gray-600">Find the perfect competition for you</p>
           </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {/* Search Input */}
+            <div className="space-y-2">
+              <label htmlFor="search" className="block text-sm font-medium text-gray-700">
+                Search
+              </label>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                  </svg>
+                </div>
+                <input
+                  id="search"
+                  type="text"
+                  placeholder="Search competitions..."
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition-colors bg-white hover:border-gray-400"
+                  aria-label="Search competitions"
+                />
+              </div>
+            </div>
+
+            {/* Scale Filter */}
+            <div className="space-y-2">
+              <label htmlFor="scale-filter" className="block text-sm font-medium text-gray-700">
+                Scale
+              </label>
+              <div className="relative">
+                <select
+                  id="scale-filter"
+                  value={scaleFilter}
+                  onChange={(e) => setScaleFilter(e.target.value)}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition-colors bg-white hover:border-gray-400 appearance-none cursor-pointer"
+                  aria-label="Filter by scale"
+                >
+                  <option value="">All scales</option>
+                  {scales.map((s) => (
+                    <option key={s} value={s}>{s}</option>
+                  ))}
+                </select>
+                <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                  <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
+                </div>
+              </div>
+            </div>
+
+            {/* Location Filter */}
+            <div className="space-y-2">
+              <label htmlFor="location-filter" className="block text-sm font-medium text-gray-700">
+                Location
+              </label>
+              <input
+                id="location-filter"
+                type="text"
+                placeholder="Type or select location..."
+                value={locationFilter}
+                onChange={(e) => setLocationFilter(e.target.value)}
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition-colors bg-white hover:border-gray-400"
+                aria-label="Filter by location"
+                list="location-options"
+              />
+              <datalist id="location-options">
+                <option value="">All locations</option>
+                {locations.map((l) => (
+                  <option key={l} value={l} />
+                ))}
+              </datalist>
+            </div>
+
+            {/* Mode Filter */}
+            <div className="space-y-2">
+              <label htmlFor="mode-filter" className="block text-sm font-medium text-gray-700">
+                Mode
+              </label>
+              <div className="relative">
+                <select
+                  id="mode-filter"
+                  value={modeFilter}
+                  onChange={(e) => setModeFilter(e.target.value)}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition-colors bg-white hover:border-gray-400 appearance-none cursor-pointer"
+                  aria-label="Filter by mode"
+                >
+                  <option value="">All modes</option>
+                  {modes.map((m) => (
+                    <option key={m} value={m}>{m}</option>
+                  ))}
+                </select>
+                <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                  <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Clear Filters Button */}
+          {(search || scaleFilter || locationFilter || modeFilter) && (
+            <div className="mt-6 pt-6 border-t border-gray-200">
+              <button
+                onClick={() => {
+                  setSearch("");
+                  setScaleFilter("");
+                  setLocationFilter("");
+                  setModeFilter("");
+                }}
+                className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+                Clear all filters
+              </button>
+            </div>
+          )}
         </div>
 
         {/* Competitions Grid */}

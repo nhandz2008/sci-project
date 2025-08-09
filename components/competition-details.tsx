@@ -4,6 +4,7 @@ import React from 'react';
 import { Competition } from '../app/api/competitions';
 import LikeButton from './like-button';
 import Breadcrumb from './breadcrumb';
+import CountdownClock from './countdown-clock';
 
 interface CompetitionDetailsProps {
   competition: Competition;
@@ -29,12 +30,12 @@ const CompetitionDetails: React.FC<CompetitionDetailsProps> = ({ competition }) 
 
   const getFormatDisplay = (format?: string) => {
     if (!format) return 'Not specified';
-    return format.charAt(0).toUpperCase() + format.slice(1);
+    return format.charAt(0).toUpperCase() + format.slice(1).toLowerCase();
   };
 
   const getScaleDisplay = (scale?: string) => {
     if (!scale) return 'Not specified';
-    return scale.charAt(0).toUpperCase() + scale.slice(1);
+    return scale.charAt(0).toUpperCase() + scale.slice(1).toLowerCase();
   };
 
   const getStatusBadge = (isActive: boolean) => {
@@ -49,6 +50,12 @@ const CompetitionDetails: React.FC<CompetitionDetailsProps> = ({ competition }) 
         {isActive ? 'Active' : 'Inactive'}
       </span>
     );
+  };
+
+  const isDeadlineInFuture = (deadline: string) => {
+    const deadlineDate = new Date(deadline);
+    const now = new Date();
+    return deadlineDate.getTime() > now.getTime();
   };
 
 
@@ -140,7 +147,7 @@ const CompetitionDetails: React.FC<CompetitionDetailsProps> = ({ competition }) 
               competition.history || competition.scoring_and_format || competition.awards || 
               competition.penalties_and_bans || competition.notable_achievements) && (
               <div className="rounded-xl shadow-lg p-8">
-                <h2 className="text-2xl font-bold text-gray-900 mb-6">About this Competition</h2>
+                <h2 className="text-2xl font-bold text-gray-900 mb-6">About this competition</h2>
                 <div className="space-y-6">
                   {/* Introduction */}
                   {competition.introduction && (
@@ -155,7 +162,7 @@ const CompetitionDetails: React.FC<CompetitionDetailsProps> = ({ competition }) 
                   {/* Question Type */}
                   {competition.question_type && (
                     <div>
-                      <h3 className="text-lg font-semibold text-gray-900 mb-3">Question Type</h3>
+                      <h3 className="text-lg font-semibold text-gray-900 mb-3">Question type</h3>
                       <div className="prose prose-lg max-w-none text-gray-700">
                         <p className="leading-relaxed">{competition.question_type}</p>
                       </div>
@@ -165,7 +172,7 @@ const CompetitionDetails: React.FC<CompetitionDetailsProps> = ({ competition }) 
                   {/* Selection Process */}
                   {competition.selection_process && (
                     <div>
-                      <h3 className="text-lg font-semibold text-gray-900 mb-3">Selection Process</h3>
+                      <h3 className="text-lg font-semibold text-gray-900 mb-3">Selection process</h3>
                       <div className="prose prose-lg max-w-none text-gray-700">
                         <p className="leading-relaxed">{competition.selection_process}</p>
                       </div>
@@ -185,7 +192,7 @@ const CompetitionDetails: React.FC<CompetitionDetailsProps> = ({ competition }) 
                   {/* Scoring and Format */}
                   {competition.scoring_and_format && (
                     <div>
-                      <h3 className="text-lg font-semibold text-gray-900 mb-3">Scoring and Format</h3>
+                      <h3 className="text-lg font-semibold text-gray-900 mb-3">Scoring and format</h3>
                       <div className="prose prose-lg max-w-none text-gray-700">
                         <p className="leading-relaxed">{competition.scoring_and_format}</p>
                       </div>
@@ -205,7 +212,7 @@ const CompetitionDetails: React.FC<CompetitionDetailsProps> = ({ competition }) 
                   {/* Penalties and Bans */}
                   {competition.penalties_and_bans && (
                     <div>
-                      <h3 className="text-lg font-semibold text-gray-900 mb-3">Penalties and Bans</h3>
+                      <h3 className="text-lg font-semibold text-gray-900 mb-3">Penalties and bans</h3>
                       <div className="prose prose-lg max-w-none text-gray-700">
                         <p className="leading-relaxed">{competition.penalties_and_bans}</p>
                       </div>
@@ -215,7 +222,7 @@ const CompetitionDetails: React.FC<CompetitionDetailsProps> = ({ competition }) 
                   {/* Notable Achievements */}
                   {competition.notable_achievements && (
                     <div>
-                      <h3 className="text-lg font-semibold text-gray-900 mb-3">Notable Achievements</h3>
+                      <h3 className="text-lg font-semibold text-gray-900 mb-3">Notable achievements</h3>
                       <div className="prose prose-lg max-w-none text-gray-700">
                         <p className="leading-relaxed">{competition.notable_achievements}</p>
                       </div>
@@ -228,9 +235,14 @@ const CompetitionDetails: React.FC<CompetitionDetailsProps> = ({ competition }) 
 
           {/* Sidebar */}
           <div className="space-y-6">
+            {/* Countdown Clock */}
+            {competition.registration_deadline && isDeadlineInFuture(competition.registration_deadline) && (
+              <CountdownClock deadline={competition.registration_deadline} />
+            )}
+
             {/* Quick Facts */}
             <div className="rounded-xl shadow-lg p-6">
-              <h3 className="text-xl font-bold text-gray-900 mb-4">Quick Facts</h3>
+              <h3 className="text-xl font-bold text-gray-900 mb-4">Quick facts</h3>
               <div className="space-y-4">
                 <div className="flex items-center gap-3">
                   <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
@@ -251,7 +263,7 @@ const CompetitionDetails: React.FC<CompetitionDetailsProps> = ({ competition }) 
                 <div className="flex items-center gap-3">
                   <div className="w-3 h-3 bg-yellow-500 rounded-full"></div>
                   <div>
-                    <p className="text-sm text-gray-500">Age Range</p>
+                    <p className="text-sm text-gray-500">Age range</p>
                     <p className="font-semibold text-gray-900">
                       {formatAgeRange(competition.target_age_min, competition.target_age_max)}
                     </p>
@@ -272,7 +284,7 @@ const CompetitionDetails: React.FC<CompetitionDetailsProps> = ({ competition }) 
 
             {/* Contact & Links */}
             <div className="rounded-xl shadow-lg p-6">
-              <h3 className="text-xl font-bold text-gray-900 mb-4">Links & Information</h3>
+              <h3 className="text-xl font-bold text-gray-900 mb-4">Links & information</h3>
               <div className="space-y-3">
                 {competition.competition_link && (
                   <a
