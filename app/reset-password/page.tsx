@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useAuth } from "../contexts/AuthContext";
 import { usersAPI } from "../api/users";
+import PasswordInput from "../../components/password-input";
 
 interface ValidationErrors {
   email?: string;
@@ -335,61 +336,47 @@ export default function ResetPasswordPage() {
         {/* Step 3: New Password */}
         {step === "password" && (
           <form onSubmit={handleResetPassword} className="space-y-6">
-            <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
-                New Password
-              </label>
-              <input
-                type="password"
-                id="password"
-                placeholder="Enter your new password"
-                value={formData.password}
-                onChange={(e) => handleInputChange("password", e.target.value)}
-                className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 ${
-                  errors.password ? 'border-red-400' : 'border-gray-300'
-                }`}
-              />
-              {formData.password && (
-                <div className="mt-2">
-                  <div className="flex items-center gap-2 mb-1">
-                    <div className="flex-1 bg-gray-200 rounded-full h-2">
-                      <div 
-                        className={`h-2 rounded-full transition-all duration-300 ${getPasswordStrengthColor(passwordStrength.score)}`}
-                        style={{ width: `${(passwordStrength.score / 5) * 100}%` }}
-                      ></div>
-                    </div>
-                    <span className="text-xs text-gray-500">
-                      {passwordStrength.score}/5
-                    </span>
+            <PasswordInput
+              id="password"
+              label="New Password"
+              placeholder="Enter your new password"
+              value={formData.password}
+              onChange={(e) => handleInputChange("password", e.target.value)}
+              error={!!errors.password}
+            />
+            {formData.password && (
+              <div className="mt-2">
+                <div className="flex items-center gap-2 mb-1">
+                  <div className="flex-1 bg-gray-200 rounded-full h-2">
+                    <div 
+                      className={`h-2 rounded-full transition-all duration-300 ${getPasswordStrengthColor(passwordStrength.score)}`}
+                      style={{ width: `${(passwordStrength.score / 5) * 100}%` }}
+                    ></div>
                   </div>
-                  {passwordStrength.feedback.length > 0 && (
-                    <div className="text-xs text-gray-600">
-                      {passwordStrength.feedback.map((msg, index) => (
-                        <p key={index} className="text-red-500">• {msg}</p>
-                      ))}
-                    </div>
-                  )}
+                  <span className="text-xs text-gray-500">
+                    {passwordStrength.score}/5
+                  </span>
                 </div>
-              )}
-              {errors.password && <p className="text-red-500 text-sm mt-1">{errors.password}</p>}
-            </div>
+                {passwordStrength.feedback.length > 0 && (
+                  <div className="text-xs text-gray-600">
+                    {passwordStrength.feedback.map((msg, index) => (
+                      <p key={index} className="text-red-500">• {msg}</p>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+            {errors.password && <p className="text-red-500 text-sm mt-1">{errors.password}</p>}
 
-            <div>
-              <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 mb-2">
-                Confirm New Password
-              </label>
-              <input
-                type="password"
-                id="confirmPassword"
-                placeholder="Confirm your new password"
-                value={formData.confirmPassword}
-                onChange={(e) => handleInputChange("confirmPassword", e.target.value)}
-                className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 ${
-                  errors.confirmPassword ? 'border-red-400' : 'border-gray-300'
-                }`}
-              />
-              {errors.confirmPassword && <p className="text-red-500 text-sm mt-1">{errors.confirmPassword}</p>}
-            </div>
+            <PasswordInput
+              id="confirmPassword"
+              label="Confirm New Password"
+              placeholder="Confirm your new password"
+              value={formData.confirmPassword}
+              onChange={(e) => handleInputChange("confirmPassword", e.target.value)}
+              error={!!errors.confirmPassword}
+            />
+            {errors.confirmPassword && <p className="text-red-500 text-sm mt-1">{errors.confirmPassword}</p>}
 
             <button
               type="submit"
@@ -404,78 +391,57 @@ export default function ResetPasswordPage() {
         {/* Logged-in User Password Change */}
         {step === "logged-in" && (
           <form onSubmit={handleChangePassword} className="space-y-6">
-            <div>
-              <label htmlFor="currentPassword" className="block text-sm font-medium text-gray-700 mb-2">
-                Current Password
-              </label>
-              <input
-                type="password"
-                id="currentPassword"
-                placeholder="Enter your current password"
-                value={formData.currentPassword}
-                onChange={(e) => handleInputChange("currentPassword", e.target.value)}
-                className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 ${
-                  errors.currentPassword ? 'border-red-400' : 'border-gray-300'
-                }`}
-              />
-              {errors.currentPassword && <p className="text-red-500 text-sm mt-1">{errors.currentPassword}</p>}
-            </div>
+            <PasswordInput
+              id="currentPassword"
+              label="Current Password"
+              placeholder="Enter your current password"
+              value={formData.currentPassword}
+              onChange={(e) => handleInputChange("currentPassword", e.target.value)}
+              error={!!errors.currentPassword}
+            />
+            {errors.currentPassword && <p className="text-red-500 text-sm mt-1">{errors.currentPassword}</p>}
 
-            <div>
-              <label htmlFor="newPassword" className="block text-sm font-medium text-gray-700 mb-2">
-                New Password
-              </label>
-              <input
-                type="password"
-                id="newPassword"
-                placeholder="Enter your new password"
-                value={formData.password}
-                onChange={(e) => handleInputChange("password", e.target.value)}
-                className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 ${
-                  errors.password ? 'border-red-400' : 'border-gray-300'
-                }`}
-              />
-              {formData.password && (
-                <div className="mt-2">
-                  <div className="flex items-center gap-2 mb-1">
-                    <div className="flex-1 bg-gray-200 rounded-full h-2">
-                      <div 
-                        className={`h-2 rounded-full transition-all duration-300 ${getPasswordStrengthColor(passwordStrength.score)}`}
-                        style={{ width: `${(passwordStrength.score / 5) * 100}%` }}
-                      ></div>
-                    </div>
-                    <span className="text-xs text-gray-500">
-                      {passwordStrength.score}/5
-                    </span>
+            <PasswordInput
+              id="newPassword"
+              label="New Password"
+              placeholder="Enter your new password"
+              value={formData.password}
+              onChange={(e) => handleInputChange("password", e.target.value)}
+              error={!!errors.password}
+            />
+            {formData.password && (
+              <div className="mt-2">
+                <div className="flex items-center gap-2 mb-1">
+                  <div className="flex-1 bg-gray-200 rounded-full h-2">
+                    <div 
+                      className={`h-2 rounded-full transition-all duration-300 ${getPasswordStrengthColor(passwordStrength.score)}`}
+                      style={{ width: `${(passwordStrength.score / 5) * 100}%` }}
+                    ></div>
                   </div>
-                  {passwordStrength.feedback.length > 0 && (
-                    <div className="text-xs text-gray-600">
-                      {passwordStrength.feedback.map((msg, index) => (
-                        <p key={index} className="text-red-500">• {msg}</p>
-                      ))}
-                    </div>
-                  )}
+                  <span className="text-xs text-gray-500">
+                    {passwordStrength.score}/5
+                  </span>
                 </div>
-              )}
-              {errors.password && <p className="text-red-500 text-sm mt-1">{errors.password}</p>}
-            </div>
+                {passwordStrength.feedback.length > 0 && (
+                  <div className="text-xs text-gray-600">
+                    {passwordStrength.feedback.map((msg, index) => (
+                      <p key={index} className="text-red-500">• {msg}</p>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+            {errors.password && <p className="text-red-500 text-sm mt-1">{errors.password}</p>}
 
-            <div>
-              <label htmlFor="confirmNewPassword" className="block text-sm font-medium text-gray-700 mb-2">
-                Confirm New Password
-              </label>
-              <input
-                type="password"
-                id="confirmNewPassword"
-                placeholder="Confirm your new password"
-                value={formData.confirmPassword}
-                onChange={(e) => handleInputChange("confirmPassword", e.target.value)}
-                className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 ${
-                  errors.confirmPassword ? 'border-red-400' : 'border-gray-300'
-                }`}
-              />
-              {errors.confirmPassword && <p className="text-red-500 text-sm mt-1">{errors.confirmPassword}</p>}
-            </div>
+            <PasswordInput
+              id="confirmNewPassword"
+              label="Confirm New Password"
+              placeholder="Confirm your new password"
+              value={formData.confirmPassword}
+              onChange={(e) => handleInputChange("confirmPassword", e.target.value)}
+              error={!!errors.confirmPassword}
+            />
+            {errors.confirmPassword && <p className="text-red-500 text-sm mt-1">{errors.confirmPassword}</p>}
 
             <button
               type="submit"

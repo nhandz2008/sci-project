@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '../contexts/AuthContext';
+import PasswordInput from '../../components/password-input';
 
 interface ValidationErrors {
   email?: string;
@@ -271,68 +272,56 @@ export default function SignupPage() {
           </div>
 
           {/* Password Input */}
-          <div>
-            <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
-              Password *
-            </label>
-            <input
-              id="password"
-              type="password"
-              placeholder="Enter your password"
-              value={formData.password}
-              onChange={(e) => handleInputChange('password', e.target.value)}
-              className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 ${
-                errors.password ? 'border-red-500' : 'border-gray-300'
-              }`}
-            />
-            {errors.password && <p className="text-red-500 text-sm mt-1">{errors.password}</p>}
-            
-            {/* Password Strength Indicator */}
-            {formData.password && (
-              <div className="mt-2">
-                <div className="flex space-x-1">
-                  {[1, 2, 3, 4, 5].map((level) => (
-                    <div
-                      key={level}
-                      className={`h-2 flex-1 rounded ${
-                        level <= passwordStrength.score
-                          ? getPasswordStrengthColor(passwordStrength.score)
-                          : 'bg-gray-200'
-                      }`}
-                    />
-                  ))}
-                </div>
-                {passwordStrength.feedback.length > 0 && (
-                  <ul className="text-xs text-gray-600 mt-1 space-y-1">
-                    {passwordStrength.feedback.map((feedback, index) => (
-                      <li key={index} className="flex items-center">
-                        <span className="text-red-500 mr-1">•</span>
-                        {feedback}
-                      </li>
-                    ))}
-                  </ul>
-                )}
+          <PasswordInput
+            id="password"
+            label="Password"
+            placeholder="Enter your password"
+            value={formData.password}
+            onChange={(e) => handleInputChange('password', e.target.value)}
+            error={!!errors.password}
+            required
+          />
+          {errors.password && <p className="text-red-500 text-sm mt-1">{errors.password}</p>}
+          
+          {/* Password Strength Indicator */}
+          {formData.password && (
+            <div className="mt-2">
+              <div className="flex space-x-1">
+                {[1, 2, 3, 4, 5].map((level) => (
+                  <div
+                    key={level}
+                    className={`h-2 flex-1 rounded ${
+                      level <= passwordStrength.score
+                        ? getPasswordStrengthColor(passwordStrength.score)
+                        : 'bg-gray-200'
+                    }`}
+                  />
+                ))}
               </div>
-            )}
-          </div>
+              {passwordStrength.feedback.length > 0 && (
+                <ul className="text-xs text-gray-600 mt-1 space-y-1">
+                  {passwordStrength.feedback.map((feedback, index) => (
+                    <li key={index} className="flex items-center">
+                      <span className="text-red-500 mr-1">•</span>
+                      {feedback}
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          )}
 
           {/* Confirm Password Input */}
-          <div>
-            <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 mb-2">
-              Confirm Password *
-            </label>
-            <input
-              id="confirmPassword"
-              type="password"
-              placeholder="Confirm your password"
-              value={formData.confirmPassword}
-              onChange={(e) => handleInputChange('confirmPassword', e.target.value)}
-              className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 ${
-                errors.confirmPassword ? 'border-red-500' : 'border-gray-300'
-              }`}
-            />
-            {errors.confirmPassword && <p className="text-red-500 text-sm mt-1">{errors.confirmPassword}</p>}
-          </div>
+          <PasswordInput
+            id="confirmPassword"
+            label="Confirm Password"
+            placeholder="Confirm your password"
+            value={formData.confirmPassword}
+            onChange={(e) => handleInputChange('confirmPassword', e.target.value)}
+            error={!!errors.confirmPassword}
+            required
+          />
+          {errors.confirmPassword && <p className="text-red-500 text-sm mt-1">{errors.confirmPassword}</p>}
 
           {/* Submit Button */}
           <button

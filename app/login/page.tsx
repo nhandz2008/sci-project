@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '../contexts/AuthContext';
+import PasswordInput from '../../components/password-input';
 
 interface ValidationErrors {
   email?: string;
@@ -101,22 +102,15 @@ export default function LoginPage() {
           </div>
 
           {/* Password Input */}
-          <div>
-            <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
-              Password
-            </label>
-            <input
-              id="password"
-              type="password"
-              placeholder="Enter your password"
-              value={formData.password}
-              onChange={(e) => handleInputChange('password', e.target.value)}
-              className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 ${
-                errors.password ? 'border-red-500' : 'border-gray-300'
-              }`}
-            />
-            {errors.password && <p className="text-red-500 text-sm mt-1">{errors.password}</p>}
-          </div>
+          <PasswordInput
+            id="password"
+            label="Password"
+            placeholder="Enter your password"
+            value={formData.password}
+            onChange={(e) => handleInputChange('password', e.target.value)}
+            error={!!errors.password}
+          />
+          {errors.password && <p className="text-red-500 text-sm mt-1">{errors.password}</p>}
 
           {/* Forgot Password Link */}
           <div className="text-right">
