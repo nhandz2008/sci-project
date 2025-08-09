@@ -10,6 +10,9 @@ const inter = Inter({ subsets: ["latin"] });
 export const metadata: Metadata = {
   title: "SCI - Science Competition Insights",
   description: "Discover and explore science competitions worldwide",
+  icons: {
+    icon: "/assets/icons/Ava.jpg",
+  },
 };
 
 export default function RootLayout({
