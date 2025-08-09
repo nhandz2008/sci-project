@@ -19,12 +19,21 @@ export default function CreateCompetitionForm({
   const [formData, setFormData] = useState<CompetitionCreate>({
     title: '',
     introduction: '',
+    question_type: '',
+    selection_process: '',
+    history: '',
+    scoring_and_format: '',
+    awards: '',
+    penalties_and_bans: '',
+    notable_achievements: '',
     competition_link: '',
     background_image_url: '',
+    detail_image_urls: [],
     location: '',
     format: 'ONLINE',
     scale: 'PROVINCIAL',
     registration_deadline: '',
+    size: undefined,
     target_age_min: undefined,
     target_age_max: undefined,
   });
@@ -45,12 +54,21 @@ export default function CreateCompetitionForm({
     setFormData({
       title: '',
       introduction: '',
+      question_type: '',
+      selection_process: '',
+      history: '',
+      scoring_and_format: '',
+      awards: '',
+      penalties_and_bans: '',
+      notable_achievements: '',
       competition_link: '',
       background_image_url: '',
+      detail_image_urls: [],
       location: '',
       format: 'ONLINE',
       scale: 'PROVINCIAL',
       registration_deadline: '',
+      size: undefined,
       target_age_min: undefined,
       target_age_max: undefined,
     });
@@ -61,7 +79,7 @@ export default function CreateCompetitionForm({
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-xl shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+      <div className="bg-white rounded-xl shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
         <div className="p-6">
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-2xl font-bold text-gray-900">Create New Competition</h2>
@@ -98,7 +116,7 @@ export default function CreateCompetitionForm({
 
               <div>
                 <label htmlFor="introduction" className="block text-sm font-medium text-gray-700 mb-1">
-                  Description
+                  Introduction/Description
                 </label>
                 <textarea
                   id="introduction"
@@ -106,10 +124,118 @@ export default function CreateCompetitionForm({
                   onChange={(e) => handleInputChange('introduction', e.target.value)}
                   rows={4}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  placeholder="Describe the competition..."
+                  placeholder="Provide a comprehensive description of the competition..."
                 />
               </div>
 
+              <div>
+                <label htmlFor="question_type" className="block text-sm font-medium text-gray-700 mb-1">
+                  Question Type
+                </label>
+                <input
+                  type="text"
+                  id="question_type"
+                  value={formData.question_type || ''}
+                  onChange={(e) => handleInputChange('question_type', e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  placeholder="e.g., Multiple choice, Essay, Practical, etc."
+                />
+              </div>
+
+              <div>
+                <label htmlFor="selection_process" className="block text-sm font-medium text-gray-700 mb-1">
+                  Selection Process
+                </label>
+                <textarea
+                  id="selection_process"
+                  value={formData.selection_process || ''}
+                  onChange={(e) => handleInputChange('selection_process', e.target.value)}
+                  rows={3}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  placeholder="Describe how participants are selected..."
+                />
+              </div>
+            </div>
+
+            {/* Competition Details */}
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold text-gray-900 border-b pb-2">Competition Details</h3>
+              
+              <div>
+                <label htmlFor="history" className="block text-sm font-medium text-gray-700 mb-1">
+                  History
+                </label>
+                <textarea
+                  id="history"
+                  value={formData.history || ''}
+                  onChange={(e) => handleInputChange('history', e.target.value)}
+                  rows={3}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  placeholder="Brief history of the competition..."
+                />
+              </div>
+
+              <div>
+                <label htmlFor="scoring_and_format" className="block text-sm font-medium text-gray-700 mb-1">
+                  Scoring and Format
+                </label>
+                <textarea
+                  id="scoring_and_format"
+                  value={formData.scoring_and_format || ''}
+                  onChange={(e) => handleInputChange('scoring_and_format', e.target.value)}
+                  rows={3}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  placeholder="Explain the scoring system and competition format..."
+                />
+              </div>
+
+              <div>
+                <label htmlFor="awards" className="block text-sm font-medium text-gray-700 mb-1">
+                  Awards and Prizes
+                </label>
+                <textarea
+                  id="awards"
+                  value={formData.awards || ''}
+                  onChange={(e) => handleInputChange('awards', e.target.value)}
+                  rows={3}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  placeholder="Describe the awards, prizes, and recognition..."
+                />
+              </div>
+
+              <div>
+                <label htmlFor="penalties_and_bans" className="block text-sm font-medium text-gray-700 mb-1">
+                  Penalties and Bans
+                </label>
+                <textarea
+                  id="penalties_and_bans"
+                  value={formData.penalties_and_bans || ''}
+                  onChange={(e) => handleInputChange('penalties_and_bans', e.target.value)}
+                  rows={3}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  placeholder="Rules regarding penalties, disqualifications, and bans..."
+                />
+              </div>
+
+              <div>
+                <label htmlFor="notable_achievements" className="block text-sm font-medium text-gray-700 mb-1">
+                  Notable Achievements
+                </label>
+                <textarea
+                  id="notable_achievements"
+                  value={formData.notable_achievements || ''}
+                  onChange={(e) => handleInputChange('notable_achievements', e.target.value)}
+                  rows={3}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  placeholder="Highlight notable achievements, winners, or alumni..."
+                />
+              </div>
+            </div>
+
+            {/* Links and Media */}
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold text-gray-900 border-b pb-2">Links and Media</h3>
+              
               <div>
                 <label htmlFor="competition_link" className="block text-sm font-medium text-gray-700 mb-1">
                   Competition Website
@@ -126,7 +252,7 @@ export default function CreateCompetitionForm({
 
               <div>
                 <label htmlFor="background_image_url" className="block text-sm font-medium text-gray-700 mb-1">
-                  Image URL
+                  Background Image URL
                 </label>
                 <input
                   type="url"
@@ -165,12 +291,12 @@ export default function CreateCompetitionForm({
                   <select
                     id="format"
                     value={formData.format}
-                    onChange={(e) => handleInputChange('format', e.target.value as 'online' | 'offline' | 'hybrid')}
+                    onChange={(e) => handleInputChange('format', e.target.value as 'ONLINE' | 'OFFLINE' | 'HYBRID')}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   >
-                    <option value="online">Online</option>
-                    <option value="offline">Offline</option>
-                    <option value="hybrid">Hybrid</option>
+                    <option value="ONLINE">Online</option>
+                    <option value="OFFLINE">Offline</option>
+                    <option value="HYBRID">Hybrid</option>
                   </select>
                 </div>
 
@@ -181,20 +307,20 @@ export default function CreateCompetitionForm({
                   <select
                     id="scale"
                     value={formData.scale}
-                    onChange={(e) => handleInputChange('scale', e.target.value as 'provincial' | 'regional' | 'international')}
+                    onChange={(e) => handleInputChange('scale', e.target.value as 'PROVINCIAL' | 'REGIONAL' | 'INTERNATIONAL')}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   >
-                    <option value="provincial">Provincial</option>
-                    <option value="regional">Regional</option>
-                    <option value="international">International</option>
+                    <option value="PROVINCIAL">Provincial</option>
+                    <option value="REGIONAL">Regional</option>
+                    <option value="INTERNATIONAL">International</option>
                   </select>
                 </div>
               </div>
             </div>
 
-            {/* Dates and Target Age */}
+            {/* Dates, Size and Target Age */}
             <div className="space-y-4">
-              <h3 className="text-lg font-semibold text-gray-900 border-b pb-2">Dates & Target Audience</h3>
+              <h3 className="text-lg font-semibold text-gray-900 border-b pb-2">Dates, Size & Target Audience</h3>
               
               <div>
                 <label htmlFor="registration_deadline" className="block text-sm font-medium text-gray-700 mb-1">
@@ -209,7 +335,22 @@ export default function CreateCompetitionForm({
                 />
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                  <label htmlFor="size" className="block text-sm font-medium text-gray-700 mb-1">
+                    Expected Size
+                  </label>
+                  <input
+                    type="number"
+                    id="size"
+                    value={formData.size || ''}
+                    onChange={(e) => handleInputChange('size', e.target.value ? parseInt(e.target.value) : undefined)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    placeholder="e.g., 1000"
+                    min="1"
+                  />
+                </div>
+
                 <div>
                   <label htmlFor="target_age_min" className="block text-sm font-medium text-gray-700 mb-1">
                     Minimum Age
@@ -241,8 +382,6 @@ export default function CreateCompetitionForm({
                 </div>
               </div>
             </div>
-
-
 
             {/* Form Actions */}
             <div className="flex items-center justify-end gap-4 pt-6 border-t">

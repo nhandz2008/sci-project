@@ -142,16 +142,24 @@ export default function AccountPage() {
       // Clean up the data before sending to API
       const cleanData: CompetitionCreate = {
         title: data.title.trim(),
-        introduction: (data as any).description?.trim() || '',
+        introduction: data.introduction?.trim() || '',
+        question_type: data.question_type?.trim() || undefined,
+        selection_process: data.selection_process?.trim() || undefined,
+        history: data.history?.trim() || undefined,
+        scoring_and_format: data.scoring_and_format?.trim() || undefined,
+        awards: data.awards?.trim() || undefined,
+        penalties_and_bans: data.penalties_and_bans?.trim() || undefined,
+        notable_achievements: data.notable_achievements?.trim() || undefined,
         competition_link: data.competition_link?.trim() || undefined,
-        background_image_url: (data as any).image_url?.trim() || undefined,
+        background_image_url: data.background_image_url?.trim() || undefined,
+        detail_image_urls: data.detail_image_urls || undefined,
         location: data.location?.trim() || '',
         format: data.format,
         scale: data.scale,
-        // Convert empty strings to undefined for optional fields
+        registration_deadline: data.registration_deadline ? new Date(data.registration_deadline).toISOString() : '',
+        size: data.size || undefined,
         target_age_min: data.target_age_min || undefined,
         target_age_max: data.target_age_max || undefined,
-        registration_deadline: data.registration_deadline ? new Date(data.registration_deadline).toISOString() : '',
       };
 
       // Remove undefined values and ensure proper data types
@@ -491,6 +499,23 @@ export default function AccountPage() {
         <div className="mt-8 bg-white rounded-xl shadow-sm p-6">
           <h2 className="text-2xl font-bold text-gray-900 mb-4">Quick Actions</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            {user.role === 'ADMIN' && (
+              <Link
+                href="/admin"
+                className="flex items-center gap-3 p-4 border border-gray-200 rounded-lg hover:shadow-md transition-shadow"
+              >
+                <div className="w-10 h-10 bg-red-100 rounded-lg flex items-center justify-center">
+                  <svg className="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                </div>
+                <div>
+                  <h3 className="font-semibold text-gray-900">Admin Dashboard</h3>
+                  <p className="text-sm text-gray-600">Manage platform</p>
+                </div>
+              </Link>
+            )}
+
             <Link
               href="/competitions"
               className="flex items-center gap-3 p-4 border border-gray-200 rounded-lg hover:shadow-md transition-shadow"
