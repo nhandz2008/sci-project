@@ -486,6 +486,7 @@ All endpoints below are under `/competitions`.
   {
     "title": "Competition Title",
     "introduction": "Competition description",
+    "overview": "Comprehensive overview of the competition",
     "question_type": "Multiple choice",
     "selection_process": "Online test",
     "history": "Established in 2020",
@@ -509,6 +510,7 @@ All endpoints below are under `/competitions`.
   - `registration_deadline` must be in the future
   - `target_age_max > target_age_min` when both provided
   - URLs must start with http:// or https://
+  - `overview` field is optional, max length 2000 characters
 - Success `200 OK` → `CompetitionResponse`
 - Notes: Creates competition with `is_approved=False` by default
 
@@ -688,6 +690,7 @@ All endpoints below are under `/admin`.
   "id": "uuid",
   "title": "Competition Title",
   "introduction": "Description",
+  "overview": "Comprehensive overview of the competition",
   "question_type": "Multiple choice",
   "selection_process": "Online test",
   "history": "Established in 2020",
@@ -720,6 +723,7 @@ All endpoints below are under `/admin`.
   "id": "uuid",
   "title": "Competition Title",
   "introduction": "Description",
+  "overview": "Comprehensive overview of the competition",
   "background_image_url": "https://example.com/image.jpg",
   "location": "Online",
   "format": "ONLINE",
@@ -811,6 +815,7 @@ const data = await res.json();
 const competitionData = {
   title: "International Science Olympiad",
   introduction: "A prestigious international science competition",
+  overview: "This comprehensive competition brings together the brightest young minds from around the world to compete in rigorous scientific challenges across multiple disciplines including physics, chemistry, biology, and mathematics.",
   format: "ONLINE",
   scale: "INTERNATIONAL",
   registration_deadline: "2025-12-31T23:59:59Z",
@@ -835,6 +840,29 @@ if (!res.ok) {
   } else {
     console.error("Error:", errorData.detail || errorData.error?.message);
   }
+}
+```
+
+### Update a competition with overview
+```js
+const updateData = {
+  title: "Updated Competition Title",
+  overview: "Updated comprehensive overview with more detailed information about the competition's scope and significance.",
+  introduction: "Updated introduction"
+};
+
+const res = await fetch(`http://localhost:8000/api/v1/competitions/${competitionId}`, {
+  method: "PUT",
+  headers: { 
+    "Content-Type": "application/json",
+    "Authorization": `Bearer ${token}`
+  },
+  body: JSON.stringify(updateData)
+});
+
+if (res.ok) {
+  const updatedCompetition = await res.json();
+  console.log("Updated overview:", updatedCompetition.overview);
 }
 ```
 
@@ -909,6 +937,7 @@ async function handleApiRequest(url, options = {}) {
 - [ ] Handle competition approval workflow (creators submit, admins approve)
 - [ ] Implement featured competitions display
 - [ ] Handle user role-based permissions (ADMIN vs CREATOR)
+- [ ] Handle overview field in competitions (optional, max 2000 chars)
 - [ ] Implement comprehensive error handling:
   - [ ] Handle authentication errors (AUTH_* codes)
   - [ ] Handle authorization errors (AUTH_006, PERM_001)
@@ -926,7 +955,36 @@ async function handleApiRequest(url, options = {}) {
 
 ---
 
-## 12. Notes & limits (current implementation)
+## 12. Overview Field
+
+The competition system includes an optional `overview` field that provides comprehensive information about each competition:
+
+### Overview Field Characteristics
+- **Type**: `string | None` (optional field)
+- **Max Length**: 2000 characters
+- **Purpose**: Provides detailed, comprehensive information about the competition
+- **Usage**: Complements the `introduction` field with more extensive descriptions
+
+### Overview Field in API Responses
+- **CompetitionResponse**: Includes overview in detailed competition responses
+- **CompetitionListResponse**: Includes overview in list responses
+- **CompetitionCreate**: Optional field for competition creation
+- **CompetitionUpdate**: Optional field for competition updates
+
+### Overview Field Validation
+- **Optional**: Can be omitted during creation/update
+- **Length Limit**: Maximum 2000 characters
+- **Content**: Can contain any text content describing the competition
+- **Null Handling**: Can be set to `null` to clear the field
+
+### Example Overview Content
+```json
+{
+  "overview": "The International Science Olympiad brings together the brightest young minds from around the world to compete in rigorous scientific challenges. Participants demonstrate their knowledge across multiple disciplines including physics, chemistry, biology, and mathematics. The competition features both theoretical and practical components, with emphasis on innovative problem-solving and real-world applications of scientific principles."
+}
+```
+
+## 13. Notes & limits (current implementation)
 
 - Access token expiry defaults to `settings.ACCESS_TOKEN_EXPIRE_MINUTES` (currently 1440 minutes).
 - Password strength required on signup/reset/change: ≥ 8 chars, with upper/lowercase and digit.
@@ -936,4 +994,38 @@ async function handleApiRequest(url, options = {}) {
 - Featured competitions are approved competitions with `is_featured=True`.
 - CORS allow-list is configurable; ensure your frontend origin is whitelisted.
 - File upload functionality is not yet implemented.
-- Recommendation system is not yet implemented. 
+- Recommendation system is not yet implemented.
+
+## 14. Testing Coverage
+
+The competition management system includes comprehensive test coverage:
+
+### CRUD Tests (`test_crud_competition.py`)
+- ✅ Basic CRUD operations (create, read, update, delete)
+- ✅ Advanced query operations (filtering, pagination, sorting)
+- ✅ Moderation workflows (approve, reject, feature, activate)
+- ✅ Permission checks (owner vs admin access)
+- ✅ Overview field integration (creation, retrieval, updates)
+
+### Route Tests (`test_competitions.py`)
+- ✅ Public endpoints (listing, detail, featured)
+- ✅ Creator workflows (create, update, delete own competitions)
+- ✅ Admin workflows (moderation, featuring, activation)
+- ✅ Validation error handling
+- ✅ Permission boundary testing
+- ✅ Overview field in API responses
+
+### Schema Tests (`test_schemas.py`)
+- ✅ Competition creation validation
+- ✅ Competition update validation
+- ✅ Response serialization
+- ✅ Filter parameter validation
+- ✅ Overview field validation (optional, max length 2000)
+- ✅ Edge cases and error scenarios
+
+### Test Coverage Areas
+- **Database Operations**: All CRUD operations with filtering, search, pagination
+- **API Endpoints**: All public, creator, and admin endpoints
+- **Schema Validation**: All request/response schemas with validation rules
+- **Security**: Permission checks, authentication requirements
+- **Overview Field**: Complete integration testing for the new overview field 

@@ -67,7 +67,7 @@ This document provides a high-level, sequential plan for developing the backend 
      - `POST /competitions` create competition (owner = current user; `is_approved=False` by default)
      - `PUT /competitions/{id}` update competition (owner/admin only)
      - `DELETE /competitions/{id}` delete competition (owner/admin only)
-     - `GET /competitions/my/competitions` list current user’s competitions
+     - `GET /competitions/my/competitions` list current user's competitions
     - ✅ Enhancements implemented:
       - `GET /competitions/featured` to list featured, approved competitions
       - Sorting (`sort_by=created_at|registration_deadline|title`, `order=asc|desc`) in listing endpoints
@@ -176,23 +176,23 @@ This document provides a high-level, sequential plan for developing the backend 
 
 ## Phase 6: Admin & Analytics
 
-1. **Admin Endpoints** ❌
-   - ❌ Implement endpoint to list pending competitions for review.
-   - ❌ Add endpoints for approving/rejecting competitions.
+1. **Admin Endpoints** ✅/➕
+   - ✅ Implement endpoint to list pending competitions for review.
+   - ✅ Add endpoints for approving/rejecting competitions.
    - ❌ Implement analytics endpoints (competition stats, user engagement, etc.).
-   - ❌ Add endpoints for user management (list, delete, change role).
+   - ✅ Add endpoints for user management (list, delete, change role).
 
 2. **Analytics & Monitoring** ❌
    - ❌ Integrate logging and error monitoring (e.g., Sentry).
    - ❌ Add endpoints for platform analytics and reporting.
    - ❌ Ensure analytics endpoints are admin-only.
 
-3. **Testing Admin & Analytics** ❌
-   - ❌ Write tests for all admin and analytics endpoints.
-   - ❌ Test permissions and data accuracy.
+3. **Testing Admin & Analytics** ✅/➕
+   - ✅ Write tests for all admin endpoints.
+   - ✅ Test permissions and data accuracy.
    - ❌ Simulate analytics/reporting scenarios in tests.
 
-**Phase 6 Status: NOT STARTED** ❌
+**Phase 6 Status: PARTIALLY COMPLETED** ⚠️
 
 ---
 
@@ -203,10 +203,10 @@ This document provides a high-level, sequential plan for developing the backend 
    - ❌ Ensure OpenAPI docs are complete and accurate.
    - ❌ Add versioning and metadata to API responses.
 
-2. **Comprehensive Testing** ❌
-   - ❌ Write end-to-end tests for all major user flows.
-   - ❌ Test error handling, edge cases, and security vulnerabilities.
-   - ❌ Run full test suite and fix any failing tests.
+2. **Comprehensive Testing** ✅/➕
+   - ✅ Write end-to-end tests for all major user flows.
+   - ✅ Test error handling, edge cases, and security vulnerabilities.
+   - ✅ Run full test suite and fix any failing tests.
 
 3. **Documentation & Cleanup** ❌
    - ❌ Update README and API documentation with usage examples.
