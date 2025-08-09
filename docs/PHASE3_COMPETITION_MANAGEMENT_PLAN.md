@@ -20,9 +20,9 @@ This document outlines the detailed steps for implementing and finalizing compet
   - `registration_deadline` must be in the future
   - `target_age_max > target_age_min` when both provided
   - `detail_image_urls`: list[str] (serialize to JSON string in model layer)
-- Enhancements to add:
-  - Sorting params (extend filter params): `sort_by=created_at|registration_deadline|title`, `order=asc|desc`
-  - URL format checks for `competition_link`, `background_image_url`, `detail_image_urls` (basic sanity checks, max length)
+- Enhancements status:
+  - ✅ Sorting params added to filter params: `sort_by`, `order`
+  - ✅ URL format checks for `competition_link`, `background_image_url`, `detail_image_urls`
 
 ---
 
@@ -46,9 +46,8 @@ This document outlines the detailed steps for implementing and finalizing compet
   - `get_approved_competitions(session, skip, limit)` — `is_approved=True`
 
 ### 2.2 Sorting & Case-insensitive Search
-- Extend `get_competitions` to support:
-  - `sort_by`, `order`
-  - Case-insensitive search that works in both SQLite (tests) and PostgreSQL (prod)
+- ✅ `get_competitions` supports `sort_by`, `order`
+- ✅ Case-insensitive search compatible with SQLite/Postgres using `func.lower(...).like('%term%')`
 
 ---
 
@@ -60,8 +59,8 @@ This document outlines the detailed steps for implementing and finalizing compet
   - `GET /competitions`: list approved competitions only with pagination, filters, search
   - `GET /competitions/{id}`: show details only if `is_approved=True`
 - Enhancements:
-  - Add sorting support
-  - Add `GET /competitions/featured` to list featured + approved
+  - ✅ Sorting support added (`sort_by`, `order`)
+  - ✅ `GET /competitions/featured` implemented
 
 ---
 
@@ -79,12 +78,17 @@ This document outlines the detailed steps for implementing and finalizing compet
 - Endpoints:
   - `GET /admin/competitions/pending`: list pending — adjust to match pending definition (`is_approved=False`)
   - `PUT /admin/competitions/{id}/approve`
-  - `PUT /admin/competitions/{id}/reject`
+  - `PUT /admin/competitions/{id}/reject` (accepts `rejection_reason`)
 - Optional admin endpoints:
   - `PUT /admin/competitions/{id}/feature`
   - `PUT /admin/competitions/{id}/unfeature`
   - `PUT /admin/competitions/{id}/activate`
   - `PUT /admin/competitions/{id}/deactivate`
+
+Status:
+- ✅ Pending definition updated (`is_approved=False`)
+- ✅ Approve/Reject endpoints working (reject accepts reason)
+- ✅ Optional toggles implemented (feature/unfeature, activate/deactivate)
 
 ---
 
@@ -97,8 +101,10 @@ This document outlines the detailed steps for implementing and finalizing compet
   - Indices for `title`, `registration_deadline`, `is_approved`, `is_featured`
 - Business rules:
   - On create: set defaults (`is_active=True`, `is_featured=False`, `is_approved=False`)
-  - On update: prevent setting past `registration_deadline`
+  - ✅ On update: prevent setting past `registration_deadline` (schema validator)
   - Optional: add audit fields for moderation (`approved_by`, `approved_at`, `rejection_reason`)
+  - ✅ Fields added in `Competition` model
+  - ✅ Values set by approve/reject endpoints (approved_by, approved_at, rejection_reason)
 
 ---
 
@@ -118,7 +124,7 @@ This document outlines the detailed steps for implementing and finalizing compet
   - SQLite (test): `LIKE ... COLLATE NOCASE`
   - PostgreSQL (prod): `ILIKE`
 - Add sensible pagination defaults and maximums (limit ≤ 1000)
-- Consider additional indices: `format`, `scale`, `owner_id`
+- ✅ Added additional indices: `format`, `scale`, `owner_id`
 
 ---
 
@@ -135,6 +141,14 @@ This document outlines the detailed steps for implementing and finalizing compet
 - Creator flow: create/update/delete/list own
 - Admin flow: pending list/approve/reject; can update/delete any
 - Featured list and sorting combinations
+
+Status:
+- ➕ Write tests for all new competition behaviors
+  - Featured listing and toggle endpoints
+  - Sorting combinations and pagination
+  - Pending definition and visibility rules
+  - URL validation errors and deadline validators
+  - Filters: format, scale, location, owner, approved/featured
 
 ### 8.3 Moderation Tests
 - Transitions: create (pending) → approve/reject → visibility
@@ -175,7 +189,7 @@ This document outlines the detailed steps for implementing and finalizing compet
 - Public endpoints return only approved competitions
 - Creators can fully manage their own competitions
 - Admins can moderate (pending list, approve, reject) and optionally feature/activate
-- Filters, search, sorting, and pagination work consistently across SQLite/PostgreSQL
+- Filters, search, sorting, and pagination work consistently across SQLite/PostgreSQL (implemented; tests pending)
 - Validation prevents invalid data (deadlines, ages, URLs)
 - All tests pass with good coverage; OpenAPI docs are up-to-date
 

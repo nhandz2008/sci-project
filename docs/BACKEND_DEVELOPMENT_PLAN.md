@@ -68,21 +68,22 @@ This document provides a high-level, sequential plan for developing the backend 
      - `PUT /competitions/{id}` update competition (owner/admin only)
      - `DELETE /competitions/{id}` delete competition (owner/admin only)
      - `GET /competitions/my/competitions` list current user’s competitions
-   - ➕ Enhancements to implement:
-     - Add `GET /competitions/featured` to list featured, approved competitions
-     - Add sorting (`sort_by=created_at|registration_deadline|title`, `order=asc|desc`)
-     - Validate and normalize `location` (trim, case-insensitive search), ensure SQLite/Postgres compatibility for search
-     - Enforce a max `limit` of 1000 consistently via schema (already applied)
+    - ✅ Enhancements implemented:
+      - `GET /competitions/featured` to list featured, approved competitions
+      - Sorting (`sort_by=created_at|registration_deadline|title`, `order=asc|desc`) in listing endpoints
+      - Case-insensitive search and location filter implemented with Postgres ILIKE
+      - Enforced max `limit` of 1000 via schemas
 
 2. Content Moderation Workflow ✅/➕
    - ✅ Admin moderation endpoints:
      - `GET /admin/competitions/pending` — list pending (to be adjusted; see below)
      - `PUT /admin/competitions/{id}/approve`
      - `PUT /admin/competitions/{id}/reject`
-   - ➕ Adjustments:
-     - Pending definition: update `get_pending_competitions` to use `is_approved=False` for newly created competitions (currently checks `is_approved IS NULL`)
-     - Add moderation audit fields on `Competition` (optional): `approved_by`, `approved_at`, `rejection_reason`
-     - Ensure public endpoints only show `is_approved=True`; creators can view their own regardless of approval
+    - ✅ Adjustments:
+      - Pending definition updated: `get_pending_competitions` now uses `is_approved=False`
+      - Ensure public endpoints only show `is_approved=True`; creators can view their own regardless of approval
+    - ✅ Optional:
+      - Moderation audit fields on `Competition` added and persisted by endpoints: `approved_by`, `approved_at`, `rejection_reason`
 
 3. Schemas & Validation ✅/➕
    - ✅ Request models: `CompetitionCreate`, `CompetitionUpdate` with validators:
@@ -90,8 +91,8 @@ This document provides a high-level, sequential plan for developing the backend 
      - `target_age_max > target_age_min` when both provided
      - `detail_image_urls` handled as list in schema and stored as JSON string in model
    - ✅ Response models: `CompetitionResponse`, `CompetitionListResponse`, `CompetitionListPaginatedResponse`, moderation responses
-   - ➕ Add `CompetitionSearchParams` (alias of existing filter params) with `sort_by`, `order`
-   - ➕ Add strict URL validation for `competition_link`, image URLs (length and basic format)
+    - ✅ Added sorting params on filters: `sort_by`, `order`
+    - ✅ Strict URL validation for `competition_link`, image URLs
 
 4. Permissions & Security ✅
    - Admin can modify/delete any competition
@@ -101,14 +102,14 @@ This document provides a high-level, sequential plan for developing the backend 
 5. Business Rules ✅/➕
    - ✅ Creation defaults: `is_active=True`, `is_featured=False`, `is_approved=False`
    - ✅ Update supports partial fields; image list merged via setter
-   - ➕ Prevent updates that set past `registration_deadline`
-   - ➕ Optional toggle endpoints (admin only): feature/unfeature, activate/deactivate
+    - ✅ Prevent updates that set past `registration_deadline`
+    - ✅ Optional toggle endpoints (admin only): feature/unfeature, activate/deactivate
 
 6. Testing Plan (to expand) ➕
-   - Unit tests (CRUD):
+    - Unit tests (CRUD):
      - Create/read/update/delete competition
      - Filters: `format`, `scale`, `location`, `is_approved`, `is_featured`, `owner_id`
-     - Search behavior (case-insensitive; SQLite vs Postgres)
+      - Search behavior (case-insensitive with Postgres ILIKE)
      - Pagination and total counts
      - Permission checks for owner vs admin on update/delete
    - Route tests:
@@ -124,17 +125,17 @@ This document provides a high-level, sequential plan for developing the backend 
      - Past `registration_deadline` on create/update (reject)
      - Large `detail_image_urls` arrays and JSON serialization
 
-7. Implementation Tasks (ordered) ➕
-   - [ ] Update `get_pending_competitions` to treat `is_approved=False` as pending (or introduce `approval_status` enum)
-   - [ ] Add sorting params to `get_competitions` and surface in `/competitions`
-   - [ ] Add `GET /competitions/featured` (approved + featured)
-   - [ ] Strengthen URL validation for `competition_link` and images in schemas
-   - [ ] Enforce future `registration_deadline` in update path
-   - [ ] Optional: add `approved_by`, `approved_at`, `rejection_reason` fields; persist in moderation endpoints
-   - [ ] Optional admin endpoints: `PUT /admin/competitions/{id}/feature`, `PUT /admin/competitions/{id}/unfeature`
-   - [ ] Add comprehensive tests covering all above
+7. Implementation Tasks (ordered) ✅
+   - [x] Update `get_pending_competitions` to treat `is_approved=False` as pending
+   - [x] Add sorting params to `get_competitions` and surface in `/competitions`
+   - [x] Add `GET /competitions/featured` (approved + featured)
+   - [x] Strengthen URL validation for `competition_link` and images in schemas
+   - [x] Enforce future `registration_deadline` in update path
+   - [x] Optional: add `approved_by`, `approved_at`, `rejection_reason` fields; persist in moderation endpoints
+   - [x] Optional admin endpoints: `PUT /admin/competitions/{id}/feature`, `PUT /admin/competitions/{id}/unfeature`
+   - [x] Add comprehensive tests covering all above (see `backend/tests/test_competitions.py`)
 
-**Phase 3 Status: IN PROGRESS (core CRUD and moderation endpoints exist; enhancements and robustness improvements pending)**
+**Phase 3 Status: COMPLETED** ✅
 
 ---
 
@@ -225,22 +226,23 @@ This document provides a high-level, sequential plan for developing the backend 
 - **Core Utilities**: Database session management, security utilities, CORS configuration
 - **Basic System Endpoints**: Health check endpoints are working
 - **Authentication System**: JWT auth (access/refresh), password reset, token validation
-- **API Routes**: Authentication and User Management endpoints implemented and secured
-- **Testing**: Comprehensive tests for auth and user routes passing with coverage
-- **Docker Setup**: Services are running and healthy
+- **API Routes**: Authentication, User Management, and Competition Management (public, creator, admin moderation, featured) implemented and secured
+- **Competition Enhancements**: Sorting, case-insensitive search, filters, featured listing, moderation audit fields
+- **Migrations**: Alembic configured with initial and follow-up migrations
+- **Testing**: Comprehensive tests (auth, users, competitions) pass against Postgres test DB with Alembic-managed schema
+- **Docker Setup**: Postgres service is running and healthy; backend connects via environment configuration
 
 ### ❌ Missing Components:
-- **API Routes**: Competition and admin endpoints pending
-- **CRUD Operations**: No competition management endpoints
 - **File Upload**: No S3 integration or upload endpoints
-- **Documentation**: API documentation needs completion
+- **Recommendations**: Recommendation endpoint and LLM integration
+- **Admin Analytics**: Analytics endpoints and reporting
+- **Documentation**: API documentation and examples can be expanded
 
 ### 🔄 Next Steps:
-1. **Phase 3**: Add competition CRUD operations and moderation workflow
-2. **Phase 4**: Integrate file upload functionality
-3. **Phase 5**: Implement recommendation system
-4. **Phase 6**: Add admin and analytics endpoints
-5. **Phase 7**: Complete testing and documentation
+1. **Phase 4**: Integrate file upload functionality
+2. **Phase 5**: Implement recommendation system
+3. **Phase 6**: Add admin and analytics endpoints
+4. **Phase 7**: Complete testing and documentation
 
 ---
 

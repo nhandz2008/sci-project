@@ -5,7 +5,7 @@
 ## 1. Quick overview
 
 - **Service name**: SCI Backend API
-- **Purpose**: REST API for Science Competitions Insight (SCI) providing authentication, user management, and system endpoints.
+- **Purpose**: REST API for Science Competitions Insight (SCI) providing authentication, user management, competition management, and content moderation.
 - **Base URL (env)**
   - Production: `https://api.sci.example.com/api/v1` (TBA)
   - Staging: `https://staging.api.sci.example.com/api/v1` (TBA)
@@ -34,11 +34,11 @@
 - **URL versioning**: `/api/v1/...`
 - **Date/time format**: ISO 8601 in UTC (e.g. `2025-08-08T14:30:00+00:00`)
 - **IDs**: UUID v4 (string)
-- **Pagination**: `skip` (offset) and `limit` (page size). Defaults vary per endpoint; max `limit` for users is `1000`.
+- **Pagination**: `skip` (offset) and `limit` (page size). Defaults vary per endpoint; max `limit` is `1000`.
 - **Filtering & search**: query params (e.g., `?role=CREATOR&is_active=true&search=alice`)
 - **Response envelope**: Plain JSON objects (no extra wrappers)
-- **Content types**: JSON for all endpoints in Phases 1–2
-- **Rate limits**: Not enforced (as of Phases 1–2)
+- **Content types**: JSON for all endpoints
+- **Rate limits**: Not enforced (as of current implementation)
 
 ---
 
@@ -55,43 +55,199 @@
 - `500 Internal Server Error`
 
 ### Error response formats
-- Validation errors (Pydantic/RequestValidationError):
-  ```json
-  {
-    "error": {
-      "type": "validation_error",
-      "message": "Validation failed",
-      "code": "VAL_001",
-      "details": "Input validation failed. See field_errors for details.",
-      "field_errors": { "field": "reason" }
+
+#### 1. Validation errors (Pydantic/RequestValidationError)
+```json
+{
+  "error": {
+    "type": "validation_error",
+    "message": "Validation failed",
+    "code": "VAL_001",
+    "details": "Input validation failed. See field_errors for details.",
+    "field_errors": {
+      "email": "value is not a valid email address",
+      "password": "ensure this value has at least 8 characters",
+      "phone_number": "string does not match pattern '^\\+?[1-9]\\d{1,19}$'"
     }
   }
-  ```
-- Custom application errors (raised via SCI exceptions):
-  ```json
-  {
-    "error": {
-      "type": "authentication_error",
-      "message": "Inactive user",
-      "code": "AUTH_005",
-      "details": "User account has been deactivated"
+}
+```
+
+#### 2. Custom application errors (SCI exceptions)
+```json
+{
+  "error": {
+    "type": "authentication_error",
+    "message": "Inactive user",
+    "code": "AUTH_005",
+    "details": "User account has been deactivated"
+  }
+}
+```
+
+#### 3. HTTP exceptions (FastAPI `HTTPException`)
+```json
+{ "detail": "Incorrect email or password" }
+```
+
+### Common error codes
+
+#### Authentication errors (AUTH_*)
+- `AUTH_001` - Authentication failed
+- `AUTH_002` - Authorization failed
+- `AUTH_003` - Could not validate credentials (invalid/expired token)
+- `AUTH_004` - Invalid token format
+- `AUTH_005` - Inactive user
+- `AUTH_006` - Not enough permissions (admin role required)
+
+#### User errors (USER_*)
+- `USER_001` - User not found
+- `USER_002` - User already exists
+- `USER_003` - User associated with token no longer exists
+- `USER_004` - User with this email already exists
+- `USER_005` - User not found (for deletion)
+- `USER_006` - User not found (for deactivation)
+- `USER_007` - User not found (for activation)
+- `USER_008` - User not found (for role change)
+
+#### Competition errors (COMP_*)
+- `COMP_001` - Competition not found
+
+#### Permission errors (PERM_*)
+- `PERM_001` - Permission denied
+
+#### Validation errors (VAL_*)
+- `VAL_001` - Validation failed
+
+#### Database errors (DB_*)
+- `DB_001` - Database operation failed
+- `DB_002` - Failed to create user
+- `DB_003` - Failed to retrieve user by email
+- `DB_004` - Failed to retrieve user by ID
+- `DB_005` - Failed to update user
+- `DB_006` - Failed to update user password
+- `DB_007` - Failed to authenticate user
+- `DB_008` - Failed to retrieve users
+- `DB_009` - Failed to delete user
+- `DB_010` - Failed to deactivate user
+- `DB_011` - Failed to activate user
+- `DB_012` - Failed to change user role
+
+### Common error scenarios
+
+#### Authentication failures
+```json
+// Missing token
+{ "detail": "Not authenticated" }
+
+// Invalid token
+{
+  "error": {
+    "type": "authentication_error",
+    "message": "Could not validate credentials",
+    "code": "AUTH_003",
+    "details": "Invalid or expired token"
+  }
+}
+
+// Inactive user
+{
+  "error": {
+    "type": "authentication_error",
+    "message": "Inactive user",
+    "code": "AUTH_005",
+    "details": "User account has been deactivated"
+  }
+}
+```
+
+#### Authorization failures
+```json
+// Insufficient permissions
+{
+  "error": {
+    "type": "authorization_error",
+    "message": "Not enough permissions",
+    "code": "AUTH_006",
+    "details": "Admin role required for this operation"
+  }
+}
+
+// Permission denied for competition
+{
+  "error": {
+    "type": "permission_error",
+    "message": "Permission denied",
+    "code": "PERM_001",
+    "details": "Not enough permissions to modify this competition"
+  }
+}
+```
+
+#### Validation failures
+```json
+// Password strength
+{
+  "error": {
+    "type": "validation_error",
+    "message": "Validation failed",
+    "code": "VAL_001",
+    "details": "Input validation failed. See field_errors for details.",
+    "field_errors": {
+      "password": "Password must contain at least one uppercase letter"
     }
   }
-  ```
-- HTTP exceptions (FastAPI `HTTPException`):
-  ```json
-  { "detail": "Incorrect email or password" }
-  ```
+}
+
+// Competition validation
+{
+  "error": {
+    "type": "validation_error",
+    "message": "Validation failed",
+    "code": "VAL_001",
+    "details": "Input validation failed. See field_errors for details.",
+    "field_errors": {
+      "registration_deadline": "Registration deadline must be in the future",
+      "target_age_max": "Maximum age must be greater than minimum age",
+      "competition_link": "URL must start with http:// or https://"
+    }
+  }
+}
+```
+
+#### Resource not found
+```json
+// User not found
+{ "detail": "User not found" }
+
+// Competition not found
+{ "detail": "Competition not found" }
+
+// Competition not approved (public endpoints)
+{ "detail": "Competition not found" }
+```
+
+#### Business logic errors
+```json
+// Duplicate user
+{ "detail": "User with this email already exists" }
+
+// Cannot delete self
+{ "detail": "Cannot delete your own account" }
+
+// Cannot change own role
+{ "detail": "Cannot change your own role" }
+```
 
 ---
 
 ## 5. Pagination (example)
 
-Users list (admin-only):
+Competitions list:
 ```json
 {
-  "users": [
-    { "id": "uuid", "email": "...", "full_name": "...", "organization": "...", "role": "CREATOR", "is_active": true, "created_at": "..." }
+  "competitions": [
+    { "id": "uuid", "title": "...", "introduction": "...", "location": "...", "format": "ONLINE", "scale": "INTERNATIONAL", "registration_deadline": "...", "is_featured": true, "is_approved": true, "created_at": "..." }
   ],
   "total": 123,
   "skip": 0,
@@ -103,17 +259,17 @@ Users list (admin-only):
 
 ## 6. File uploads
 
-Not implemented in Phases 1–2.
+Not implemented in current version.
 
 ---
 
 ## 7. WebSockets / realtime
 
-Not applicable in Phases 1–2.
+Not applicable in current version.
 
 ---
 
-## 8. Endpoints (implemented in Phases 1–2)
+## 8. Endpoints (implemented)
 
 Base prefix for all endpoints below: `/api/v1`
 
@@ -287,11 +443,190 @@ All endpoints below are under `/users`.
 
 ---
 
+### Competitions
+
+All endpoints below are under `/competitions`.
+
+#### GET `/competitions`
+- Purpose: List competitions with pagination/filters (public - only approved competitions)
+- Auth: No
+- Query params
+  - `skip`: int ≥ 0 (default `0`)
+  - `limit`: int 1–1000 (default `100`)
+  - `format`: `ONLINE` | `OFFLINE` | `HYBRID` (optional)
+  - `scale`: `PROVINCIAL` | `REGIONAL` | `INTERNATIONAL` (optional)
+  - `location`: string (optional)
+  - `search`: string (matches title and description, case-insensitive) (optional)
+  - `sort_by`: `created_at` | `registration_deadline` | `title` (optional)
+  - `order`: `asc` | `desc` (optional)
+- Success `200 OK` → `CompetitionListPaginatedResponse`
+- Notes: Only returns approved competitions
+
+#### GET `/competitions/featured`
+- Purpose: List featured competitions (approved + featured)
+- Auth: No
+- Query params
+  - `skip`: int ≥ 0 (default `0`)
+  - `limit`: int 1–1000 (default `10`)
+  - `sort_by`: `created_at` | `registration_deadline` | `title` (optional)
+  - `order`: `asc` | `desc` (optional)
+- Success `200 OK` → `CompetitionListPaginatedResponse`
+
+#### GET `/competitions/{competition_id}`
+- Purpose: Get competition details by ID (public - only approved competitions)
+- Auth: No
+- Success `200 OK` → `CompetitionResponse`
+- Errors: `404` not found or not approved
+
+#### POST `/competitions`
+- Purpose: Create a new competition (authenticated users only)
+- Auth: Yes (active user)
+- Body: `CompetitionCreate` schema
+  ```json
+  {
+    "title": "Competition Title",
+    "introduction": "Competition description",
+    "question_type": "Multiple choice",
+    "selection_process": "Online test",
+    "history": "Established in 2020",
+    "scoring_and_format": "100 points total",
+    "awards": "Gold, Silver, Bronze medals",
+    "penalties_and_bans": "No cheating allowed",
+    "notable_achievements": "Winners from top universities",
+    "competition_link": "https://example.com",
+    "background_image_url": "https://example.com/image.jpg",
+    "detail_image_urls": ["https://example.com/detail1.jpg"],
+    "location": "Online",
+    "format": "ONLINE",
+    "scale": "INTERNATIONAL",
+    "registration_deadline": "2025-12-31T23:59:59Z",
+    "size": 1000,
+    "target_age_min": 16,
+    "target_age_max": 25
+  }
+  ```
+- Validation
+  - `registration_deadline` must be in the future
+  - `target_age_max > target_age_min` when both provided
+  - URLs must start with http:// or https://
+- Success `200 OK` → `CompetitionResponse`
+- Notes: Creates competition with `is_approved=False` by default
+
+#### PUT `/competitions/{competition_id}`
+- Purpose: Update competition by ID (owner/admin only)
+- Auth: Yes (active user)
+- Body: `CompetitionUpdate` schema (any subset of fields)
+- Success `200 OK` → `CompetitionResponse`
+- Errors: `403` insufficient permissions; `404` not found
+
+#### DELETE `/competitions/{competition_id}`
+- Purpose: Delete competition by ID (owner/admin only)
+- Auth: Yes (active user)
+- Success `200 OK`
+  ```json
+  { "message": "Competition deleted successfully" }
+  ```
+- Errors: `403` insufficient permissions; `404` not found
+
+#### GET `/competitions/my/competitions`
+- Purpose: Get current user's competitions
+- Auth: Yes (active user)
+- Query params
+  - `skip`: int ≥ 0 (default `0`)
+  - `limit`: int 1–1000 (default `100`)
+- Success `200 OK` → `CompetitionListPaginatedResponse`
+- Notes: Shows user's own competitions regardless of approval status
+
+---
+
+### Admin
+
+All endpoints below are under `/admin`.
+
+#### GET `/admin/competitions/pending`
+- Purpose: Get pending competitions for moderation (admin only)
+- Auth: Yes (admin)
+- Query params
+  - `skip`: int ≥ 0 (default `0`)
+  - `limit`: int 1–1000 (default `100`)
+- Success `200 OK` → `CompetitionModerationListResponse`
+- Notes: Returns competitions with `is_approved=False`
+
+#### PUT `/admin/competitions/{competition_id}/approve`
+- Purpose: Approve competition by ID (admin only)
+- Auth: Yes (admin)
+- Success `200 OK`
+  ```json
+  { "message": "Competition approved successfully" }
+  ```
+- Errors: `404` not found
+
+#### PUT `/admin/competitions/{competition_id}/reject`
+- Purpose: Reject competition by ID (admin only)
+- Auth: Yes (admin)
+- Body
+  ```json
+  { "rejection_reason": "Optional reason for rejection" }
+  ```
+- Success `200 OK`
+  ```json
+  { "message": "Competition rejected successfully" }
+  ```
+- Errors: `404` not found
+
+#### PUT `/admin/competitions/{competition_id}/feature`
+- Purpose: Feature competition by ID (admin only)
+- Auth: Yes (admin)
+- Success `200 OK`
+  ```json
+  { "message": "Competition featured successfully" }
+  ```
+- Errors: `404` not found
+
+#### PUT `/admin/competitions/{competition_id}/unfeature`
+- Purpose: Unfeature competition by ID (admin only)
+- Auth: Yes (admin)
+- Success `200 OK`
+  ```json
+  { "message": "Competition unfeatured successfully" }
+  ```
+- Errors: `404` not found
+
+#### PUT `/admin/competitions/{competition_id}/activate`
+- Purpose: Activate competition by ID (admin only)
+- Auth: Yes (admin)
+- Success `200 OK`
+  ```json
+  { "message": "Competition activated successfully" }
+  ```
+- Errors: `404` not found
+
+#### PUT `/admin/competitions/{competition_id}/deactivate`
+- Purpose: Deactivate competition by ID (admin only)
+- Auth: Yes (admin)
+- Success `200 OK`
+  ```json
+  { "message": "Competition deactivated successfully" }
+  ```
+- Errors: `404` not found
+
+---
+
 ## 9. Schemas (selected)
 
 ### UserRole
 ```json
 "ADMIN" | "CREATOR"
+```
+
+### CompetitionFormat
+```json
+"ONLINE" | "OFFLINE" | "HYBRID"
+```
+
+### CompetitionScale
+```json
+"PROVINCIAL" | "REGIONAL" | "INTERNATIONAL"
 ```
 
 ### UserResponse
@@ -310,7 +645,19 @@ All endpoints below are under `/users`.
 ```
 
 ### UserDetailResponse
-Same fields as `UserResponse`.
+```json
+{
+  "id": "uuid",
+  "email": "user@example.com",
+  "full_name": "User Name",
+  "organization": "Org",
+  "phone_number": "+1234567890",
+  "role": "CREATOR",
+  "is_active": true,
+  "created_at": "2025-08-08T14:30:00+00:00",
+  "updated_at": "2025-08-08T15:00:00+00:00"
+}
+```
 
 ### UserListResponse
 ```json
@@ -329,6 +676,91 @@ Same fields as `UserResponse`.
 ```json
 {
   "users": [ /* array of UserListResponse */ ],
+  "total": 123,
+  "skip": 0,
+  "limit": 100
+}
+```
+
+### CompetitionResponse
+```json
+{
+  "id": "uuid",
+  "title": "Competition Title",
+  "introduction": "Description",
+  "question_type": "Multiple choice",
+  "selection_process": "Online test",
+  "history": "Established in 2020",
+  "scoring_and_format": "100 points total",
+  "awards": "Gold, Silver, Bronze medals",
+  "penalties_and_bans": "No cheating allowed",
+  "notable_achievements": "Winners from top universities",
+  "competition_link": "https://example.com",
+  "background_image_url": "https://example.com/image.jpg",
+  "detail_image_urls": ["https://example.com/detail1.jpg"],
+  "location": "Online",
+  "format": "ONLINE",
+  "scale": "INTERNATIONAL",
+  "registration_deadline": "2025-12-31T23:59:59Z",
+  "size": 1000,
+  "target_age_min": 16,
+  "target_age_max": 25,
+  "is_active": true,
+  "is_featured": false,
+  "is_approved": true,
+  "owner_id": "uuid",
+  "created_at": "2025-08-08T14:30:00+00:00",
+  "updated_at": "2025-08-08T15:00:00+00:00"
+}
+```
+
+### CompetitionListResponse
+```json
+{
+  "id": "uuid",
+  "title": "Competition Title",
+  "introduction": "Description",
+  "background_image_url": "https://example.com/image.jpg",
+  "location": "Online",
+  "format": "ONLINE",
+  "scale": "INTERNATIONAL",
+  "registration_deadline": "2025-12-31T23:59:59Z",
+  "size": 1000,
+  "target_age_min": 16,
+  "target_age_max": 25,
+  "is_featured": false,
+  "is_approved": true,
+  "owner_id": "uuid",
+  "created_at": "2025-08-08T14:30:00+00:00"
+}
+```
+
+### CompetitionListPaginatedResponse
+```json
+{
+  "competitions": [ /* array of CompetitionListResponse */ ],
+  "total": 123,
+  "skip": 0,
+  "limit": 100
+}
+```
+
+### CompetitionModerationResponse
+```json
+{
+  "id": "uuid",
+  "title": "Competition Title",
+  "introduction": "Description",
+  "owner_id": "uuid",
+  "created_at": "2025-08-08T14:30:00+00:00",
+  "is_approved": false
+}
+```
+
+### CompetitionModerationListResponse
+```json
+{
+  "competitions": [ /* array of CompetitionModerationResponse */ ],
   "total": 123,
   "skip": 0,
   "limit": 100
@@ -368,10 +800,98 @@ curl -s http://localhost:8000/api/v1/users/me \
 
 ### JavaScript — Fetch with Authorization
 ```js
-const res = await fetch("http://localhost:8000/api/v1/users?limit=10", {
+const res = await fetch("http://localhost:8000/api/v1/competitions?limit=10", {
   headers: { Authorization: `Bearer ${token}` },
 });
 const data = await res.json();
+```
+
+### Create a competition
+```js
+const competitionData = {
+  title: "International Science Olympiad",
+  introduction: "A prestigious international science competition",
+  format: "ONLINE",
+  scale: "INTERNATIONAL",
+  registration_deadline: "2025-12-31T23:59:59Z",
+  competition_link: "https://example.com/olympiad"
+};
+
+const res = await fetch("http://localhost:8000/api/v1/competitions", {
+  method: "POST",
+  headers: { 
+    "Content-Type": "application/json",
+    "Authorization": `Bearer ${token}`
+  },
+  body: JSON.stringify(competitionData)
+});
+
+// Handle response
+if (!res.ok) {
+  const errorData = await res.json();
+  if (errorData.error?.type === "validation_error") {
+    // Handle validation errors
+    console.error("Validation errors:", errorData.error.field_errors);
+  } else {
+    console.error("Error:", errorData.detail || errorData.error?.message);
+  }
+}
+```
+
+### Error handling example
+```js
+async function handleApiRequest(url, options = {}) {
+  try {
+    const response = await fetch(url, {
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${token}`,
+        ...options.headers
+      },
+      ...options
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      
+      // Handle different error types
+      if (errorData.error) {
+        switch (errorData.error.code) {
+          case "AUTH_003":
+          case "AUTH_005":
+            // Token expired or user inactive - redirect to login
+            window.location.href = "/login";
+            break;
+          case "AUTH_006":
+            // Insufficient permissions
+            showError("You don't have permission to perform this action");
+            break;
+          case "VAL_001":
+            // Validation errors
+            showValidationErrors(errorData.error.field_errors);
+            break;
+          default:
+            showError(errorData.error.message);
+        }
+      } else {
+        // Simple HTTP exception
+        showError(errorData.detail);
+      }
+      
+      throw new Error(errorData.error?.message || errorData.detail);
+    }
+
+    return await response.json();
+  } catch (error) {
+    if (error.name === "TypeError" && error.message.includes("fetch")) {
+      // Network error
+      showError("Network error. Please check your connection.");
+    } else {
+      // Re-throw API errors
+      throw error;
+    }
+  }
+}
 ```
 
 ---
@@ -386,12 +906,34 @@ const data = await res.json();
 - [ ] Handle success and error formats (both `{detail}` and `{error:{...}}`)
 - [ ] Respect pagination (`skip`, `limit`) and filters
 - [ ] Log out/refresh on `401` (re-login when token expires)
+- [ ] Handle competition approval workflow (creators submit, admins approve)
+- [ ] Implement featured competitions display
+- [ ] Handle user role-based permissions (ADMIN vs CREATOR)
+- [ ] Implement comprehensive error handling:
+  - [ ] Handle authentication errors (AUTH_* codes)
+  - [ ] Handle authorization errors (AUTH_006, PERM_001)
+  - [ ] Handle validation errors with field_errors
+  - [ ] Handle resource not found errors (404)
+  - [ ] Handle business logic errors (duplicate users, self-deletion, etc.)
+  - [ ] Handle database errors (DB_* codes)
+  - [ ] Provide user-friendly error messages
+  - [ ] Log errors for debugging
+- [ ] Implement proper error recovery:
+  - [ ] Retry failed requests with exponential backoff
+  - [ ] Show appropriate loading states during requests
+  - [ ] Handle network connectivity issues
+  - [ ] Provide offline feedback when possible
 
 ---
 
-## 12. Notes & limits (current phases)
+## 12. Notes & limits (current implementation)
 
-- Access token expiry defaults to `settings.ACCESS_TOKEN_EXPIRE_MINUTES` (currently 1440 minutes). Refresh token helpers exist but are not exposed via endpoints yet.
+- Access token expiry defaults to `settings.ACCESS_TOKEN_EXPIRE_MINUTES` (currently 1440 minutes).
 - Password strength required on signup/reset/change: ≥ 8 chars, with upper/lowercase and digit.
-- Search in users list is case-insensitive (SQLite vs PostgreSQL handled in backend).
-- CORS allow-list is configurable; ensure your frontend origin is whitelisted. 
+- Search in competitions list is case-insensitive (PostgreSQL ILIKE).
+- Competition creation defaults to `is_approved=False` and requires admin approval.
+- Public endpoints only show approved competitions (`is_approved=True`).
+- Featured competitions are approved competitions with `is_featured=True`.
+- CORS allow-list is configurable; ensure your frontend origin is whitelisted.
+- File upload functionality is not yet implemented.
+- Recommendation system is not yet implemented. 
