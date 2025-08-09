@@ -4,14 +4,18 @@ import os
 import time
 
 import pytest
+
+# Load environment variables from .env file first
+from dotenv import load_dotenv
 from fastapi.testclient import TestClient
 from sqlalchemy import text
 from sqlmodel import Session, create_engine
 
+load_dotenv("../../.env")
+
 # Set test environment (PostgreSQL only) BEFORE importing app/settings
 os.environ["ENVIRONMENT"] = "test"
 os.environ.setdefault("SECRET_KEY", "test-secret-key-for-testing-only")
-os.environ.setdefault("POSTGRES_PASSWORD", "changethis")
 os.environ.setdefault("POSTGRES_USER", "postgres")
 os.environ.setdefault("POSTGRES_SERVER", "localhost")
 os.environ.setdefault("POSTGRES_DB", "sci_db")
@@ -57,7 +61,6 @@ def create_test_schema():
             "TEST_POSTGRES_DB": os.environ.get("TEST_POSTGRES_DB", "sci_test_db"),
             "POSTGRES_SERVER": os.environ.get("POSTGRES_SERVER", "localhost"),
             "POSTGRES_USER": os.environ.get("POSTGRES_USER", "postgres"),
-            "POSTGRES_PASSWORD": os.environ.get("POSTGRES_PASSWORD", "changethis"),
             "POSTGRES_DB": os.environ.get("TEST_POSTGRES_DB", "sci_test_db"),
         }
     )

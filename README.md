@@ -1,169 +1,167 @@
 # Science Competitions Insight (SCI)
 
-Full‑stack app for discovering and managing science & technology competitions.
+Full‑stack app for discovering and managing science & technology competitions. Backend is implemented; frontend is planned.
 
-## 🚀 Quick Start
+### Contents
+- Run (Docker)
+- Development (local)
+- Testing
+- Project structure
+- Configuration
 
-### Prerequisites
+## 🚀 Run (Docker)
 
+Prerequisites:
 - Docker (with `docker compose`)
-- Python 3.10+ (for local development)
-- UV package manager
 
-### Setup
-
+Steps:
 ```bash
-# Bootstrap: .env + deps + pre-commit
+# 1) Bootstrap: .env + backend/alembic.ini
 ./scripts/dev.sh setup
 
-# Start docker services
-./scripts/dev.sh docker
-
-# Apply DB migrations
-cd backend && uv run -m alembic upgrade head && cd ..
-
-# Start API
-./scripts/dev.sh start
+# 2) Start full stack (db + backend) in Docker
+./scripts/dev.sh run-start
 ```
 
-5. **Verify the setup**
-   - Backend API: http://localhost:8000
-   - API Documentation: http://localhost:8000/docs
-   - Health Check: http://localhost:8000/api/v1/health
+Verify:
+- API: http://localhost:8000
+- Docs: http://localhost:8000/api/v1/docs
+- Health: http://localhost:8000/api/v1/health
 
-## Backend
-
-### Prereqs
-- Python 3.10+
-- UV package manager
-- PostgreSQL (or use `docker compose`)
-
-### Environment
-- Copy `env.example` → `.env`, set at least:
-  - `SECRET_KEY` (32+ chars)
-  - `POSTGRES_*` (server, port, user, password, db)
-  - `FIRST_SUPERUSER_PASSWORD`
-
-### Install & run (backend only)
+To run tests in production environment:
 ```bash
-# Install dependencies
-./scripts/dev.sh install
-
-# Start Postgres (Docker)
-./scripts/dev.sh docker
-
-# Apply DB migrations (Alembic)
-cd backend && uv run -m alembic upgrade head && cd ..
-
-# Start API
-./scripts/dev.sh start
+# Run tests (automatically creates test database if needed)
+./scripts/dev.sh dev-test
 ```
 
-### Tests (PostgreSQL)
+## 🛠️ Local Development
+
+### Prerequisites
+- [UV package manager](https://github.com/astral-sh/uv)
+
+Common commands:
 ```bash
-# Ensure DB is running
-./scripts/dev.sh docker
-
-# Run the suite against Postgres test DB
-cd backend
-ENVIRONMENT=test TEST_POSTGRES_DB=sci_test_db \
-POSTGRES_SERVER=localhost POSTGRES_USER=postgres POSTGRES_PASSWORD=changethis \
-uv run -m pytest -q
+./scripts/dev.sh setup            # bootstrap: .env + backend/alembic.ini
+./scripts/dev.sh dev-install      # install backend deps + pre-commit
+./scripts/dev.sh dev-start        # start db, apply migrations, run API locally
+./scripts/dev.sh dev-test [args]  # run tests (ensures db is running)
+./scripts/dev.sh dev-lint [--fix] # ruff check (optionally --fix)
+./scripts/dev.sh dev-format       # ruff format
+./scripts/dev.sh migrate ...      # alembic via backend/scripts/migrate.sh
 ```
-Note: On first run, create the test database once if missing:
+
+### Database Migrations
+
+Migrations are used to manage database schema changes. Use them when:
+- Adding new models or fields to existing models
+- Modifying field types or constraints
+- Adding indexes or database-level validations
+- Refactoring table structures
+
+Common migration commands:
 ```bash
-createdb -h localhost -U postgres sci_test_db
+# Create a new migration from current models
+cd backend && uv run -m alembic revision -m "describe change" --autogenerate && cd ..
+
+# Apply latest migrations
+./scripts/dev.sh migrate upgrade head
+
+# Downgrade one step (rollback)
+./scripts/dev.sh migrate downgrade -1
+
+# View migration history
+./scripts/dev.sh migrate history
 ```
 
-### Docker helpers
-- Start/stop services: `./scripts/dev.sh docker` | `./scripts/dev.sh docker-stop`
-- Logs: `./scripts/dev.sh docker-logs`
+## ✅ Testing
+
+The project uses pytest with comprehensive test coverage including unit tests, integration tests, and API endpoint testing. Tests run against a dedicated PostgreSQL test database.
+
+### Test Structure
+- **Unit Tests**: Test individual functions and classes (`test_crud_*.py`, `test_schemas.py`)
+- **Integration Tests**: Test API endpoints and workflows (`test_*_routes.py`, `test_integration.py`)
+- **Security Tests**: Test authentication and authorization (`test_security.py`, `test_auth_routes.py`)
+
+### Running Tests
+```bash
+# Run all tests (automatically sets up test database)
+./scripts/dev.sh dev-test
+
+# Run with summary output
+./scripts/dev.sh dev-test --summary
+
+# Run specific test file or test case
+./scripts/dev.sh dev-test tests/test_auth_routes.py::TestAuthSignup::test_signup_success -v -s
+
+# Run tests with coverage reports
+cd backend && uv run pytest tests/ -v --tb=short \
+  --cov=app --cov-report=term-missing \
+  --cov-report=html:htmlcov --cov-report=xml && cd ..
+```
+
+**Note**: The `dev-test` command automatically:
+- Ensures the PostgreSQL database is running
+- Creates the test database if it doesn't exist
+- Loads environment variables from `.env`
+- Runs tests with proper isolation
+
+See `backend/tests/TESTING.md` for detailed testing guidelines.
+
+## 🐳 Docker Helpers
+
+Docker is used to run the full application stack (PostgreSQL database + FastAPI backend) in isolated containers. This ensures consistent environments across development and production.
+
+### Common Commands
+```bash
+# Start the full stack (database + backend API)
+./scripts/dev.sh run-start
+
+# View real-time logs from all services
+./scripts/dev.sh run-logs
+
+# Stop all services and remove containers
+./scripts/dev.sh run-stop
+
+# Build Docker images (useful for production deployment)
+./scripts/dev.sh run-build
+```
+
+### What's Running
+- **PostgreSQL Database**: Port 5432 (accessible at `localhost:5432`)
+- **FastAPI Backend**: Port 8000 (API at `http://localhost:8000`)
+- **API Documentation**: Available at `http://localhost:8000/api/v1/docs`
 
 ## 🏗️ Project Structure
 
+The project follows a modular FastAPI architecture with clear separation of concerns:
+
 ```
 sci-project/
-├── backend/
-│   ├── app/
-│   │   ├── core/           # Configuration and utilities
-│   │   │   ├── config.py   # Settings and environment
-│   │   │   ├── db.py       # Database configuration
-│   │   │   └── security.py # JWT and password utilities
-│   │   ├── models/         # Database models
-│   │   │   ├── common.py   # Base models and enums
-│   │   │   ├── user.py     # User model
-│   │   │   └── competition.py # Competition model
-│   │   └── main.py         # FastAPI application
-│   ├── Dockerfile
-│   ├── pyproject.toml      # Dependencies and project config
-│   └── .gitignore
-├── frontend/               # React frontend (to be implemented)
-├── scripts/
-│   └── dev.sh             # Development helper script
-├── docker-compose.yml      # Development environment
-├── env.example            # Environment template
-└── README.md
+├── backend/                  # Backend application (FastAPI + PostgreSQL)
+│   ├── app/                  # Main application package
+│   │   ├── api/              # HTTP endpoints and routing
+│   │   ├── core/             # Configuration, security, utilities
+│   │   ├── crud/             # Database operations layer
+│   │   ├── models/           # SQLAlchemy database models
+│   │   ├── schemas/          # Pydantic request/response models
+│   │   └── main.py           # FastAPI application entry point
+│   ├── tests/                # Comprehensive test suite
+│   ├── alembic/              # Database migrations
+│   ├── scripts/              # Backend-specific scripts
+│   ├── Dockerfile            # Backend container definition
+│   └── pyproject.toml        # Python dependencies and config
+├── frontend/                 # Frontend application (planned)
+├── scripts/                  # Project-wide automation
+│   └── dev.sh                # Development and deployment scripts
+├── docker-compose.yml        # Multi-service container orchestration
+├── env.example               # Environment variables template
+└── README.md                 # This file
 ```
 
-## 🛠️ Development
-
-### Useful Scripts
-```bash
-./scripts/dev.sh setup      # bootstrap: .env + deps + pre-commit
-./scripts/dev.sh install    # install deps
-./scripts/dev.sh start      # run API locally
-./scripts/dev.sh test       # run tests (requires DB running)
-./scripts/dev.sh lint       # lint (ruff)
-./scripts/dev.sh format     # format (ruff)
-./scripts/dev.sh docker     # start Docker services (db)
-./scripts/dev.sh docker-logs
-./scripts/dev.sh docker-stop
-
-# DB migrations
-cd backend && ./scripts/migrate.sh upgrade head
-```
-
-### Install UV (if needed)
-```bash
-curl -LsSf https://astral.sh/uv/install.sh | sh
-```
-
-### Code Quality
-- Ruff (lint/format), MyPy, pre-commit (installed by `./scripts/dev.sh setup`).
-
-### Database & Migrations
-PostgreSQL + SQLModel with Alembic (`backend/alembic`).
-
-## 🔧 Configuration
-
-Key `.env` variables:
-- `SECRET_KEY`: JWT token secret (32+ chars)
-- `POSTGRES_*`: DB configuration
-- `FIRST_SUPERUSER_*`: Admin credentials
-(- `AWS_*`, `LLM_API_*` optional for later features)
-
-#### Database Migrations (Alembic)
-
-From the project root:
-```bash
-cd backend
-
-# Create a new migration from current models
-uv run -m alembic revision -m "describe change" --autogenerate
-
-# Upgrade to latest
-uv run -m alembic upgrade head
-
-# Downgrade one step
-uv run -m alembic downgrade -1
-
-# If your DB was created without Alembic, align the revision (no schema change)
-uv run -m alembic stamp head
-
-# Alternatively, use helper script
-./scripts/migrate.sh upgrade head
-./scripts/migrate.sh downgrade -1
-```
-Notes:
-- Ensure `.env` is configured (`POSTGRES_*`, `SECRET_KEY` 32+ chars).
-- Tests run against PostgreSQL (Docker `db` service). Schema is managed by Alembic; `TEST_POSTGRES_DB` defaults to `sci_test_db`.
+### Architecture Overview
+- **API Layer** (`app/api/`): HTTP endpoints and request/response handling
+- **Business Logic** (`app/crud/`): Database operations and business rules
+- **Data Models** (`app/models/`): Database schema definitions
+- **Validation** (`app/schemas/`): Request/response validation and serialization
+- **Configuration** (`app/core/`): Settings, security, and utilities
+- **Testing** (`tests/`): Comprehensive test coverage for all layers

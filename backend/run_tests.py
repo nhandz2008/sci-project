@@ -16,10 +16,14 @@ def run_tests():
     # Change to backend directory
     os.chdir(backend_dir)
 
-    # Set environment variables for testing
+    # Load environment variables from .env file first
+    from dotenv import load_dotenv
+
+    load_dotenv("../.env")
+
+    # Set test-specific environment variables (only if not already set)
     os.environ["ENVIRONMENT"] = "test"
     os.environ.setdefault("SECRET_KEY", "test-secret-key-for-testing-only")
-    os.environ.setdefault("POSTGRES_PASSWORD", "test-password")
     os.environ.setdefault("FIRST_SUPERUSER_PASSWORD", "test-admin-password")
 
     # Run pytest with coverage and warning suppression
@@ -67,9 +71,14 @@ def run_specific_test(test_file):
     backend_dir = Path(__file__).parent
     os.chdir(backend_dir)
 
+    # Load environment variables from .env file first
+    from dotenv import load_dotenv
+
+    load_dotenv("../.env")
+
+    # Set test-specific environment variables (only if not already set)
     os.environ["ENVIRONMENT"] = "test"
     os.environ.setdefault("SECRET_KEY", "test-secret-key-for-testing-only")
-    os.environ.setdefault("POSTGRES_PASSWORD", "test-password")
     os.environ.setdefault("FIRST_SUPERUSER_PASSWORD", "test-admin-password")
 
     cmd = [

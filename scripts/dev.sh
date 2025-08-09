@@ -8,52 +8,107 @@ echo "🚀 SCI Development Script"
 echo "========================"
 
 case "$1" in
-    "start")
-        echo "Starting development server..."
+    "dev-start")
+        echo "Starting local development (db + API with reload)..."
+        # Ensure database is running
+        docker compose up -d db
+        # Apply migrations and start API (auto-reload)
         cd backend
-        uv run python -m uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+        ./scripts/migrate.sh upgrade head
+        echo "Starting development server (Uvicorn on port 8000)..."
+        uv run uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
         ;;
-    "install")
-        echo "Installing dependencies..."
+    "dev-install")
+        echo "Installing backend dependencies..."
         cd backend
         uv sync
+        echo "✅ Installed dependencies"
+        echo "Installing pre-commit hooks..."
+        uv run pre-commit install || echo "⚠️  pre-commit not available; skipping hooks install"
+        echo "✅ Installed pre-commit hooks"
         ;;
-    "test")
-        echo "Running tests..."
+    "dev-test")
+        echo "Running tests (uses PostgreSQL from Docker, see backend/tests/TESTING.md)..."
+        # Ensure database is running
+        docker compose up -d db
+        # Wait for database to be ready
+        echo "Waiting for database to be ready..."
+        sleep 5
+        # Create test database if it doesn't exist
+        echo "Ensuring test database exists..."
+        if docker compose exec -T db psql -U postgres -lqt | cut -d \| -f 1 | grep -qw sci_test_db; then
+            echo "✅ Test database already exists"
+        else
+            echo "Creating test database..."
+            docker compose exec -T db createdb -U postgres sci_test_db
+            echo "✅ Test database created"
+        fi
+        # Wait a moment for the database to be ready
+        sleep 2
         cd backend
-        uv run pytest
+        # Prefer the project test runner that configures env/test DB automatically
+        uv run python run_tests.py "${@:2}"
         ;;
-    "lint")
-        echo "Running linting..."
+
+    "dev-lint")
+        echo "Running linting (ruff check)..."
         cd backend
         if [[ "$2" == "--fix" ]]; then
-            echo "Auto-fixing lint issues with ruff format..."
+            echo "Auto-fixing lint issues with ruff check --fix..."
             uv run ruff check . --fix
         else
             uv run ruff check .
         fi
         ;;
-    "format")
-        echo "Formatting code..."
+
+    "dev-format")
+        echo "Formatting code (ruff format)..."
         cd backend
         uv run ruff format .
         ;;
-    "docker")
-        echo "Starting with Docker..."
+
+    # Run (Docker): full stack - no local code changes required
+    "run-start")
+        echo "Starting full stack (db + backend) with Docker..."
         docker compose up -d
         ;;
-    "docker-build")
-        echo "Building with Docker..."
+    "run-build")
+        echo "Building Docker images..."
         docker compose build
         ;;
-    "docker-logs")
-        echo "Showing Docker logs..."
+    "run-logs")
+        echo "Showing Docker logs (all services)..."
         docker compose logs -f
         ;;
-    "docker-stop")
+    "run-stop")
         echo "Stopping Docker services..."
         docker compose down
         ;;
+
+    # Backwards-compatible aliases (deprecated)
+    "docker-start")
+        echo "⚠️  'docker-start' is deprecated. Use 'run-start' instead."
+        docker compose up -d
+        ;;
+    "docker-build")
+        echo "⚠️  'docker-build' is deprecated. Use 'run-build' instead."
+        docker compose build
+        ;;
+    "docker-logs")
+        echo "⚠️  'docker-logs' is deprecated. Use 'run-logs' instead."
+        docker compose logs -f
+        ;;
+    "docker-stop")
+        echo "⚠️  'docker-stop' is deprecated. Use 'run-stop' instead."
+        docker compose down
+        ;;
+
+    "migrate")
+        echo "Running Alembic migrations via backend/scripts/migrate.sh..."
+        cd backend
+        ./scripts/migrate.sh "${@:2}"
+        ;;
+
     "clean")
         echo "Cleaning project (docker, env, generated files)..."
         # Stop and remove docker services, networks, and volumes
@@ -73,8 +128,9 @@ case "$1" in
         find backend -type d -name "__pycache__" -prune -exec rm -rf {} + 2>/dev/null || true
         echo "✅ Clean complete."
         ;;
+
     "setup")
-        echo "Setting up development environment..."
+        echo "Setting up project environment (no Python deps)..."
         # Copy env file if it doesn't exist
         if [ ! -f .env ]; then
             cp env.example .env
@@ -88,43 +144,41 @@ case "$1" in
             echo "ℹ️  .env file already exists, skipping creation"
         fi
 
-        # Install dependencies
-        cd backend
-        uv sync
-        echo "✅ Installed dependencies"
-
-        # Install pre-commit hooks inside the virtual environment
-        echo "Installing pre-commit hooks..."
-        uv run pre-commit install || echo "⚠️  pre-commit not available; skipping hooks install"
-        echo "✅ Installed pre-commit hooks"
-
-        # Create minimal alembic.ini if it doesn't exist
-        if [ ! -f alembic.ini ]; then
-            echo "[alembic]" > alembic.ini
-            echo "script_location = alembic" >> alembic.ini
-            echo "✅ Created minimal alembic.ini"
+        # Ensure backend alembic.ini exists (minimal)
+        if [ ! -f backend/alembic.ini ]; then
+            echo "[alembic]" > backend/alembic.ini
+            echo "script_location = alembic" >> backend/alembic.ini
+            echo "✅ Created backend/alembic.ini"
         fi
 
         echo "✅ Setup complete!"
         echo "Next steps:"
-        echo "1. Edit .env file with your configuration"
-        echo "2. Run: ./scripts/dev.sh start"
+        echo "- Run (Docker): ./scripts/dev.sh run-start"
+        echo "- Develop locally: ./scripts/dev.sh dev-install && ./scripts/dev.sh dev-start"
         ;;
+
     *)
-        echo "Usage: $0 {start|install|test|lint|format|docker|docker-build|docker-logs|docker-stop|setup|clean}"
+        echo "Usage: $0 <command> [args]"
         echo ""
-        echo "Commands:"
-        echo "  start        - Start development server"
-        echo "  install      - Install dependencies"
-        echo "  test         - Run tests"
-        echo "  lint         - Run linting"
-        echo "  format       - Format code"
-        echo "  docker       - Start Docker services (alias of docker-start)"
-        echo "  docker-build - Build Docker images"
-        echo "  docker-logs  - Show Docker logs"
-        echo "  docker-stop  - Stop Docker services"
-        echo "  setup        - Initial setup"
-        echo "  clean        - Remove docker resources, env, and generated files"
+        echo "Setup:"
+        echo "  setup            - Create .env + backend/alembic.ini (no Python deps)"
+        echo ""
+        echo "Development (local code):"
+        echo "  dev-install      - Install backend dependencies"
+        echo "  dev-start        - Run API locally on http://localhost:8000 (starts db + applies migrations)"
+        echo "  dev-test [args]  - Run tests (ensures db is running)"
+        echo "  dev-lint [--fix] - Lint code with ruff (optionally --fix)"
+        echo "  dev-format       - Format code with ruff"
+        echo "  migrate ...      - Run Alembic via backend/scripts/migrate.sh (e.g., 'migrate upgrade head')"
+        echo ""
+        echo "Run (Docker):"
+        echo "  run-start        - Start full stack (db + backend) with Docker"
+        echo "  run-build        - Build Docker images"
+        echo "  run-logs         - Show Docker logs (all services)"
+        echo "  run-stop         - Stop Docker services"
+        echo ""
+        echo "Maintenance:"
+        echo "  clean         - Remove docker resources, env, and generated files"
         exit 1
         ;;
 esac
