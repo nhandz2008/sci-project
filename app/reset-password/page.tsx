@@ -1,12 +1,15 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
+import { useAuth } from "../contexts/AuthContext";
+import { usersAPI } from "../api/users";
 
 interface ValidationErrors {
   email?: string;
   password?: string;
   confirmPassword?: string;
   token?: string;
+  currentPassword?: string;
 }
 
 interface PasswordStrength {
@@ -16,12 +19,14 @@ interface PasswordStrength {
 }
 
 export default function ResetPasswordPage() {
-  const [step, setStep] = useState<"email" | "token" | "password">("email");
+  const { user } = useAuth();
+  const [step, setStep] = useState<"email" | "token" | "password" | "logged-in">("email");
   const [formData, setFormData] = useState({
     email: "",
     token: "",
     password: "",
     confirmPassword: "",
+    currentPassword: "",
   });
   const [errors, setErrors] = useState<ValidationErrors>({});
   const [passwordStrength, setPasswordStrength] = useState<PasswordStrength>({
@@ -31,6 +36,13 @@ export default function ResetPasswordPage() {
   });
   const [isLoading, setIsLoading] = useState(false);
   const [message, setMessage] = useState("");
+
+  // Check if user is logged in and set appropriate step
+  useEffect(() => {
+    if (user) {
+      setStep("logged-in");
+    }
+  }, [user]);
 
   const validatePassword = (password: string): PasswordStrength => {
     const feedback: string[] = [];
@@ -161,15 +173,73 @@ export default function ResetPasswordPage() {
 
     if (Object.keys(newErrors).length === 0) {
       setIsLoading(true);
-      // Simulate API call
-      setTimeout(() => {
-        setIsLoading(false);
-        setMessage("Password reset successfully! You can now sign in with your new password.");
-        // Redirect to login after a delay
+      try {
+        // Call the API to reset password with token
+        // This would be implemented when the backend supports it
+        // For now, simulate the API call
         setTimeout(() => {
-          window.location.href = "/login";
-        }, 3000);
-      }, 2000);
+          setIsLoading(false);
+          setMessage("Password reset successfully! You can now sign in with your new password.");
+          // Redirect to login after a delay
+          setTimeout(() => {
+            window.location.href = "/login";
+          }, 3000);
+        }, 2000);
+      } catch (error) {
+        setIsLoading(false);
+        setMessage("Failed to reset password. Please try again.");
+      }
+    }
+  };
+
+  const handleChangePassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const newErrors: ValidationErrors = {};
+
+    if (!formData.currentPassword) {
+      newErrors.currentPassword = "Current password is required";
+    }
+
+    if (!formData.password) {
+      newErrors.password = "New password is required";
+    } else if (!passwordStrength.isValid) {
+      newErrors.password = "Password does not meet requirements";
+    }
+
+    if (!formData.confirmPassword) {
+      newErrors.confirmPassword = "Please confirm your new password";
+    } else if (formData.password !== formData.confirmPassword) {
+      newErrors.confirmPassword = "Passwords do not match";
+    }
+
+    setErrors(newErrors);
+
+    if (Object.keys(newErrors).length === 0) {
+      setIsLoading(true);
+      try {
+        await usersAPI.changePassword({
+          current_password: formData.currentPassword,
+          new_password: formData.password,
+        });
+        
+        setIsLoading(false);
+        setMessage("Password changed successfully!");
+        
+        // Reset form
+        setFormData(prev => ({
+          ...prev,
+          currentPassword: "",
+          password: "",
+          confirmPassword: "",
+        }));
+      } catch (error) {
+        setIsLoading(false);
+        if (error instanceof Error) {
+          setMessage(`Failed to change password: ${error.message}`);
+        } else {
+          setMessage("Failed to change password. Please try again.");
+        }
+      }
     }
   };
 
@@ -185,11 +255,14 @@ export default function ResetPasswordPage() {
     <main className="min-h-screen flex flex-col items-center justify-center bg-gray-100 py-8">
       <div className="bg-white rounded-xl shadow-2xl w-full max-w-md p-8">
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Reset Password</h1>
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">
+            {user ? "Change Password" : "Reset Password"}
+          </h1>
           <p className="text-gray-600">
             {step === "email" && "Enter your email to receive a reset link"}
             {step === "token" && "Enter the token sent to your email"}
             {step === "password" && "Create your new password"}
+            {step === "logged-in" && "Enter your current password and choose a new password"}
           </p>
         </div>
 
@@ -328,12 +401,98 @@ export default function ResetPasswordPage() {
           </form>
         )}
 
+        {/* Logged-in User Password Change */}
+        {step === "logged-in" && (
+          <form onSubmit={handleChangePassword} className="space-y-6">
+            <div>
+              <label htmlFor="currentPassword" className="block text-sm font-medium text-gray-700 mb-2">
+                Current Password
+              </label>
+              <input
+                type="password"
+                id="currentPassword"
+                placeholder="Enter your current password"
+                value={formData.currentPassword}
+                onChange={(e) => handleInputChange("currentPassword", e.target.value)}
+                className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 ${
+                  errors.currentPassword ? 'border-red-400' : 'border-gray-300'
+                }`}
+              />
+              {errors.currentPassword && <p className="text-red-500 text-sm mt-1">{errors.currentPassword}</p>}
+            </div>
+
+            <div>
+              <label htmlFor="newPassword" className="block text-sm font-medium text-gray-700 mb-2">
+                New Password
+              </label>
+              <input
+                type="password"
+                id="newPassword"
+                placeholder="Enter your new password"
+                value={formData.password}
+                onChange={(e) => handleInputChange("password", e.target.value)}
+                className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 ${
+                  errors.password ? 'border-red-400' : 'border-gray-300'
+                }`}
+              />
+              {formData.password && (
+                <div className="mt-2">
+                  <div className="flex items-center gap-2 mb-1">
+                    <div className="flex-1 bg-gray-200 rounded-full h-2">
+                      <div 
+                        className={`h-2 rounded-full transition-all duration-300 ${getPasswordStrengthColor(passwordStrength.score)}`}
+                        style={{ width: `${(passwordStrength.score / 5) * 100}%` }}
+                      ></div>
+                    </div>
+                    <span className="text-xs text-gray-500">
+                      {passwordStrength.score}/5
+                    </span>
+                  </div>
+                  {passwordStrength.feedback.length > 0 && (
+                    <div className="text-xs text-gray-600">
+                      {passwordStrength.feedback.map((msg, index) => (
+                        <p key={index} className="text-red-500">• {msg}</p>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+              {errors.password && <p className="text-red-500 text-sm mt-1">{errors.password}</p>}
+            </div>
+
+            <div>
+              <label htmlFor="confirmNewPassword" className="block text-sm font-medium text-gray-700 mb-2">
+                Confirm New Password
+              </label>
+              <input
+                type="password"
+                id="confirmNewPassword"
+                placeholder="Confirm your new password"
+                value={formData.confirmPassword}
+                onChange={(e) => handleInputChange("confirmPassword", e.target.value)}
+                className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 ${
+                  errors.confirmPassword ? 'border-red-400' : 'border-gray-300'
+                }`}
+              />
+              {errors.confirmPassword && <p className="text-red-500 text-sm mt-1">{errors.confirmPassword}</p>}
+            </div>
+
+            <button
+              type="submit"
+              disabled={isLoading}
+              className="w-full bg-green-600 text-white py-3 px-4 rounded-lg font-semibold hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-400 disabled:opacity-50"
+            >
+              {isLoading ? "Changing..." : "Change Password"}
+            </button>
+          </form>
+        )}
+
         <div className="mt-6 text-center">
           <Link 
-            href="/login" 
+            href={user ? "/account" : "/login"}
             className="text-pink-600 hover:text-pink-700 text-sm font-medium"
           >
-            Back to Sign In
+            {user ? "Back to Account" : "Back to Sign In"}
           </Link>
         </div>
       </div>
