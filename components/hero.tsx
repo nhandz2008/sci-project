@@ -24,7 +24,7 @@ const Hero = () => (
       <div className="grid grid-cols-12 text-center lg:text-left">
         <div className="col-span-full rounded-xl border border-white bg-white/90 py-10 px-8 shadow-lg shadow-black/10 backdrop-blur-sm backdrop-saturate-200 xl:col-span-7">
           <h1 className="lg:text-5xl !leading-snug text-3xl lg:max-w-3xl font-bold text-blue-900">
-            Empowering the Next Generation of STEM Leaders.
+            Empowering the Next Generation of STEM Leaders
           </h1>
           <p className="mb-10 mt-6 !text-gray-900 text-lg">
             Discover, explore, and participate in global science and technology competitions. Science Competition Insights (SCI) connects students, educators, and innovators worldwide, providing opportunities to grow, compete, and excel in STEM fields.
