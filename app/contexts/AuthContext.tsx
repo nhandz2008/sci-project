@@ -2,13 +2,14 @@
 
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { authAPI, User } from '../api/auth';
+import { handleAuthError } from '../api/utils';
 
 interface AuthContextType {
   user: User | null;
   isLoading: boolean;
   login: (email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
-  signup: (email: string, password: string, fullName: string, organization?: string, phoneNumber?: string) => Promise<void>;
+  signup: (email: string, password: string, fullName: string, organization: string, phoneNumber: string) => Promise<void>;
   updateUser: (userData: Partial<User>) => void;
 }
 
@@ -36,12 +37,13 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       try {
         const token = localStorage.getItem('auth_token');
         if (token) {
-          const userData = await authAPI.getCurrentUser(token);
+          const userData = await authAPI.getCurrentUser();
           setUser(userData);
         }
       } catch (error) {
         console.error('Auth check failed:', error);
         localStorage.removeItem('auth_token');
+        setUser(null);
       } finally {
         setIsLoading(false);
       }
@@ -67,14 +69,14 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     setUser(null);
   };
 
-  const signup = async (email: string, password: string, fullName: string, organization?: string, phoneNumber?: string) => {
+  const signup = async (email: string, password: string, fullName: string, organization: string, phoneNumber: string) => {
     try {
       const userData = await authAPI.signUp({
         email,
         password,
         full_name: fullName,
-        organization,
-        phone_number: phoneNumber,
+        organization, // Required
+        phone_number: phoneNumber, // Required
       });
       setUser(userData);
     } catch (error) {

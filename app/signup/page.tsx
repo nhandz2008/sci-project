@@ -10,6 +10,7 @@ interface ValidationErrors {
   password?: string;
   confirmPassword?: string;
   name?: string;
+  organization?: string;
   phoneNumber?: string;
 }
 
@@ -96,9 +97,11 @@ export default function SignupPage() {
   };
 
   const validatePhoneNumber = (phoneNumber: string): string | undefined => {
-    if (!phoneNumber) return undefined; // Optional field
+    if (!phoneNumber) return 'Phone number is required';
     const phoneRegex = /^\+?[1-9]\d{1,19}$/;
-    if (!phoneRegex.test(phoneNumber)) return 'Please enter a valid phone number (e.g., +1234567890)';
+    if (!phoneRegex.test(phoneNumber)) {
+      return 'Please enter a valid phone number (e.g., +1234567890)';
+    }
     return undefined;
   };
 
@@ -106,23 +109,9 @@ export default function SignupPage() {
     setFormData(prev => ({ ...prev, [field]: value }));
     setErrors(prev => ({ ...prev, [field]: undefined }));
 
-    // Real-time validation
+    // Update password strength when password changes
     if (field === 'password') {
       setPasswordStrength(validatePassword(value));
-    } else if (field === 'email') {
-      const emailError = validateEmail(value);
-      if (emailError) {
-        setErrors(prev => ({ ...prev, email: emailError }));
-      }
-    } else if (field === 'confirmPassword' && formData.password) {
-      if (value !== formData.password) {
-        setErrors(prev => ({ ...prev, confirmPassword: 'Passwords do not match' }));
-      }
-    } else if (field === 'phoneNumber') {
-      const phoneError = validatePhoneNumber(value);
-      if (phoneError) {
-        setErrors(prev => ({ ...prev, phoneNumber: phoneError }));
-      }
     }
   };
 
@@ -151,7 +140,12 @@ export default function SignupPage() {
       newErrors.name = 'Name is required';
     }
 
-    // Validate phone number if provided
+    // Validate organization (required)
+    if (!formData.organization.trim()) {
+      newErrors.organization = 'Organization is required';
+    }
+
+    // Validate phone number (required)
     const phoneError = validatePhoneNumber(formData.phoneNumber);
     if (phoneError) newErrors.phoneNumber = phoneError;
 
@@ -166,8 +160,8 @@ export default function SignupPage() {
           formData.email, 
           formData.password, 
           formData.name,
-          formData.organization || undefined,
-          formData.phoneNumber || undefined
+          formData.organization, // Required
+          formData.phoneNumber // Required
         );
         setSubmitMessage({ type: 'success', message: 'Account created successfully! Redirecting...' });
         
@@ -243,27 +237,30 @@ export default function SignupPage() {
           {/* Organization Input */}
           <div>
             <label htmlFor="organization" className="block text-sm font-medium text-gray-700 mb-2">
-              Organization
+              Organization *
             </label>
             <input
               id="organization"
               type="text"
-              placeholder="Enter your organization (optional)"
+              placeholder="Enter your organization"
               value={formData.organization}
               onChange={(e) => handleInputChange('organization', e.target.value)}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
+              className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 ${
+                errors.organization ? 'border-red-500' : 'border-gray-300'
+              }`}
             />
+            {errors.organization && <p className="text-red-500 text-sm mt-1">{errors.organization}</p>}
           </div>
 
           {/* Phone Number Input */}
           <div>
             <label htmlFor="phoneNumber" className="block text-sm font-medium text-gray-700 mb-2">
-              Phone Number
+              Phone Number *
             </label>
             <input
               id="phoneNumber"
               type="tel"
-              placeholder="Enter your phone number (optional)"
+              placeholder="+1234567890"
               value={formData.phoneNumber}
               onChange={(e) => handleInputChange('phoneNumber', e.target.value)}
               className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 ${
@@ -281,36 +278,42 @@ export default function SignupPage() {
             <input
               id="password"
               type="password"
-              placeholder="Create a strong password"
+              placeholder="Enter your password"
               value={formData.password}
               onChange={(e) => handleInputChange('password', e.target.value)}
               className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 ${
                 errors.password ? 'border-red-500' : 'border-gray-300'
               }`}
             />
+            {errors.password && <p className="text-red-500 text-sm mt-1">{errors.password}</p>}
+            
+            {/* Password Strength Indicator */}
             {formData.password && (
               <div className="mt-2">
-                <div className="flex items-center gap-2 mb-1">
-                  <div className="flex-1 bg-gray-200 rounded-full h-2">
-                    <div 
-                      className={`h-2 rounded-full transition-all duration-300 ${getPasswordStrengthColor(passwordStrength.score)}`}
-                      style={{ width: `${(passwordStrength.score / 5) * 100}%` }}
-                    ></div>
-                  </div>
-                  <span className="text-xs text-gray-500">
-                    {passwordStrength.score}/5
-                  </span>
+                <div className="flex space-x-1">
+                  {[1, 2, 3, 4, 5].map((level) => (
+                    <div
+                      key={level}
+                      className={`h-2 flex-1 rounded ${
+                        level <= passwordStrength.score
+                          ? getPasswordStrengthColor(passwordStrength.score)
+                          : 'bg-gray-200'
+                      }`}
+                    />
+                  ))}
                 </div>
                 {passwordStrength.feedback.length > 0 && (
-                  <div className="text-xs text-gray-600">
-                    {passwordStrength.feedback.map((msg, index) => (
-                      <p key={index} className="text-red-500">• {msg}</p>
+                  <ul className="text-xs text-gray-600 mt-1 space-y-1">
+                    {passwordStrength.feedback.map((feedback, index) => (
+                      <li key={index} className="flex items-center">
+                        <span className="text-red-500 mr-1">•</span>
+                        {feedback}
+                      </li>
                     ))}
-                  </div>
+                  </ul>
                 )}
               </div>
             )}
-            {errors.password && <p className="text-red-500 text-sm mt-1">{errors.password}</p>}
           </div>
 
           {/* Confirm Password Input */}
