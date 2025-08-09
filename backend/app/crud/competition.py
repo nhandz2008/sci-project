@@ -30,7 +30,8 @@ def create_competition(
         notable_achievements=competition_create.notable_achievements,
         competition_link=competition_create.competition_link,
         background_image_url=competition_create.background_image_url,
-        detail_image_urls_list=competition_create.detail_image_urls,
+        # Set list again after instance creation to ensure JSON field updated
+        detail_image_urls_list=[],
         location=competition_create.location,
         format=competition_create.format,
         scale=competition_create.scale,
@@ -38,11 +39,15 @@ def create_competition(
         size=competition_create.size,
         target_age_min=competition_create.target_age_min,
         target_age_max=competition_create.target_age_max,
-        owner_id=str(owner_id),
+        owner_id=owner_id,
         is_active=True,
         is_featured=False,
         is_approved=False,  # Requires admin approval
     )
+
+    # Ensure detail images are persisted via property setter
+    if competition_create.detail_image_urls:
+        competition.detail_image_urls_list = competition_create.detail_image_urls
 
     # Add to database
     session.add(competition)
@@ -68,7 +73,7 @@ def get_competitions(
     is_approved: bool | None = None,
     is_featured: bool | None = None,
     search: str | None = None,
-    owner_id: str | None = None,
+    owner_id: UUID | None = None,
     sort_by: str | None = None,
     order: str | None = None,
 ) -> tuple[list[Competition], int]:
@@ -268,7 +273,7 @@ def can_modify_competition(user: User, competition: Competition) -> bool:
         return True
 
     # Owner can modify their own competition
-    if competition.owner_id == str(user.id):
+    if str(competition.owner_id) == str(user.id):
         return True
 
     return False
@@ -281,7 +286,7 @@ def can_delete_competition(user: User, competition: Competition) -> bool:
         return True
 
     # Owner can delete their own competition
-    if competition.owner_id == str(user.id):
+    if str(competition.owner_id) == str(user.id):
         return True
 
     return False
@@ -292,7 +297,7 @@ def get_competitions_by_owner(
 ) -> tuple[list[Competition], int]:
     """Get competitions by owner."""
     competitions, total = get_competitions(
-        session=session, skip=skip, limit=limit, owner_id=str(owner_id)
+        session=session, skip=skip, limit=limit, owner_id=owner_id
     )
     return competitions, total
 

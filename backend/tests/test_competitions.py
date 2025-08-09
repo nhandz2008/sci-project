@@ -402,11 +402,56 @@ class TestPublicCompetitions:
         """Test handling of invalid competition IDs."""
         # Test with invalid UUID format
         resp = client.get("/api/v1/competitions/invalid-uuid")
-        assert resp.status_code == 404
+        assert resp.status_code == 400
 
         # Test with non-existent UUID
         resp = client.get("/api/v1/competitions/12345678-1234-1234-1234-123456789012")
         assert resp.status_code == 404
+
+    def test_invalid_competition_id_on_modify_delete(
+        self, client: TestClient, auth_headers
+    ):
+        """Invalid UUID format should return 400 on update/delete routes."""
+        bad_id = "not-a-uuid"
+        resp_put = client.put(
+            f"/api/v1/competitions/{bad_id}", json={"title": "X"}, headers=auth_headers
+        )
+        assert resp_put.status_code == 400
+
+        resp_del = client.delete(f"/api/v1/competitions/{bad_id}", headers=auth_headers)
+        assert resp_del.status_code == 400
+
+    def test_update_validation_error_returns_422(
+        self, client: TestClient, auth_headers
+    ):
+        """Updating with invalid data (e.g., past deadline) should 422."""
+        # Create a valid competition first
+        create_resp = client.post(
+            "/api/v1/competitions",
+            json=_create_competition_payload(title="Validate Update"),
+            headers=auth_headers,
+        )
+        assert create_resp.status_code == 200
+        comp_id = create_resp.json()["id"]
+
+        # Attempt to set past registration_deadline
+        past_deadline = (datetime.now(timezone.utc) - timedelta(days=1)).isoformat()
+        update_resp = client.put(
+            f"/api/v1/competitions/{comp_id}",
+            json={"registration_deadline": past_deadline},
+            headers=auth_headers,
+        )
+        assert update_resp.status_code == 422
+
+    def test_admin_invalid_competition_id_returns_400(
+        self, client: TestClient, admin_headers
+    ):
+        """Admin endpoints should return 400 for invalid UUID format."""
+        bad_id = "invalid-uuid"
+        resp = client.put(
+            f"/api/v1/admin/competitions/{bad_id}/approve", headers=admin_headers
+        )
+        assert resp.status_code == 400
 
     def test_competition_validation_errors(self, client: TestClient, auth_headers):
         """Test competition creation validation errors."""

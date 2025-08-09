@@ -790,7 +790,10 @@ class TestCompetitionSchemas:
                 self.location = "Test City"
                 self.format = CompetitionFormat.ONLINE
                 self.scale = CompetitionScale.REGIONAL
-                self.registration_deadline = self._future_deadline(30)
+                # Use future timestamp directly
+                self.registration_deadline = datetime.now(timezone.utc) + timedelta(
+                    days=30
+                )
                 self.size = 100
                 self.target_age_min = 16
                 self.target_age_max = 20
@@ -807,8 +810,9 @@ class TestCompetitionSchemas:
         assert response.title == "Test Competition"
         assert response.overview == "Test overview"
         assert response.detail_image_urls == ["https://example.com/d1.jpg"]
-        assert isinstance(response.id, str)
-        assert isinstance(response.owner_id, str)
+        dumped = response.model_dump()
+        assert isinstance(dumped["id"], str)
+        assert isinstance(dumped["owner_id"], str)
 
     def test_competition_list_response_serialization(self):
         """Test competition list response serialization."""
@@ -834,7 +838,9 @@ class TestCompetitionSchemas:
                 self.location = "Test City"
                 self.format = CompetitionFormat.ONLINE
                 self.scale = CompetitionScale.REGIONAL
-                self.registration_deadline = self._future_deadline(30)
+                self.registration_deadline = datetime.now(timezone.utc) + timedelta(
+                    days=30
+                )
                 self.size = 100
                 self.target_age_min = 16
                 self.target_age_max = 20
@@ -849,8 +855,9 @@ class TestCompetitionSchemas:
         assert response.title == "Test Competition"
         assert response.overview == "Test overview"
         assert response.detail_image_urls == ["https://example.com/d1.jpg"]
-        assert isinstance(response.id, str)
-        assert isinstance(response.owner_id, str)
+        dumped = response.model_dump()
+        assert isinstance(dumped["id"], str)
+        assert isinstance(dumped["owner_id"], str)
 
     def test_competition_filter_params(self):
         """Test competition filter parameters."""
@@ -997,7 +1004,9 @@ class TestCompetitionSchemas:
                 self.location = "Test City"
                 self.format = CompetitionFormat.ONLINE
                 self.scale = CompetitionScale.REGIONAL
-                self.registration_deadline = self._future_deadline(30)
+                self.registration_deadline = datetime.now(timezone.utc) + timedelta(
+                    days=30
+                )
                 self.size = 100
                 self.target_age_min = 16
                 self.target_age_max = 20
@@ -1037,7 +1046,9 @@ class TestCompetitionSchemas:
                 self.location = "Test City"
                 self.format = CompetitionFormat.ONLINE
                 self.scale = CompetitionScale.REGIONAL
-                self.registration_deadline = self._future_deadline(30)
+                self.registration_deadline = datetime.now(timezone.utc) + timedelta(
+                    days=30
+                )
                 self.size = 100
                 self.target_age_min = 16
                 self.target_age_max = 20

@@ -408,6 +408,78 @@ class TestAdminUserManagement:
 
         assert response.status_code == status.HTTP_403_FORBIDDEN
 
+    def test_admin_invalid_user_id_returns_400(
+        self, client: TestClient, session: Session
+    ):
+        """Admin endpoints should return 400 for invalid UUID format in path."""
+        # Create admin user
+        admin_data = {
+            "email": "admin2@example.com",
+            "full_name": "Admin Two",
+            "organization": "Admin Org",
+            "phone_number": "+1234567890",
+            "password": "AdminPass123",
+        }
+        admin = create_user(session, UserCreate(**admin_data))
+        admin.role = UserRole.ADMIN
+        session.add(admin)
+        session.commit()
+
+        # Login as admin
+        login_data = {"email": admin_data["email"], "password": admin_data["password"]}
+        login_response = client.post("/api/v1/auth/login", json=login_data)
+        token = login_response.json()["access_token"]
+        headers = {"Authorization": f"Bearer {token}"}
+
+        bad_id = "not-a-uuid"
+        # Delete
+        r_del = client.delete(f"/api/v1/users/{bad_id}", headers=headers)
+        assert r_del.status_code == status.HTTP_400_BAD_REQUEST
+        # Deactivate
+        r_deact = client.put(f"/api/v1/users/{bad_id}/deactivate", headers=headers)
+        assert r_deact.status_code == status.HTTP_400_BAD_REQUEST
+        # Activate
+        r_act = client.put(f"/api/v1/users/{bad_id}/activate", headers=headers)
+        assert r_act.status_code == status.HTTP_400_BAD_REQUEST
+        # Change role
+        r_role = client.put(
+            f"/api/v1/users/{bad_id}/role?new_role=ADMIN", headers=headers
+        )
+        assert r_role.status_code == status.HTTP_400_BAD_REQUEST
+
+    def test_admin_cannot_deactivate_self_or_change_own_role(
+        self, client: TestClient, session: Session
+    ):
+        """Admin should not be able to deactivate self or change own role (400)."""
+        # Create admin user
+        admin_data = {
+            "email": "selfadmin@example.com",
+            "full_name": "Self Admin",
+            "organization": "Admin Org",
+            "phone_number": "+1234567890",
+            "password": "AdminPass123",
+        }
+        admin = create_user(session, UserCreate(**admin_data))
+        admin.role = UserRole.ADMIN
+        session.add(admin)
+        session.commit()
+
+        # Login as admin
+        login_data = {"email": admin_data["email"], "password": admin_data["password"]}
+        login_response = client.post("/api/v1/auth/login", json=login_data)
+        token = login_response.json()["access_token"]
+        headers = {"Authorization": f"Bearer {token}"}
+
+        # Deactivate self
+        r_deact = client.put(f"/api/v1/users/{admin.id}/deactivate", headers=headers)
+        assert r_deact.status_code == status.HTTP_400_BAD_REQUEST
+
+        # Change own role
+        r_role = client.put(
+            f"/api/v1/users/{admin.id}/role?new_role=CREATOR", headers=headers
+        )
+        assert r_role.status_code == status.HTTP_400_BAD_REQUEST
+
     def test_activate_user_admin_success(self, client: TestClient, session: Session):
         """Test successful user activation by admin."""
         # Create admin user directly with admin role

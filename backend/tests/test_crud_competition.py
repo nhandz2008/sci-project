@@ -96,7 +96,7 @@ class TestCompetitionCRUD:
         assert competition.title == competition_data["title"]
         assert competition.introduction == competition_data["introduction"]
         assert competition.overview == competition_data["overview"]
-        assert competition.owner_id == str(user.id)
+        assert str(competition.owner_id) == str(user.id)
         assert competition.is_active is True
         assert competition.is_featured is False
         assert competition.is_approved is False
@@ -201,6 +201,11 @@ class TestCompetitionCRUD:
         for data in competitions_data:
             competition_create = CompetitionCreate(**data)
             competition = create_competition(session, competition_create, user.id)
+            # Apply approval status per test data (creation defaults to False)
+            if data.get("is_approved"):
+                competition.is_approved = True
+                session.add(competition)
+                session.commit()
             created_competitions.append(competition)
 
         # Test format filter
@@ -222,7 +227,7 @@ class TestCompetitionCRUD:
         assert "Online" in competitions[0].title
 
         # Test owner filter
-        competitions, total = get_competitions(session, owner_id=str(user.id))
+        competitions, total = get_competitions(session, owner_id=user.id)
         assert total == 3
 
     def test_get_competitions_with_pagination(self, session: Session):
@@ -304,7 +309,7 @@ class TestCompetitionCRUD:
 
         competitions, total = get_competitions_by_owner(session, user1.id)
         assert total == 2
-        assert all(comp.owner_id == str(user1.id) for comp in competitions)
+        assert all(str(comp.owner_id) == str(user1.id) for comp in competitions)
 
     def test_get_featured_competitions(self, session: Session):
         """Test getting featured competitions."""
