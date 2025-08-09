@@ -7,10 +7,10 @@ interface LikeButtonProps {
   competitionId: string;
   competition: {
     id: string;
-    name: string;
-    location: string;
-    description: string;
-    homepage: string;
+    title: string;
+    location?: string;
+    introduction?: string;
+    competition_link?: string;
   };
 }
 
@@ -47,8 +47,14 @@ export default function LikeButton({ competitionId, competition }: LikeButtonPro
         // Remove from liked
         likedCompetitions = likedCompetitions.filter((comp: { id: string }) => comp.id !== competitionId);
       } else {
-        // Add to liked
-        likedCompetitions.unshift(competition);
+              // Add to liked
+      likedCompetitions.unshift({
+        id: competition.id,
+        name: competition.title,
+        location: competition.location || '',
+        description: competition.introduction || '',
+        homepage: competition.competition_link || ''
+      });
       }
 
       localStorage.setItem(`liked_competitions_${user.id}`, JSON.stringify(likedCompetitions));
@@ -70,7 +76,13 @@ export default function LikeButton({ competitionId, competition }: LikeButtonPro
       recentlyViewed = recentlyViewed.filter((comp: { id: string }) => comp.id !== competitionId);
       
       // Add to beginning
-      recentlyViewed.unshift(competition);
+      recentlyViewed.unshift({
+        id: competition.id,
+        name: competition.title,
+        location: competition.location || '',
+        description: competition.introduction || '',
+        homepage: competition.competition_link || ''
+      });
       
       // Keep only last 10
       recentlyViewed = recentlyViewed.slice(0, 10);
