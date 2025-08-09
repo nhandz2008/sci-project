@@ -20,6 +20,7 @@ def create_competition(
     competition = Competition(
         title=competition_create.title,
         introduction=competition_create.introduction,
+        overview=competition_create.overview,
         question_type=competition_create.question_type,
         selection_process=competition_create.selection_process,
         history=competition_create.history,

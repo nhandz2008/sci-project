@@ -19,6 +19,9 @@ class CompetitionCreate(BaseModel):
     introduction: str | None = Field(
         None, max_length=2000, description="Competition introduction"
     )
+    overview: str | None = Field(
+        None, max_length=2000, description="Competition overview"
+    )
     question_type: str | None = Field(
         None, max_length=500, description="Type of questions"
     )
@@ -113,6 +116,9 @@ class CompetitionUpdate(BaseModel):
     )
     introduction: str | None = Field(
         None, max_length=2000, description="Competition introduction"
+    )
+    overview: str | None = Field(
+        None, max_length=2000, description="Competition overview"
     )
     question_type: str | None = Field(
         None, max_length=500, description="Type of questions"
@@ -212,6 +218,7 @@ class CompetitionResponse(BaseModel):
     id: UUID
     title: str
     introduction: str | None
+    overview: str | None
     question_type: str | None
     selection_process: str | None
     history: str | None
@@ -268,6 +275,7 @@ class CompetitionListResponse(BaseModel):
     id: UUID
     title: str
     introduction: str | None
+    overview: str | None
     question_type: str | None
     selection_process: str | None
     history: str | None
@@ -357,6 +365,7 @@ class CompetitionModerationResponse(BaseModel):
     id: UUID
     title: str
     introduction: str | None
+    overview: str | None
     owner_id: UUID | None
     created_at: datetime
     is_approved: bool

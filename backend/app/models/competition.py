@@ -19,6 +19,7 @@ class Competition(BaseModel, table=True):  # type: ignore[call-arg]
 
     title: str = Field(min_length=1, max_length=255, index=True)
     introduction: str | None = Field(default=None, max_length=2000)
+    overview: str | None = Field(default=None, max_length=2000)
     question_type: str | None = Field(default=None, max_length=500)
     selection_process: str | None = Field(default=None, max_length=1000)
     history: str | None = Field(default=None, max_length=1000)

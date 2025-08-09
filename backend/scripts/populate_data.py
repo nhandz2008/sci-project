@@ -140,6 +140,7 @@ def create_competitions(
         competition_create = CompetitionCreate(
             title=comp_data.get("title"),
             introduction=comp_data.get("introduction"),
+            overview=comp_data.get("overview"),
             question_type=comp_data.get("question_type"),
             selection_process=comp_data.get("selection_process"),
             history=comp_data.get("history"),

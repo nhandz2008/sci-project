@@ -59,6 +59,7 @@
     {
       "title": "International Science Olympiad 2025",
       "introduction": "A prestigious international competition for high school students in physics, chemistry, biology, and mathematics. This year's theme focuses on sustainable energy solutions and climate science.",
+      "overview": "The International Science Olympiad brings together the brightest young minds from around the world to compete in rigorous scientific challenges. Participants demonstrate their knowledge across multiple disciplines including physics, chemistry, biology, and mathematics. The competition features both theoretical and practical components, with emphasis on innovative problem-solving and real-world applications of scientific principles.",
       "question_type": "Multiple choice questions (40%), essay questions (30%), practical experiments (30%)",
       "selection_process": "Online preliminary round in March, regional qualifiers in May, international finals in July. Top 10% from each region advance to finals.",
       "history": "Established in 2020, this competition has grown to include participants from over 50 countries.",
@@ -82,6 +83,7 @@
     {
       "title": "National Robotics Challenge 2025",
       "introduction": "Design and build autonomous robots to solve real-world problems in this exciting competition. This year's challenge focuses on disaster response and environmental cleanup robots.",
+      "overview": "The National Robotics Challenge is a premier competition that challenges students to design, build, and program autonomous robots capable of solving complex real-world problems. This year's focus on disaster response and environmental cleanup highlights the importance of robotics in addressing global challenges. Teams must demonstrate both technical expertise and innovative thinking as they create robots that can navigate challenging environments and perform specific tasks.",
       "question_type": "Practical robot building and programming challenges, technical documentation, and innovation presentation",
       "selection_process": "Regional qualifiers in February-March, national semifinals in April, national finals in May. Teams must submit technical documentation and video demonstrations.",
       "scoring_and_format": "Total 300 points: 120 points for robot performance in challenges, 80 points for design innovation and creativity, 60 points for technical documentation, 40 points for presentation and teamwork.",
@@ -105,6 +107,7 @@
     {
       "title": "Young Scientists Discovery Fair 2025",
       "introduction": "An innovative competition encouraging young scientists to explore cutting-edge research topics and present their findings to a panel of expert judges.",
+      "overview": "The Young Scientists Discovery Fair provides a platform for emerging researchers to showcase their innovative projects and connect with the scientific community. This competition emphasizes both the quality of research and the ability to communicate complex scientific concepts effectively. Participants gain valuable experience in presenting their work to expert panels and receive feedback that helps shape their future research directions.",
       "question_type": "Research project presentation, scientific poster, Q&A session with judges",
       "selection_process": "Abstract submission in January, full project submission in March, regional fairs in April, national fair in May. Projects are evaluated by panels of PhD scientists.",
       "history": "Founded in 2019, this fair has launched hundreds of scientific careers.",
@@ -129,6 +132,7 @@
     {
       "title": "Global Environmental Science Competition 2025",
       "introduction": "Address critical environmental challenges through innovative scientific solutions. This year focuses on climate change mitigation, renewable energy, and sustainable agriculture.",
+      "overview": "The Global Environmental Science Competition brings together students and researchers from around the world to tackle pressing environmental challenges through innovative scientific approaches. This year's focus on climate change mitigation, renewable energy, and sustainable agriculture reflects the urgent need for practical solutions to global environmental problems. Participants develop comprehensive solutions that combine scientific rigor with real-world applicability.",
       "question_type": "Environmental impact assessment, solution design, implementation plan, and feasibility analysis",
       "selection_process": "Online submission of environmental solutions in February, virtual presentations in March, final showcase in April. International judging panel includes environmental scientists and policymakers.",
       "history": "Launched in 2021, this competition has generated over 500 environmental solutions, with 50+ implemented in communities worldwide.",
@@ -149,6 +153,7 @@
     {
       "title": "Mathematics Modeling Challenge 2025",
       "introduction": "Apply mathematical modeling to solve real-world problems in economics, epidemiology, engineering, and social sciences. Teams work on complex problems requiring advanced mathematical techniques.",
+      "overview": "The Mathematics Modeling Challenge pushes participants to apply advanced mathematical concepts to solve complex real-world problems across diverse fields including economics, epidemiology, engineering, and social sciences. Teams must demonstrate both mathematical rigor and creative problem-solving as they develop models that can provide meaningful insights into complex systems. This competition bridges the gap between theoretical mathematics and practical applications.",
       "question_type": "Mathematical modeling problems, statistical analysis, computer simulations, and written reports",
       "selection_process": "Problem release in January, 72-hour intensive modeling session in February, report submission and presentation in March. Problems are designed by leading mathematicians and industry experts.",
       "scoring_and_format": "Total 400 points: 150 points for mathematical accuracy and methodology, 100 points for creativity and innovation in approach, 80 points for computer implementation and simulations, 70 points for written communication and presentation.",
@@ -171,6 +176,7 @@
     {
       "title": "Computational Biology Hackathon 2025",
       "introduction": "A fast-paced hackathon where teams build computational tools for biological data analysis, with challenges on genomics, proteomics, and systems biology.",
+      "overview": "The Computational Biology Hackathon is an intensive event that brings together computer scientists, biologists, and data scientists to develop innovative computational tools for biological data analysis. Participants tackle challenges in genomics, proteomics, and systems biology, creating solutions that can advance our understanding of complex biological systems. This competition fosters interdisciplinary collaboration and produces tools that contribute to the broader scientific community.",
       "question_type": "Rapid prototyping, code submission, demo presentation, and technical report",
       "selection_process": "Online team registration, preliminary code review, hackathon weekend, final demos judged by computational biology experts.",
       "history": "Created in 2020 to bridge computer science and biology students; alumni have contributed to open-source bioinformatics tools.",
@@ -198,6 +204,7 @@
     {
       "title": "Quantum Computing Challenge 2025",
       "introduction": "Teams explore quantum algorithms and build small-scale quantum simulations or proofs-of-concept, focusing on optimization and cryptography.",
+      "overview": "The Quantum Computing Challenge invites participants to explore the cutting-edge field of quantum computing through algorithm design and simulation development. Teams focus on optimization and cryptography applications, building small-scale quantum simulations or proofs-of-concept that demonstrate the potential of quantum computing. This competition serves as a platform for the next generation of quantum researchers to showcase their innovative approaches to complex computational problems.",
       "question_type": "Algorithm design, simulation results, written explanation, and presentation",
       "selection_process": "Paper submission followed by demo round; finalists present to a panel of quantum computing researchers.",
       "history": "Established in 2021 to nurture the next generation of quantum researchers.",
@@ -224,6 +231,7 @@
     {
       "title": "Data Science Case Competition 2025",
       "introduction": "Solve real industrial problems with data science approaches — tasks include forecasting, anomaly detection, and optimization.",
+      "overview": "The Data Science Case Competition connects students with real-world industrial challenges, requiring them to apply advanced data science techniques to solve practical problems. Participants tackle tasks including forecasting, anomaly detection, and optimization, working with actual industry datasets and presenting their solutions to professional data scientists. This competition bridges the gap between academic learning and industry application, providing valuable experience in solving complex business problems through data-driven approaches.",
       "question_type": "Dataset challenge, model submission, write-up, and presentation to industry judges",
       "selection_process": "Open dataset release, submission of predictions and reports, finalist presentations.",
       "history": "A long-running competition connecting students with industry data challenges.",
@@ -251,6 +259,7 @@
     {
       "title": "Aerospace Design Cup 2025",
       "introduction": "Design aircraft or spacecraft subsystems focusing on sustainability, efficiency, and novel propulsion concepts.",
+      "overview": "The Aerospace Design Cup challenges participants to design innovative aircraft or spacecraft subsystems with a focus on sustainability, efficiency, and novel propulsion concepts. This competition emphasizes the importance of sustainable aerospace engineering while encouraging creative solutions to complex design challenges. Teams must balance technical feasibility with environmental considerations, creating designs that could shape the future of aerospace technology.",
       "question_type": "Design reports, simulations, scaled models, and oral defense",
       "selection_process": "Proposal submission, design reviews, final builds and demonstrations.",
       "history": "Since 2017 this cup has promoted aerospace innovation among students.",
@@ -277,6 +286,7 @@
     {
       "title": "Renewable Energy Innovation Summit 2025",
       "introduction": "Teams propose and prototype renewable energy technologies with a focus on scalability and community impact.",
+      "overview": "The Renewable Energy Innovation Summit brings together teams to propose and prototype cutting-edge renewable energy technologies with a focus on scalability and community impact. This competition addresses the urgent need for sustainable energy solutions by encouraging participants to develop technologies that can be implemented in real communities. The emphasis on scalability ensures that winning solutions have the potential for widespread adoption and meaningful environmental impact.",
       "question_type": "Technical proposals, pilot plans, prototypes, and impact assessments",
       "selection_process": "Abstract and proposal rounds followed by prototype demonstrations.",
       "history": "Created in 2022 to accelerate student-led renewable solutions.",
@@ -304,6 +314,7 @@
     {
       "title": "Citizen Science Challenge 2025",
       "introduction": "Engage the public in large-scale data collection and analysis projects across ecology, astronomy, and public health.",
+      "overview": "The Citizen Science Challenge democratizes scientific research by engaging the public in large-scale data collection and analysis projects across ecology, astronomy, and public health. This competition recognizes the power of collective intelligence in advancing scientific knowledge while making research accessible to people of all ages and backgrounds. Participants design projects that can scale to involve thousands of volunteers, creating valuable datasets for scientific research.",
       "question_type": "Data collection protocols, analysis plans, community outreach strategies, and results reports",
       "selection_process": "Project proposals reviewed for scientific merit and community engagement; selected projects receive seed funding.",
       "history": "Launched to scale participatory science and public engagement with research.",
@@ -328,6 +339,7 @@
     {
       "title": "Biotech Startup Pitch Competition 2025",
       "introduction": "Student and early-stage biotech teams pitch translational ideas to investors and mentors.",
+      "overview": "The Biotech Startup Pitch Competition provides a platform for student and early-stage biotech teams to present their translational research ideas to investors and industry mentors. This competition bridges the gap between academic research and commercial application, helping promising biotech innovations reach the market. Participants receive valuable feedback from industry experts and have the opportunity to secure funding for their ventures.",
       "question_type": "Business pitch, scientific validation, regulatory pathway, and market analysis",
       "selection_process": "Application screening, mentorship round, final pitch day to investors.",
       "history": "Since 2019 this competition has helped launch multiple biotech startups.",
@@ -354,6 +366,7 @@
     {
       "title": "Chemistry Innovation Awards 2025",
       "introduction": "Recognize breakthrough student research in green chemistry, materials, and chemical engineering.",
+      "overview": "The Chemistry Innovation Awards celebrate breakthrough student research in green chemistry, materials science, and chemical engineering. This competition emphasizes sustainable chemistry practices and innovative approaches to chemical challenges. Participants showcase their research through comprehensive presentations that demonstrate both scientific rigor and environmental responsibility, contributing to the advancement of sustainable chemistry solutions.",
       "question_type": "Research manuscript, poster, oral defense, and reproducibility package",
       "selection_process": "Paper submission, poster session, final oral presentations.",
       "history": "Founded to accelerate sustainable chemistry innovations among students.",
@@ -380,6 +393,7 @@
     {
       "title": "Social Science & Policy Challenge 2025",
       "introduction": "Teams apply scientific methods to social problems, proposing evidence-based policy solutions.",
+      "overview": "The Social Science & Policy Challenge encourages teams to apply rigorous scientific methods to address complex social problems, proposing evidence-based policy solutions that can create meaningful change. This competition bridges the gap between academic research and practical policy implementation, requiring participants to develop solutions that are both scientifically sound and politically feasible. Teams must demonstrate how their research can inform real-world decision-making processes.",
       "question_type": "Policy brief, data analysis, stakeholder engagement plan, and presentation",
       "selection_process": "Abstract submission, full brief, finalist presentations to policy experts.",
       "history": "Launched to connect research with actionable policy recommendations.",
@@ -407,6 +421,7 @@
     {
       "title": "Advanced Materials Challenge 2025",
       "introduction": "Develop novel materials with superior properties for energy, electronics, or biomedical applications.",
+      "overview": "The Advanced Materials Challenge encourages participants to develop novel materials with superior properties for energy, electronics, or biomedical applications. This competition focuses on the intersection of materials science and practical applications, requiring participants to demonstrate both the innovative properties of their materials and their potential for real-world use. The challenge accelerates student materials research toward commercial applications and industry partnerships.",
       "question_type": "Material synthesis plan, characterization data, application case study, and prototype demonstration",
       "selection_process": "Proposal review, experimental validation round, final presentations.",
       "history": "Created to fast-track student materials research toward real applications.",
