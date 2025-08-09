@@ -161,9 +161,13 @@ def create_competitions(
         try:
             competition = create_competition(session, competition_create, owner_id)
 
-            # Set approval and featured status
+            # Set approval and featured status after creation
             competition.is_approved = comp_data.get("is_approved", False)
             competition.is_featured = comp_data.get("is_featured", False)
+
+            # Manually set detail_image_urls directly
+            competition.detail_image_urls = json.dumps(comp_data["detail_image_urls"])
+
             session.add(competition)
             session.commit()
 
