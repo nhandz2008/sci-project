@@ -71,15 +71,15 @@ export default function AccountPage() {
         throw new Error('No authentication token found');
       }
 
-      const response = await competitionsAPI.getCompetitions({
-        owner_id: user.id,
+      const response = await competitionsAPI.getMyCompetitions({
         limit: 10
       });
       
-      setUserCompetitions(response.data);
+      setUserCompetitions(response.competitions || []);
     } catch (error) {
       console.error('Error fetching user competitions:', error);
-      // Don't show alert for this error as it's not critical
+      // Set empty array on error to prevent undefined issues
+      setUserCompetitions([]);
     } finally {
       setIsLoadingUserCompetitions(false);
     }
@@ -98,8 +98,8 @@ export default function AccountPage() {
         // Save to localStorage
         localStorage.setItem(`avatar_${user.id}`, result);
         
-        // Update user context
-        updateUser({ avatar_url: result });
+        // Update user context - note: avatar_url is not part of the User interface
+        // We'll store it locally only
         setIsUploading(false);
       };
       reader.readAsDataURL(file);
@@ -142,17 +142,16 @@ export default function AccountPage() {
       // Clean up the data before sending to API
       const cleanData: CompetitionCreate = {
         title: data.title.trim(),
-        description: data.description?.trim() || undefined,
+        introduction: (data as any).description?.trim() || '',
         competition_link: data.competition_link?.trim() || undefined,
-        image_url: data.image_url?.trim() || undefined,
-        location: data.location?.trim() || undefined,
+        background_image_url: (data as any).image_url?.trim() || undefined,
+        location: data.location?.trim() || '',
         format: data.format,
         scale: data.scale,
         // Convert empty strings to undefined for optional fields
         target_age_min: data.target_age_min || undefined,
         target_age_max: data.target_age_max || undefined,
-        registration_deadline: data.registration_deadline ? new Date(data.registration_deadline).toISOString() : undefined,
-        is_featured: data.is_featured || false,
+        registration_deadline: data.registration_deadline ? new Date(data.registration_deadline).toISOString() : '',
       };
 
       // Remove undefined values and ensure proper data types
@@ -169,7 +168,7 @@ export default function AccountPage() {
       });
 
       // Call the API to create the competition
-      const createdCompetition = await competitionsAPI.createCompetition(finalData, token);
+      const createdCompetition = await competitionsAPI.createCompetition(finalData);
       
       // Show success message
       alert('Competition created successfully! You can now view it in your created competitions list.');
@@ -219,7 +218,7 @@ export default function AccountPage() {
         throw new Error('No authentication token found. Please log in again.');
       }
 
-      await competitionsAPI.deleteCompetition(competitionId, token);
+      await competitionsAPI.deleteCompetition(competitionId);
       
       alert('Competition deleted successfully!');
       
@@ -306,9 +305,9 @@ export default function AccountPage() {
           {/* Recently Viewed Competitions */}
           <div className="bg-white rounded-xl shadow-sm p-6">
             <h2 className="text-2xl font-bold text-gray-900 mb-4">Recently Viewed</h2>
-            {recentlyViewed.length > 0 ? (
+            {(recentlyViewed && recentlyViewed.length > 0) ? (
               <div className="space-y-4">
-                {recentlyViewed.slice(0, 5).map((competition) => (
+                {(recentlyViewed || []).slice(0, 5).map((competition) => (
                   <div key={competition.id} className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
                     <h3 className="font-semibold text-gray-900 mb-1">{competition.name}</h3>
                     <p className="text-gray-600 text-sm mb-2">{competition.location}</p>
@@ -344,9 +343,9 @@ export default function AccountPage() {
           {/* Liked Competitions */}
           <div className="bg-white rounded-xl shadow-sm p-6">
             <h2 className="text-2xl font-bold text-gray-900 mb-4">Liked Competitions</h2>
-            {likedCompetitions.length > 0 ? (
+            {(likedCompetitions && likedCompetitions.length > 0) ? (
               <div className="space-y-4">
-                {likedCompetitions.map((competition) => (
+                {(likedCompetitions || []).map((competition) => (
                   <div key={competition.id} className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
@@ -424,9 +423,9 @@ export default function AccountPage() {
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
               <p className="text-gray-600">Loading your competitions...</p>
             </div>
-          ) : userCompetitions.length > 0 ? (
+          ) : (userCompetitions && userCompetitions.length > 0) ? (
             <div className="space-y-4">
-              {userCompetitions.map((competition) => (
+              {(userCompetitions || []).map((competition) => (
                 <div key={competition.id} className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
@@ -439,14 +438,10 @@ export default function AccountPage() {
                         }`}>
                           {competition.is_active ? 'Active' : 'Inactive'}
                         </span>
-                        {competition.is_featured && (
-                          <span className="px-2 py-1 text-xs rounded-full bg-yellow-100 text-yellow-800">
-                            Featured
-                          </span>
-                        )}
+
                       </div>
                       <p className="text-gray-600 text-sm mb-2">{competition.location}</p>
-                      <p className="text-gray-700 text-sm line-clamp-2 mb-2">{competition.description}</p>
+                      <p className="text-gray-700 text-sm line-clamp-2 mb-2">{competition.introduction}</p>
                       <div className="flex items-center gap-4 text-sm text-gray-500">
                         <span className="capitalize">{competition.format}</span>
                         <span className="capitalize">{competition.scale}</span>

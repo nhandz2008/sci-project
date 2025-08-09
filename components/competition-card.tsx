@@ -55,14 +55,7 @@ const CompetitionCard: React.FC<CompetitionCardProps> = ({
     );
   };
 
-  const getFeaturedBadge = (isFeatured: boolean) => {
-    if (!isFeatured) return null;
-    return (
-      <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
-        Featured
-      </span>
-    );
-  };
+
 
   return (
     <div className={`bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition-shadow duration-300 ${className}`}>
@@ -83,7 +76,6 @@ const CompetitionCard: React.FC<CompetitionCardProps> = ({
           {/* Badges */}
           <div className="absolute top-3 left-3 flex gap-2">
             {getStatusBadge(competition.is_active)}
-            {getFeaturedBadge(competition.is_featured)}
           </div>
         </div>
       )}

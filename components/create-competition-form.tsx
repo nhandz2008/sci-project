@@ -27,7 +27,6 @@ export default function CreateCompetitionForm({
     registration_deadline: '',
     target_age_min: undefined,
     target_age_max: undefined,
-    is_featured: false,
   });
 
   const handleInputChange = (field: keyof CompetitionCreate, value: any) => {
@@ -54,7 +53,6 @@ export default function CreateCompetitionForm({
       registration_deadline: '',
       target_age_min: undefined,
       target_age_max: undefined,
-      is_featured: false,
     });
     onClose();
   };
@@ -244,23 +242,7 @@ export default function CreateCompetitionForm({
               </div>
             </div>
 
-            {/* Featured Option */}
-            <div className="space-y-4">
-              <h3 className="text-lg font-semibold text-gray-900 border-b pb-2">Visibility</h3>
-              
-              <div className="flex items-center">
-                <input
-                  type="checkbox"
-                  id="is_featured"
-                  checked={formData.is_featured}
-                  onChange={(e) => handleInputChange('is_featured', e.target.checked)}
-                  className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                />
-                <label htmlFor="is_featured" className="ml-2 block text-sm text-gray-700">
-                  Mark as featured competition
-                </label>
-              </div>
-            </div>
+
 
             {/* Form Actions */}
             <div className="flex items-center justify-end gap-4 pt-6 border-t">

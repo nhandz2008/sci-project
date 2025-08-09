@@ -51,14 +51,7 @@ const CompetitionDetails: React.FC<CompetitionDetailsProps> = ({ competition }) 
     );
   };
 
-  const getFeaturedBadge = (isFeatured: boolean) => {
-    if (!isFeatured) return null;
-    return (
-      <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-yellow-100 text-yellow-800">
-        Featured
-      </span>
-    );
-  };
+
 
   return (
     <div className="bg-gray-50 min-h-screen">
@@ -99,7 +92,6 @@ const CompetitionDetails: React.FC<CompetitionDetailsProps> = ({ competition }) 
                 <div className="flex-1">
                   <div className="flex items-center gap-3 mb-4">
                     {getStatusBadge(competition.is_active)}
-                    {getFeaturedBadge(competition.is_featured)}
                   </div>
                   
                   <h1 className="text-4xl lg:text-5xl font-bold text-gray-900 mb-4">
@@ -143,65 +135,95 @@ const CompetitionDetails: React.FC<CompetitionDetailsProps> = ({ competition }) 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Main Content */}
           <div className="lg:col-span-2 space-y-8">
-            {/* Description */}
-            {competition.introduction && (
+            {/* Competition Information */}
+            {(competition.introduction || competition.question_type || competition.selection_process || 
+              competition.history || competition.scoring_and_format || competition.awards || 
+              competition.penalties_and_bans || competition.notable_achievements) && (
               <div className="bg-white rounded-xl shadow-lg p-8">
                 <h2 className="text-2xl font-bold text-gray-900 mb-6">About this Competition</h2>
-                <div className="prose prose-lg max-w-none text-gray-700">
-                  <p className="leading-relaxed">{competition.introduction}</p>
+                <div className="space-y-6">
+                  {/* Introduction */}
+                  {competition.introduction && (
+                    <div>
+                      <h3 className="text-lg font-semibold text-gray-900 mb-3">Description</h3>
+                      <div className="prose prose-lg max-w-none text-gray-700">
+                        <p className="leading-relaxed">{competition.introduction}</p>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Question Type */}
+                  {competition.question_type && (
+                    <div>
+                      <h3 className="text-lg font-semibold text-gray-900 mb-3">Question Type</h3>
+                      <div className="prose prose-lg max-w-none text-gray-700">
+                        <p className="leading-relaxed">{competition.question_type}</p>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Selection Process */}
+                  {competition.selection_process && (
+                    <div>
+                      <h3 className="text-lg font-semibold text-gray-900 mb-3">Selection Process</h3>
+                      <div className="prose prose-lg max-w-none text-gray-700">
+                        <p className="leading-relaxed">{competition.selection_process}</p>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* History */}
+                  {competition.history && (
+                    <div>
+                      <h3 className="text-lg font-semibold text-gray-900 mb-3">History</h3>
+                      <div className="prose prose-lg max-w-none text-gray-700">
+                        <p className="leading-relaxed">{competition.history}</p>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Scoring and Format */}
+                  {competition.scoring_and_format && (
+                    <div>
+                      <h3 className="text-lg font-semibold text-gray-900 mb-3">Scoring and Format</h3>
+                      <div className="prose prose-lg max-w-none text-gray-700">
+                        <p className="leading-relaxed">{competition.scoring_and_format}</p>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Awards */}
+                  {competition.awards && (
+                    <div>
+                      <h3 className="text-lg font-semibold text-gray-900 mb-3">Awards</h3>
+                      <div className="prose prose-lg max-w-none text-gray-700">
+                        <p className="leading-relaxed">{competition.awards}</p>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Penalties and Bans */}
+                  {competition.penalties_and_bans && (
+                    <div>
+                      <h3 className="text-lg font-semibold text-gray-900 mb-3">Penalties and Bans</h3>
+                      <div className="prose prose-lg max-w-none text-gray-700">
+                        <p className="leading-relaxed">{competition.penalties_and_bans}</p>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Notable Achievements */}
+                  {competition.notable_achievements && (
+                    <div>
+                      <h3 className="text-lg font-semibold text-gray-900 mb-3">Notable Achievements</h3>
+                      <div className="prose prose-lg max-w-none text-gray-700">
+                        <p className="leading-relaxed">{competition.notable_achievements}</p>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
             )}
-
-            {/* Competition Details */}
-            <div className="bg-white rounded-xl shadow-lg p-8">
-              <h2 className="text-2xl font-bold text-gray-900 mb-6">Competition Details</h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-4">
-                  <div>
-                    <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wide">Format</h3>
-                    <p className="text-lg text-gray-900">{getFormatDisplay(competition.format)}</p>
-                  </div>
-                  
-                  <div>
-                    <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wide">Scale</h3>
-                    <p className="text-lg text-gray-900">{getScaleDisplay(competition.scale)}</p>
-                  </div>
-                  
-                  <div>
-                    <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wide">Target Age Range</h3>
-                    <p className="text-lg text-gray-900">
-                      {formatAgeRange(competition.target_age_min, competition.target_age_max)}
-                    </p>
-                  </div>
-                </div>
-                
-                <div className="space-y-4">
-                  <div>
-                    <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wide">Registration Deadline</h3>
-                    <p className="text-lg text-gray-900">
-                      {formatDate(competition.registration_deadline)}
-                    </p>
-                  </div>
-                  
-                  <div>
-                    <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wide">Status</h3>
-                    <div className="flex items-center gap-2">
-                      {getStatusBadge(competition.is_active)}
-                    </div>
-                  </div>
-                  
-                  <div>
-                    <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wide">Featured</h3>
-                    <div className="flex items-center gap-2">
-                      {getFeaturedBadge(competition.is_featured) || (
-                        <span className="text-gray-500">Not featured</span>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
           </div>
 
           {/* Sidebar */}
