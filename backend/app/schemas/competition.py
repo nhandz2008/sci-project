@@ -268,7 +268,16 @@ class CompetitionListResponse(BaseModel):
     id: UUID
     title: str
     introduction: str | None
+    question_type: str | None
+    selection_process: str | None
+    history: str | None
+    scoring_and_format: str | None
+    awards: str | None
+    penalties_and_bans: str | None
+    notable_achievements: str | None
+    competition_link: str | None
     background_image_url: str | None
+    detail_image_urls: list[str]
     location: str | None
     format: CompetitionFormat | None
     scale: CompetitionScale | None
@@ -288,6 +297,21 @@ class CompetitionListResponse(BaseModel):
     @field_serializer("owner_id")
     def serialize_owner_id(self, value: UUID | None) -> str | None:
         return str(value) if value is not None else None
+
+    @field_validator("detail_image_urls", mode="before")
+    @classmethod
+    def coerce_detail_images(cls, v: Any) -> list[str]:
+        if isinstance(v, str):
+            try:
+                loaded = json.loads(v)
+                if isinstance(loaded, list):
+                    return [str(x) for x in loaded]
+            except Exception:
+                return []
+            return []
+        if isinstance(v, list):
+            return [str(x) for x in v]
+        return []
 
     model_config = ConfigDict(from_attributes=True)
 

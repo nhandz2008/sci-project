@@ -8,6 +8,7 @@ import sys
 from datetime import datetime
 from pathlib import Path
 from typing import Any
+from uuid import UUID
 
 # Add the backend directory to the Python path
 backend_dir = Path(__file__).parent.parent
@@ -122,7 +123,7 @@ def create_competitions(
             )
             continue
 
-        owner_id = email_to_id[owner_email]
+        owner_uuid = UUID(email_to_id[owner_email])
 
         # Parse registration deadline
         try:
@@ -137,36 +138,42 @@ def create_competitions(
 
         # Create competition data
         competition_create = CompetitionCreate(
-            title=comp_data["title"],
-            introduction=comp_data["introduction"],
-            question_type=comp_data["question_type"],
-            selection_process=comp_data["selection_process"],
-            history=comp_data["history"],
-            scoring_and_format=comp_data["scoring_and_format"],
-            awards=comp_data["awards"],
-            penalties_and_bans=comp_data["penalties_and_bans"],
-            notable_achievements=comp_data["notable_achievements"],
-            competition_link=comp_data["competition_link"],
-            background_image_url=comp_data["background_image_url"],
-            detail_image_urls=comp_data["detail_image_urls"],
-            location=comp_data["location"],
-            format=comp_data["format"],
-            scale=comp_data["scale"],
+            title=comp_data.get("title"),
+            introduction=comp_data.get("introduction"),
+            question_type=comp_data.get("question_type"),
+            selection_process=comp_data.get("selection_process"),
+            history=comp_data.get("history"),
+            scoring_and_format=comp_data.get("scoring_and_format"),
+            awards=comp_data.get("awards"),
+            penalties_and_bans=comp_data.get("penalties_and_bans"),
+            notable_achievements=comp_data.get("notable_achievements"),
+            competition_link=comp_data.get("competition_link"),
+            background_image_url=comp_data.get("background_image_url"),
+            detail_image_urls=(
+                comp_data.get("detail_image_urls")
+                if comp_data.get("detail_image_urls") is not None
+                else []
+            ),
+            location=comp_data.get("location"),
+            format=comp_data.get("format"),
+            scale=comp_data.get("scale"),
             registration_deadline=registration_deadline,
-            size=comp_data["size"],
-            target_age_min=comp_data["target_age_min"],
-            target_age_max=comp_data["target_age_max"],
+            size=comp_data.get("size"),
+            target_age_min=comp_data.get("target_age_min"),
+            target_age_max=comp_data.get("target_age_max"),
         )
 
         try:
-            competition = create_competition(session, competition_create, owner_id)
+            competition = create_competition(session, competition_create, owner_uuid)
 
             # Set approval and featured status after creation
             competition.is_approved = comp_data.get("is_approved", False)
             competition.is_featured = comp_data.get("is_featured", False)
 
             # Manually set detail_image_urls directly
-            competition.detail_image_urls = json.dumps(comp_data["detail_image_urls"])
+            competition.detail_image_urls = json.dumps(
+                comp_data.get("detail_image_urls", [])
+            )
 
             session.add(competition)
             session.commit()
