@@ -1,9 +1,11 @@
 'use client';
 
 import Link from 'next/link';
+import { useAuth } from '../app/contexts/AuthContext';
 
 const Footer = () => {
   const currentYear = new Date().getFullYear();
+  const { user } = useAuth();
 
   return (
     <footer className="bg-gray-900 text-white">
@@ -26,7 +28,7 @@ const Footer = () => {
             </div>
             <div className="flex space-x-4">
               <Link
-                href="https://www.facebook.com/profile.php?id=61575271022933"
+                href="https://www.facebook.com/tue.nhi.840114"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-gray-400 hover:text-blue-400 transition-colors duration-200"
@@ -59,22 +61,26 @@ const Footer = () => {
                   Competitions
                 </Link>
               </li>
-              <li>
-                <Link
-                  href="/login"
-                  className="text-gray-400 hover:text-white transition-colors duration-200"
-                >
-                  Sign In
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/signup"
-                  className="text-gray-400 hover:text-white transition-colors duration-200"
-                >
-                  Sign Up
-                </Link>
-              </li>
+              {!user && (
+                <>
+                  <li>
+                    <Link
+                      href="/login"
+                      className="text-gray-400 hover:text-white transition-colors duration-200"
+                    >
+                      Sign In
+                    </Link>
+                  </li>
+                  <li>
+                    <Link
+                      href="/signup"
+                      className="text-gray-400 hover:text-white transition-colors duration-200"
+                    >
+                      Sign Up
+                    </Link>
+                  </li>
+                </>
+              )}
             </ul>
           </div>
 
