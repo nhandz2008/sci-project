@@ -1,4 +1,4 @@
-import { apiRequest, ApiError } from './utils';
+import { apiRequest } from './utils';
 
 export interface User {
   id: string;

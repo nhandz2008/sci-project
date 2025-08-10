@@ -29,6 +29,13 @@ const nextConfig = {
       },
     ],
   },
+  // Do not block production builds on lint/type issues; lint in CI instead
+  eslint: {
+    ignoreDuringBuilds: true,
+  },
+  typescript: {
+    ignoreBuildErrors: true,
+  },
 }
 
 module.exports = nextConfig

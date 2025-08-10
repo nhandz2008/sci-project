@@ -20,7 +20,7 @@ services:
       context: ./backend
     # restart: always
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      test: ["CMD-SHELL", "python -c 'import urllib.request,sys; sys.exit(0) if urllib.request.urlopen(\"http://localhost:8000/health\").status==200 else sys.exit(1)'"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -34,6 +34,28 @@ services:
       - POSTGRES_SERVER=db
     ports:
       - "8000:8000"
+
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        # Use host-exposed URL so browser clients can reach backend
+        NEXT_PUBLIC_API_URL: http://localhost:8000
+    environment:
+      # Runtime override (also used by client-side code)
+      NEXT_PUBLIC_API_URL: http://localhost:8000
+      NODE_ENV: production
+    depends_on:
+      backend:
+        condition: service_healthy
+    ports:
+      - "3000:3000"
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:3000', r=>process.exit(r.statusCode===200?0:1)).on('error',()=>process.exit(1))"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
 
 volumes:
   app-db-data:

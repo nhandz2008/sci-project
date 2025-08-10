@@ -117,11 +117,15 @@ case "$1" in
 
     # Run (Docker): full stack - no local code changes required
     "run-start")
-        echo "Starting full stack (db + backend) with Docker..."
+        echo "Starting full stack (db + backend + frontend) with Docker..."
         docker compose up -d
+        echo "✅ Services started:"
+        echo "- Database:        http://localhost:5432 (PostgreSQL)"
+        echo "- Backend (API):   http://localhost:8000"
+        echo "- Frontend (Web):  http://localhost:3000"
         ;;
     "run-build")
-        echo "Building Docker images..."
+        echo "Building Docker images (backend + frontend)..."
         docker compose build
         ;;
     "run-logs")
@@ -162,8 +166,9 @@ case "$1" in
         # Stop and remove docker services, networks, and volumes
         docker compose down -v --remove-orphans || true
         docker compose rm -f -s -v || true
-        # Optionally remove built image (best-effort)
+        # Optionally remove built images (best-effort)
         docker image rm -f sci-project-backend 2>/dev/null || true
+        docker image rm -f sci-project-frontend 2>/dev/null || true
         # Remove environment file
         rm -f .env
         # Remove backend virtualenv and caches
@@ -174,6 +179,10 @@ case "$1" in
         rm -f backend/alembic.ini || true
         # Remove python bytecode caches
         find backend -type d -name "__pycache__" -prune -exec rm -rf {} + 2>/dev/null || true
+        # Remove frontend caches and build artifacts
+        rm -rf frontend/.next frontend/.turbo frontend/.cache 2>/dev/null || true
+        # Optionally remove node_modules to force clean install next time
+        rm -rf frontend/node_modules 2>/dev/null || true
         echo "✅ Clean complete."
         ;;
 
@@ -202,7 +211,25 @@ case "$1" in
         echo "✅ Setup complete!"
         echo "Next steps:"
         echo "- Run (Docker): ./scripts/dev.sh run-start"
-        echo "- Develop locally: ./scripts/dev.sh dev-install && ./scripts/dev.sh dev-start"
+        echo "- Develop locally: ./scripts/dev.sh dev-install && ./scripts/dev.sh dev-start && ./scripts/dev.sh dev-frontend"
+        ;;
+
+    "dev-frontend")
+        echo "Starting frontend (Next.js) locally on http://localhost:3000 ..."
+        cd frontend
+        # Ensure port 3000 is free
+        if lsof -ti:3000 > /dev/null 2>&1; then
+            echo "⚠️  Port 3000 is already in use. Stopping existing processes..."
+            lsof -ti:3000 | xargs kill -9 2>/dev/null || true
+            sleep 2
+            echo "✅ Cleaned up port 3000"
+        fi
+        if [ ! -d node_modules ]; then
+            echo "Installing frontend dependencies..."
+            npm ci || npm install
+        fi
+        echo "Using NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL:-http://localhost:8000}"
+        NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL:-http://localhost:8000} npm run dev
         ;;
 
     *)
@@ -215,6 +242,7 @@ case "$1" in
         echo "  dev-install      - Install backend dependencies"
         echo "  dev-start        - Run API locally on http://localhost:8000 (starts db + applies migrations + creates admin)"
         echo "  dev-stop         - Stop development server (kills processes on port 8000)"
+        echo "  dev-frontend     - Run Next.js frontend locally on http://localhost:3000 (uses NEXT_PUBLIC_API_URL)"
         echo "  dev-test [args]  - Run tests (ensures db is running)"
         echo "  dev-lint [--fix] - Lint code with ruff (optionally --fix)"
         echo "  dev-format       - Format code with ruff"
@@ -222,7 +250,7 @@ case "$1" in
         echo "  migrate ...      - Run Alembic via backend/scripts/migrate.sh (e.g., 'migrate upgrade head')"
         echo ""
         echo "Run (Docker):"
-        echo "  run-start        - Start full stack (db + backend) with Docker"
+        echo "  run-start        - Start full stack (db + backend + frontend) with Docker"
         echo "  run-build        - Build Docker images"
         echo "  run-logs         - Show Docker logs (all services)"
         echo "  run-stop         - Stop Docker services"

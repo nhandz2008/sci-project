@@ -1,6 +1,6 @@
 # Science Competitions Insight (SCI)
 
-Full‑stack app for discovering and managing science & technology competitions. Backend is implemented; frontend is planned.
+Full‑stack app for discovering and managing science & technology competitions. Backend and frontend are included.
 
 ### Contents
 - Run (Docker)
@@ -19,11 +19,12 @@ Steps:
 # 1) Bootstrap: .env + backend/alembic.ini
 ./scripts/dev.sh setup
 
-# 2) Start full stack (db + backend) in Docker
+# 2) Start full stack (db + backend + frontend) in Docker
 ./scripts/dev.sh run-start
 ```
 
 Verify:
+- Web: http://localhost:3000
 - API: http://localhost:8000
 - Docs: http://localhost:8000/api/v1/docs
 - Health: http://localhost:8000/api/v1/health
@@ -47,6 +48,7 @@ Common commands:
 ./scripts/dev.sh dev-install      # install backend deps + pre-commit
 ./scripts/dev.sh dev-start        # start db, apply migrations, create admin, run API locally
 ./scripts/dev.sh dev-stop         # stop development server (kills processes on port 8000)
+./scripts/dev.sh dev-frontend     # run Next.js frontend locally on http://localhost:3000 (uses NEXT_PUBLIC_API_URL)
 ./scripts/dev.sh dev-test [args]  # run tests (ensures db is running)
 ./scripts/dev.sh dev-lint [--fix] # ruff check (optionally --fix)
 ./scripts/dev.sh dev-format       # ruff format
@@ -158,12 +160,28 @@ Docker is used to run the full application stack (PostgreSQL database + FastAPI 
 ./scripts/dev.sh run-build
 ```
 
-**Note**: The `run-start` command starts both database and backend in Docker containers. For local development with live code reloading and automatic admin user creation, use `dev-start` instead.
+**Note**: The `run-start` command starts database, backend, and frontend in Docker containers. For local development with live code reloading and automatic admin user creation, use `dev-start` for backend and `dev-frontend` for the Next.js app.
 
 ### What's Running
 - **PostgreSQL Database**: Port 5432 (accessible at `localhost:5432`)
 - **FastAPI Backend**: Port 8000 (API at `http://localhost:8000`)
+- **Next.js Frontend**: Port 3000 (Web at `http://localhost:3000`)
 - **API Documentation**: Available at `http://localhost:8000/api/v1/docs`
+
+### Cleaning the project
+
+The clean command removes Docker resources and generated files, including frontend artifacts:
+
+```bash
+./scripts/dev.sh clean
+```
+
+This will:
+- Stop and remove Docker containers, volumes, and networks for this project
+- Remove images `sci-project-backend` and `sci-project-frontend` (best-effort)
+- Remove `.env`
+- Remove backend caches (`.venv`, `.pytest_cache`, `.mypy_cache`, `.ruff_cache`, `htmlcov`, `__pycache__`)
+- Remove frontend caches (`frontend/.next`, `frontend/.turbo`, `frontend/.cache`) and `frontend/node_modules`
 
 ## 🏗️ Project Structure
 
@@ -184,7 +202,7 @@ sci-project/
 │   ├── scripts/              # Backend-specific scripts
 │   ├── Dockerfile            # Backend container definition
 │   └── pyproject.toml        # Python dependencies and config
-├── frontend/                 # Frontend application (planned)
+├── frontend/                 # Frontend application (Next.js)
 ├── scripts/                  # Project-wide automation
 │   └── dev.sh                # Development and deployment scripts
 ├── docker-compose.yml        # Multi-service container orchestration

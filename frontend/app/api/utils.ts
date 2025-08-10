@@ -1,6 +1,6 @@
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
-export interface ApiError {
+export interface ApiErrorPayload {
   detail?: string;
   error?: {
     type: string;
@@ -62,7 +62,7 @@ export async function apiRequest<T>(
     const response = await fetch(url, config);
 
     if (!response.ok) {
-      const errorData: ApiError = await response.json().catch(() => ({ detail: 'Network error' }));
+      const errorData: ApiErrorPayload = await response.json().catch(() => ({ detail: 'Network error' }));
 
       // Handle different error formats from the API
       if (errorData.error) {
