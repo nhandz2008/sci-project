@@ -107,9 +107,9 @@ const CompetitionCard: React.FC<CompetitionCardProps> = ({
           </div>
         )}
         
-        {competition.introduction && (
+        {(competition.introduction || competition.overview) && (
           <p className="text-gray-600 text-sm mb-4 line-clamp-3 group-hover:text-gray-700 transition-colors duration-200">
-            {competition.introduction}
+            {competition.introduction || competition.overview}
           </p>
         )}
         

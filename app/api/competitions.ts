@@ -4,6 +4,7 @@ export interface Competition {
   id: string;
   title: string;
   introduction: string;
+  overview?: string;
   question_type?: string;
   selection_process?: string;
   history?: string;
@@ -39,6 +40,7 @@ export interface CompetitionListResponse {
 export interface CompetitionCreate {
   title: string;
   introduction: string;
+  overview?: string;
   question_type?: string;
   selection_process?: string;
   history?: string;
@@ -61,6 +63,7 @@ export interface CompetitionCreate {
 export interface CompetitionUpdate {
   title?: string;
   introduction?: string;
+  overview?: string;
   question_type?: string;
   selection_process?: string;
   history?: string;

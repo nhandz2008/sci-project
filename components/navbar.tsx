@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { useAuth } from "../app/contexts/AuthContext";
+import ModeToggle from "./mode-toggle";
 
 const NAV_LINKS = [
   { name: "Home", href: "/" },
@@ -107,6 +108,12 @@ const Navbar = () => {
                   >
                     Account Dashboard
                   </Link>
+                  
+                  {/* Mode Toggle in dropdown */}
+                  <div className="px-4 py-2 border-t border-gray-100">
+                    <ModeToggle />
+                  </div>
+                  
                   <button
                     onClick={handleLogout}
                     className="block w-full text-left px-4 py-2 text-gray-700 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-400"
@@ -169,6 +176,12 @@ const Navbar = () => {
                 >
                   Account Dashboard
                 </Link>
+                
+                {/* Mode Toggle in mobile menu */}
+                <div className="px-2 py-2 border-t border-gray-100 mt-2">
+                  <ModeToggle />
+                </div>
+                
                 <button
                   onClick={() => {
                     handleLogout();

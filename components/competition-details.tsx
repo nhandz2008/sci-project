@@ -1,16 +1,24 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Competition } from '../app/api/competitions';
+import { useAuth } from '../app/contexts/AuthContext';
+import { useMode } from '../app/contexts/ModeContext';
+import { canEditCompetition } from '../app/utils/permissions';
 import LikeButton from './like-button';
 import Breadcrumb from './breadcrumb';
 import CountdownClock from './countdown-clock';
+import EditCompetitionForm from './edit-competition-form';
 
 interface CompetitionDetailsProps {
   competition: Competition;
 }
 
 const CompetitionDetails: React.FC<CompetitionDetailsProps> = ({ competition }) => {
+  const { user } = useAuth();
+  const { isCreatorsMode } = useMode();
+  const [isEditFormOpen, setIsEditFormOpen] = useState(false);
+  const [editingCompetition, setEditingCompetition] = useState<Competition | null>(null);
   const formatDate = (dateString: string | undefined) => {
     if (!dateString) return 'Not specified';
     return new Date(dateString).toLocaleDateString('en-US', {
@@ -56,6 +64,16 @@ const CompetitionDetails: React.FC<CompetitionDetailsProps> = ({ competition }) 
     const deadlineDate = new Date(deadline);
     const now = new Date();
     return deadlineDate.getTime() > now.getTime();
+  };
+
+  const handleEditCompetition = () => {
+    setEditingCompetition(competition);
+    setIsEditFormOpen(true);
+  };
+
+  const handleUpdateCompetition = (updatedCompetition: Competition) => {
+    // Refresh the page to show updated data
+    window.location.reload();
   };
 
 
@@ -132,6 +150,18 @@ const CompetitionDetails: React.FC<CompetitionDetailsProps> = ({ competition }) 
                       Visit Official Site
                     </a>
                   )}
+                  
+                  {(canEditCompetition(user, competition) || isCreatorsMode) && (
+                    <button
+                      onClick={handleEditCompetition}
+                      className="inline-flex items-center justify-center px-6 py-3 bg-green-600 text-white font-semibold rounded-lg hover:bg-green-700 transition-colors"
+                    >
+                      <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                      </svg>
+                      Edit Competition
+                    </button>
+                  )}
                 </div>
               </div>
             </div>
@@ -143,18 +173,18 @@ const CompetitionDetails: React.FC<CompetitionDetailsProps> = ({ competition }) 
           {/* Main Content */}
           <div className="lg:col-span-2 space-y-8">
             {/* Competition Information */}
-            {(competition.introduction || competition.question_type || competition.selection_process || 
+            {(competition.overview || competition.question_type || competition.selection_process || 
               competition.history || competition.scoring_and_format || competition.awards || 
               competition.penalties_and_bans || competition.notable_achievements) && (
               <div className="rounded-xl shadow-lg p-8">
                 <h2 className="text-2xl font-bold text-gray-900 mb-6">About this competition</h2>
                 <div className="space-y-6">
-                  {/* Introduction */}
-                  {competition.introduction && (
+                  {/* Overview */}
+                  {competition.overview && (
                     <div>
-                      <h3 className="text-lg font-semibold text-gray-900 mb-3">Description</h3>
+                      <h3 className="text-lg font-semibold text-gray-900 mb-3">Overview</h3>
                       <div className="prose prose-lg max-w-none text-gray-700">
-                        <p className="leading-relaxed">{competition.introduction}</p>
+                        <p className="leading-relaxed">{competition.overview}</p>
                       </div>
                     </div>
                   )}
@@ -311,7 +341,7 @@ const CompetitionDetails: React.FC<CompetitionDetailsProps> = ({ competition }) 
                     if (navigator.share) {
                       navigator.share({
                         title: competition.title,
-                        text: competition.introduction || '',
+                        text: competition.overview || competition.introduction || '',
                         url: window.location.href,
                       });
                     } else {
@@ -331,6 +361,18 @@ const CompetitionDetails: React.FC<CompetitionDetailsProps> = ({ competition }) 
           </div>
         </div>
       </div>
+
+      {/* Edit Competition Form Modal */}
+      <EditCompetitionForm
+        isOpen={isEditFormOpen}
+        onClose={() => {
+          setIsEditFormOpen(false);
+          setEditingCompetition(null);
+        }}
+        competition={editingCompetition}
+        onUpdate={handleUpdateCompetition}
+        isLoading={false}
+      />
     </div>
   );
 };

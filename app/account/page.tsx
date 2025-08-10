@@ -5,7 +5,10 @@ import { useAuth } from '../contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import CreateCompetitionForm from '../../components/create-competition-form';
+import EditCompetitionForm from '../../components/edit-competition-form';
 import { CompetitionCreate, competitionsAPI, Competition } from '../api/competitions';
+import { canEditCompetition } from '../utils/permissions';
+import { useMode } from '../contexts/ModeContext';
 
 // Local interface for stored competitions (different from API Competition)
 interface StoredCompetition {
@@ -18,6 +21,7 @@ interface StoredCompetition {
 
 export default function AccountPage() {
   const { user, updateUser } = useAuth();
+  const { isCreatorsMode } = useMode();
   const router = useRouter();
   const [avatar, setAvatar] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
@@ -25,6 +29,8 @@ export default function AccountPage() {
   const [likedCompetitions, setLikedCompetitions] = useState<StoredCompetition[]>([]);
   const [isCreateFormOpen, setIsCreateFormOpen] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
+  const [isEditFormOpen, setIsEditFormOpen] = useState(false);
+  const [editingCompetition, setEditingCompetition] = useState<Competition | null>(null);
   const [userCompetitions, setUserCompetitions] = useState<Competition[]>([]);
   const [isLoadingUserCompetitions, setIsLoadingUserCompetitions] = useState(false);
 
@@ -210,9 +216,18 @@ export default function AccountPage() {
     }
   };
 
-  const handleEditCompetition = (competitionId: string) => {
-    // TODO: Implement edit functionality
-    alert('Edit functionality coming soon!');
+  const handleEditCompetition = (competition: Competition) => {
+    setEditingCompetition(competition);
+    setIsEditFormOpen(true);
+  };
+
+  const handleUpdateCompetition = (updatedCompetition: Competition) => {
+    // Update the competition in the local state
+    setUserCompetitions(prev => 
+      prev.map(comp => 
+        comp.id === updatedCompetition.id ? updatedCompetition : comp
+      )
+    );
   };
 
   const handleDeleteCompetition = async (competitionId: string) => {
@@ -464,18 +479,22 @@ export default function AccountPage() {
                         >
                           View Details →
                         </Link>
-                        <button
-                          onClick={() => handleEditCompetition(competition.id)}
-                          className="text-green-600 hover:text-green-800 text-sm font-medium"
-                        >
-                          Edit
-                        </button>
-                        <button
-                          onClick={() => handleDeleteCompetition(competition.id)}
-                          className="text-red-600 hover:text-red-800 text-sm font-medium"
-                        >
-                          Delete
-                        </button>
+                        {(canEditCompetition(user, competition) || isCreatorsMode) && (
+                          <button
+                            onClick={() => handleEditCompetition(competition)}
+                            className="text-green-600 hover:text-green-800 text-sm font-medium"
+                          >
+                            Edit
+                          </button>
+                        )}
+                        {(canEditCompetition(user, competition) || isCreatorsMode) && (
+                          <button
+                            onClick={() => handleDeleteCompetition(competition.id)}
+                            className="text-red-600 hover:text-red-800 text-sm font-medium"
+                          >
+                            Delete
+                          </button>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -585,6 +604,18 @@ export default function AccountPage() {
         onClose={() => setIsCreateFormOpen(false)}
         onSubmit={handleCreateCompetition}
         isLoading={isCreating}
+      />
+
+      {/* Edit Competition Form Modal */}
+      <EditCompetitionForm
+        isOpen={isEditFormOpen}
+        onClose={() => {
+          setIsEditFormOpen(false);
+          setEditingCompetition(null);
+        }}
+        competition={editingCompetition}
+        onUpdate={handleUpdateCompetition}
+        isLoading={false}
       />
     </main>
   );

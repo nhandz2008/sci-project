@@ -5,6 +5,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { competitionsAPI, Competition } from '../../api/competitions';
+import EditCompetitionForm from '../../../components/edit-competition-form';
 
 export default function AdminCompetitionsPage() {
   const { user } = useAuth();
@@ -23,6 +24,8 @@ export default function AdminCompetitionsPage() {
     is_active: '',
     search: '',
   });
+  const [isEditFormOpen, setIsEditFormOpen] = useState(false);
+  const [editingCompetition, setEditingCompetition] = useState<Competition | null>(null);
 
   // Redirect if not logged in or not admin
   useEffect(() => {
@@ -163,6 +166,20 @@ export default function AdminCompetitionsPage() {
   const handleFilterChange = (key: string, value: string) => {
     setFilters(prev => ({ ...prev, [key]: value }));
     setCurrentPage(1);
+  };
+
+  const handleEditCompetition = (competition: Competition) => {
+    setEditingCompetition(competition);
+    setIsEditFormOpen(true);
+  };
+
+  const handleUpdateCompetition = (updatedCompetition: Competition) => {
+    // Update the competition in the local state
+    setCompetitions(prev => 
+      prev.map(comp => 
+        comp.id === updatedCompetition.id ? updatedCompetition : comp
+      )
+    );
   };
 
   const totalPages = Math.ceil(totalCompetitions / limit);
@@ -385,6 +402,15 @@ export default function AdminCompetitionsPage() {
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                           <div className="flex flex-col gap-2">
+                            {/* Edit Button */}
+                            <button
+                              onClick={() => handleEditCompetition(competition)}
+                              disabled={isActionLoading}
+                              className="text-sm px-3 py-1 bg-blue-100 text-blue-800 hover:bg-blue-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors rounded"
+                            >
+                              Edit
+                            </button>
+
                             {/* Feature/Unfeature Button */}
                             <button
                               onClick={() => handleFeatureToggle(competition.id, competition.is_featured, competition.title)}
@@ -460,6 +486,18 @@ export default function AdminCompetitionsPage() {
           )}
         </div>
       </div>
+
+      {/* Edit Competition Form Modal */}
+      <EditCompetitionForm
+        isOpen={isEditFormOpen}
+        onClose={() => {
+          setIsEditFormOpen(false);
+          setEditingCompetition(null);
+        }}
+        competition={editingCompetition}
+        onUpdate={handleUpdateCompetition}
+        isLoading={false}
+      />
     </main>
   );
 }

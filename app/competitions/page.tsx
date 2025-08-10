@@ -50,7 +50,7 @@ const mapCompetitionToDisplay = (competition: Competition) => {
   return {
     id: competition.id,
     name: competition.title,
-    overview: competition.introduction || "No description available",
+    overview: competition.introduction || competition.overview || "No description available",
     scale: competition.scale ? competition.scale.charAt(0).toUpperCase() + competition.scale.slice(1).toLowerCase() : "Unknown",
     location: competition.location || "TBD",
     modes: competition.format ? [competition.format.charAt(0).toUpperCase() + competition.format.slice(1).toLowerCase()] : ["TBD"],

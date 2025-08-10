@@ -8,8 +8,8 @@ Token storage: `localStorage['auth_token']` managed by `app/contexts/AuthContext
 
 Summary
 - **Total endpoints**: 29
-- **Integrated**: 23
-- **Partial (client exists, not wired in UI)**: 5
+- **Integrated**: 24
+- **Partial (client exists, not wired in UI)**: 4
 - **Not integrated**: 1
 
 ### System
@@ -46,7 +46,7 @@ Summary
 | GET | `/competitions/featured` | Integrated | `app/api/competitions.ts` → `getFeaturedCompetitions`; `app/admin/featured/page.tsx` | – |
 | GET | `/competitions/{id}` | Integrated | `app/api/competitions.ts` → `getCompetition`; `app/hooks/useCompetition.ts`; `app/competitions/[id]/page.tsx`; `components/competition-details.tsx` | – |
 | POST | `/competitions` | Integrated | `app/api/competitions.ts` → `createCompetition`; `app/account/page.tsx` (+ `components/create-competition-form.tsx`) | Creates with `is_approved=false` per API |
-| PUT | `/competitions/{id}` | Partial | `app/api/competitions.ts` → `updateCompetition` | UI not wired (edit in `app/account/page.tsx` is TODO) |
+| PUT | `/competitions/{id}` | Integrated | `app/api/competitions.ts` → `updateCompetition`; `app/account/page.tsx` (+ `components/edit-competition-form.tsx`) | Full edit UI implemented |
 | DELETE | `/competitions/{id}` | Integrated | `app/api/competitions.ts` → `deleteCompetition`; used in `app/account/page.tsx`, `app/admin/*` pages | – |
 | GET | `/competitions/my/competitions` | Integrated | `app/api/competitions.ts` → `getMyCompetitions`; `app/account/page.tsx` | – |
 
@@ -64,9 +64,8 @@ Summary
 ### Notable notes and gaps
 - **Password reset flow**: UI currently simulates email/token steps. Wire to `POST /auth/forgot-password` and `POST /auth/reset-password` for full integration.
 - **Profile**: Endpoints `GET /users/me` and `PUT /users/me` exist in client but are not used in UI. Add a profile edit/view flow to consume them.
-- **Competition update**: Client method exists; edit UI not implemented. Wire `PUT /competitions/{id}`.
 - **System health**: Only `/api/v1/health` is used (as a connectivity probe in `app/account/page.tsx`). `/health` is unused.
-- **Field coverage (overview)**: API spec includes optional `overview` (<= 2000 chars). Current types/forms do not surface `overview`. Consider adding to `Competition` types, create/update forms, and details UI.
+- **Field coverage (overview)**: ✅ **COMPLETED** - Added `overview` field to all interfaces, forms, and display components. Overview field is now fully integrated with 2000 character limit and proper validation.
 
 ### Cross-cutting implementation details
 - All API calls go through `apiRequest` in `app/api/utils.ts` for consistent headers, error parsing (supports both `{detail}` and `{error:{...}}`), and 401 handling (redirect to `/login`).
@@ -75,7 +74,7 @@ Summary
 ### Next steps
 - Wire password reset endpoints into `app/reset-password/page.tsx`.
 - Add profile page to use `GET/PUT /users/me`.
-- Implement competition edit UI to use `PUT /competitions/{id}`.
-- Optionally display and allow editing of `overview` field.
+- ✅ **COMPLETED** - Competition edit UI implemented with full `PUT /competitions/{id}` integration.
+- ✅ **COMPLETED** - Overview field fully integrated across all components.
 
 
