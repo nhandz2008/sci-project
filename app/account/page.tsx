@@ -7,7 +7,7 @@ import Link from 'next/link';
 import CreateCompetitionForm from '../../components/create-competition-form';
 import EditCompetitionForm from '../../components/edit-competition-form';
 import { CompetitionCreate, competitionsAPI, Competition } from '../api/competitions';
-import { canEditCompetition } from '../utils/permissions';
+import { canEditCompetitionInCreatorsMode } from '../utils/permissions';
 import { useMode } from '../contexts/ModeContext';
 
 // Local interface for stored competitions (different from API Competition)
@@ -479,7 +479,7 @@ export default function AccountPage() {
                         >
                           View Details →
                         </Link>
-                        {(canEditCompetition(user, competition) || isCreatorsMode) && (
+                        {canEditCompetitionInCreatorsMode(user, competition, isCreatorsMode) && (
                           <button
                             onClick={() => handleEditCompetition(competition)}
                             className="text-green-600 hover:text-green-800 text-sm font-medium"
@@ -487,7 +487,7 @@ export default function AccountPage() {
                             Edit
                           </button>
                         )}
-                        {(canEditCompetition(user, competition) || isCreatorsMode) && (
+                        {canEditCompetitionInCreatorsMode(user, competition, isCreatorsMode) && (
                           <button
                             onClick={() => handleDeleteCompetition(competition.id)}
                             className="text-red-600 hover:text-red-800 text-sm font-medium"

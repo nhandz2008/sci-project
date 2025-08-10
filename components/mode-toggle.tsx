@@ -24,8 +24,8 @@ const ModeToggle: React.FC = () => {
         aria-label={`Switch to ${isCreatorsMode ? 'normal' : 'creators'} mode`}
       >
         <span
-          className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-            isCreatorsMode ? 'translate-x-6' : 'translate-x-1'
+          className={`inline-block h-4 w-4 transform rounded-full bg-white shadow-sm transition-all duration-200 ease-in-out ${
+            isCreatorsMode ? 'translate-x-5' : 'translate-x-0.5'
           }`}
         />
       </button>

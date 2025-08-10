@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import { Competition } from '../app/api/competitions';
 import { useAuth } from '../app/contexts/AuthContext';
 import { useMode } from '../app/contexts/ModeContext';
-import { canEditCompetition } from '../app/utils/permissions';
+import { canEditCompetitionInCreatorsMode } from '../app/utils/permissions';
 import LikeButton from './like-button';
 import Breadcrumb from './breadcrumb';
 import CountdownClock from './countdown-clock';
@@ -151,7 +151,7 @@ const CompetitionDetails: React.FC<CompetitionDetailsProps> = ({ competition }) 
                     </a>
                   )}
                   
-                  {(canEditCompetition(user, competition) || isCreatorsMode) && (
+                  {canEditCompetitionInCreatorsMode(user, competition, isCreatorsMode) && (
                     <button
                       onClick={handleEditCompetition}
                       className="inline-flex items-center justify-center px-6 py-3 bg-green-600 text-white font-semibold rounded-lg hover:bg-green-700 transition-colors"
