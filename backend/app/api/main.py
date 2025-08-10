@@ -2,7 +2,7 @@
 
 from fastapi import APIRouter
 
-from app.api.routes import admin, auth, competitions, users
+from app.api.routes import admin, auth, competitions, upload, users
 
 # Create main API router
 api_router = APIRouter()
@@ -11,4 +11,5 @@ api_router = APIRouter()
 api_router.include_router(auth.router, tags=["authentication"])
 api_router.include_router(users.router, tags=["users"])
 api_router.include_router(competitions.router, tags=["competitions"])
+api_router.include_router(upload.router, tags=["upload"])
 api_router.include_router(admin.router, tags=["admin"])

@@ -240,7 +240,7 @@ async def get_my_competitions(
 ) -> CompetitionListPaginatedResponse:
     """Get current user's competitions."""
     competitions, total = get_competitions(
-        session=session, skip=skip, limit=limit, owner_id=str(current_user.id)
+        session=session, skip=skip, limit=limit, owner_id=current_user.id
     )
 
     return CompetitionListPaginatedResponse(
