@@ -8,8 +8,8 @@ Token storage: `localStorage['auth_token']` managed by `app/contexts/AuthContext
 
 Summary
 - **Total endpoints**: 29
-- **Integrated**: 24
-- **Partial (client exists, not wired in UI)**: 4
+- **Integrated**: 25
+- **Partial (client exists, not wired in UI)**: 3
 - **Not integrated**: 1
 
 ### System
@@ -31,7 +31,7 @@ Summary
 | Method | Endpoint | Status | Where used | Notes |
 |---|---|---|---|---|
 | GET | `/users/me` | Partial | `app/api/users.ts` → `getCurrentUser` | Not used in UI; `auth/me` is used for quick current-user |
-| PUT | `/users/me` | Partial | `app/api/users.ts` → `updateCurrentUser` | Not wired to UI (profile edit UI not present) |
+| PUT | `/users/me` | Integrated | `app/api/users.ts` → `updateCurrentUser`; `components/user-profile-form.tsx`; `app/account/page.tsx` | Profile edit modal updates name, organization, phone number |
 | PUT | `/users/me/password` | Integrated | `app/api/users.ts` → `changePassword`; `app/reset-password/page.tsx` (logged-in step) | – |
 | GET | `/users` | Integrated | `app/api/users.ts` → `getUsers`; `app/admin/users/page.tsx` | Supports filters and pagination |
 | DELETE | `/users/{user_id}` | Integrated | `app/api/users.ts` → `deleteUser`; `app/admin/users/page.tsx` | – |
@@ -63,9 +63,10 @@ Summary
 
 ### Notable notes and gaps
 - **Password reset flow**: UI currently simulates email/token steps. Wire to `POST /auth/forgot-password` and `POST /auth/reset-password` for full integration.
-- **Profile**: Endpoints `GET /users/me` and `PUT /users/me` exist in client but are not used in UI. Add a profile edit/view flow to consume them.
+- **Profile**: ✅ **COMPLETED** - Profile editing uses `PUT /users/me` via `components/user-profile-form.tsx` and updates context in `app/account/page.tsx`. Retrieval uses `GET /auth/me` on startup; `GET /users/me` client exists but is not used in UI.
 - **System health**: Only `/api/v1/health` is used (as a connectivity probe in `app/account/page.tsx`). `/health` is unused.
 - **Field coverage (overview)**: ✅ **COMPLETED** - Added `overview` field to all interfaces, forms, and display components. Overview field is now fully integrated with 2000 character limit and proper validation.
+- **Admin user management**: ✅ **ENHANCED** - Added user detail viewing modal and improved user management interface. Note: Full user editing by admins requires backend endpoint that doesn't currently exist.
 
 ### Cross-cutting implementation details
 - All API calls go through `apiRequest` in `app/api/utils.ts` for consistent headers, error parsing (supports both `{detail}` and `{error:{...}}`), and 401 handling (redirect to `/login`).
@@ -73,8 +74,9 @@ Summary
 
 ### Next steps
 - Wire password reset endpoints into `app/reset-password/page.tsx`.
-- Add profile page to use `GET/PUT /users/me`.
+- ✅ **COMPLETED** - Profile editing functionality implemented with `PUT /users/me` endpoint (UI retrieves user via `GET /auth/me`).
 - ✅ **COMPLETED** - Competition edit UI implemented with full `PUT /competitions/{id}` integration.
 - ✅ **COMPLETED** - Overview field fully integrated across all components.
+- **Backend enhancement needed**: Add admin endpoint for updating other users' information (e.g., `PUT /admin/users/{user_id}`).
 
 
