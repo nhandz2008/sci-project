@@ -39,11 +39,12 @@ services:
     build:
       context: ./frontend
       args:
-        # Use host-exposed URL so browser clients can reach backend
-        NEXT_PUBLIC_API_URL: http://localhost:8000
+        # Public API URL must be injected at build time for Next.js client code
+        # Read from project .env via Compose variable substitution
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL}
     environment:
-      # Runtime override (also used by client-side code)
-      NEXT_PUBLIC_API_URL: http://localhost:8000
+      # Keep in runtime env for any server-side usage
+      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL}
       NODE_ENV: production
     depends_on:
       backend:

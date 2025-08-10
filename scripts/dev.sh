@@ -7,6 +7,68 @@ set -e
 echo "🚀 SCI Development Script"
 echo "========================"
 
+# ---------------------------------------------
+# Helpers: detect public IP and update .env key
+# ---------------------------------------------
+detect_public_ip() {
+    # Prefer EC2 instance metadata if available
+    local ip
+    ip=$(curl -fsS --max-time 2 http://169.254.169.254/latest/meta-data/public-ipv4 2>/dev/null || true)
+    if [ -n "$ip" ]; then
+        echo "$ip"
+        return 0
+    fi
+    # Fallbacks
+    ip=$(curl -fsS --max-time 5 https://checkip.amazonaws.com 2>/dev/null | tr -d '\n' || true)
+    if [ -n "$ip" ]; then
+        echo "$ip"
+        return 0
+    fi
+    ip=$(dig +short myip.opendns.com @resolver1.opendns.com 2>/dev/null || true)
+    if [ -n "$ip" ]; then
+        echo "$ip"
+        return 0
+    fi
+    # As a last resort, use first host IP (may be private)
+    ip=$(hostname -I 2>/dev/null | awk '{print $1}')
+    [ -n "$ip" ] && echo "$ip"
+}
+
+update_env_var() {
+    # Usage: update_env_var KEY VALUE
+    local key="$1"
+    local val="$2"
+    # Ensure .env exists
+    [ -f .env ] || cp env.example .env 2>/dev/null || touch .env
+    if grep -q "^${key}=" .env; then
+        # Portable in-place edit
+        sed -i.bak -E "s|^${key}=.*$|${key}=${val}|" .env && rm -f .env.bak
+    else
+        echo "${key}=${val}" >> .env
+    fi
+}
+
+set_api_url_from_public_ip() {
+    # Decide scheme: default to https for public access
+    local scheme="${1:-https}"
+    local current
+    current=$(grep -E '^NEXT_PUBLIC_API_URL=' .env 2>/dev/null | cut -d '=' -f2- || true)
+    # Only auto-set if not already customized away from localhost
+    if [ -n "$current" ] && [ "$current" != "http://localhost:8000" ]; then
+        echo "ℹ️  NEXT_PUBLIC_API_URL already set to '$current'; leaving unchanged."
+        return 0
+    fi
+    local ip
+    ip=$(detect_public_ip)
+    if [ -z "$ip" ]; then
+        echo "⚠️  Could not detect public IP automatically; keeping NEXT_PUBLIC_API_URL as '${current:-http://localhost:8000}'."
+        return 0
+    fi
+    local url="${scheme}://${ip}"
+    update_env_var NEXT_PUBLIC_API_URL "$url"
+    echo "✅ Set NEXT_PUBLIC_API_URL=$url (detected from machine public IP)"
+}
+
 case "$1" in
     "dev-start")
         echo "Starting local development (db + API with reload)..."
@@ -118,6 +180,8 @@ case "$1" in
     # Run (Docker): full stack - no local code changes required
     "run-start")
         echo "Starting full stack (db + backend + frontend) with Docker..."
+        # Auto-set public API URL if still at localhost default
+        set_api_url_from_public_ip https
         docker compose up -d
         echo "✅ Services started:"
         echo "- Database:        http://localhost:5432 (PostgreSQL)"
@@ -126,6 +190,8 @@ case "$1" in
         ;;
     "run-build")
         echo "Building Docker images (backend + frontend)..."
+        # Auto-set public API URL if still at localhost default before building frontend
+        set_api_url_from_public_ip https
         docker compose build
         ;;
     "run-logs")
