@@ -4,7 +4,7 @@ import FeaturedCarousel from "../components/featured-carousel";
 
 export default function HomePage() {
   return (
-    <main>
+    <main className="w-full overflow-x-hidden">
       <Hero />
       <STEMInfo />
       <FeaturedCarousel />

@@ -2,6 +2,8 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { CompetitionUpdate, Competition, competitionsAPI } from '../app/api/competitions';
+import ImageUpload from './image-upload';
+import DetailImagesUpload from './detail-images-upload';
 
 interface EditCompetitionFormProps {
   isOpen: boolean;
@@ -22,6 +24,7 @@ export default function EditCompetitionForm({
   const [formData, setFormData] = useState<CompetitionUpdate>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [uploadErrors, setUploadErrors] = useState<{ [key: string]: string }>({});
 
   // Initialize form data when competition changes
   useEffect(() => {
@@ -58,6 +61,13 @@ export default function EditCompetitionForm({
     }));
   };
 
+  const handleUploadError = (field: string, error: string) => {
+    setUploadErrors(prev => ({
+      ...prev,
+      [field]: error
+    }));
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!competition) return;
@@ -86,6 +96,7 @@ export default function EditCompetitionForm({
     setFormData({});
     setError(null);
     setIsSubmitting(false);
+    setUploadErrors({});
     onClose();
   };
 
@@ -436,19 +447,31 @@ export default function EditCompetitionForm({
                 />
               </div>
 
-              <div>
-                <label htmlFor="background_image_url" className="block text-sm font-medium text-gray-700 mb-1">
-                  Background Image URL
-                </label>
-                <input
-                  type="url"
-                  id="background_image_url"
-                  value={formData.background_image_url || ''}
-                  onChange={(e) => handleInputChange('background_image_url', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  placeholder="https://example.com/image.jpg"
-                />
-              </div>
+              <ImageUpload
+                label="Background Image"
+                value={formData.background_image_url}
+                onChange={(url) => handleInputChange('background_image_url', url)}
+                onError={(error) => handleUploadError('background_image', error)}
+                category="competition-background"
+                competitionId={competition?.id}
+                placeholder="Upload or update background image"
+              />
+
+              {uploadErrors.background_image && (
+                <p className="text-sm text-red-600">{uploadErrors.background_image}</p>
+              )}
+
+              <DetailImagesUpload
+                label="Detail Images"
+                value={formData.detail_image_urls || []}
+                onChange={(urls) => handleInputChange('detail_image_urls', urls)}
+                onError={(error) => handleUploadError('detail_images', error)}
+                competitionId={competition?.id}
+              />
+
+              {uploadErrors.detail_images && (
+                <p className="text-sm text-red-600">{uploadErrors.detail_images}</p>
+              )}
             </div>
 
             {/* Form Actions */}

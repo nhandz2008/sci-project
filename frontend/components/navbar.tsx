@@ -146,75 +146,77 @@ const Navbar = () => {
       {/* Mobile menu */}
       {menuOpen && (
         <div id="navbar-menu" className="lg:hidden bg-white/95 shadow-md">
-          <ul className="flex flex-col items-center gap-4 py-4">
-            {NAV_LINKS.map((link) => (
-              <li key={link.name}>
-                <Link
-                  href={link.href}
-                  className="block text-gray-900 hover:text-blue-700 font-medium focus:outline-none focus:ring-2 focus:ring-blue-400 px-4 py-2 rounded transition-colors"
-                  aria-label={link.name}
-                  onClick={handleClose}
-                >
-                  {link.name}
-                </Link>
-              </li>
-            ))}
+          <div className="container mx-auto px-4">
+            <ul className="flex flex-col items-center gap-4 py-4">
+              {NAV_LINKS.map((link) => (
+                <li key={link.name} className="w-full text-center">
+                  <Link
+                    href={link.href}
+                    className="block text-gray-900 hover:text-blue-700 font-medium focus:outline-none focus:ring-2 focus:ring-blue-400 px-4 py-2 rounded transition-colors w-full"
+                    aria-label={link.name}
+                    onClick={handleClose}
+                  >
+                    {link.name}
+                  </Link>
+                </li>
+              ))}
 
-            {/* Mobile auth buttons */}
-            {user ? (
-              <li className="w-full px-4">
-                <div className="flex items-center gap-2 mb-2">
-                  <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center text-white font-semibold">
-                    {user.full_name.charAt(0).toUpperCase()}
+              {/* Mobile auth buttons */}
+              {user ? (
+                <li className="w-full text-center">
+                  <div className="flex items-center justify-center gap-2 mb-2">
+                    <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center text-white font-semibold">
+                      {user.full_name.charAt(0).toUpperCase()}
+                    </div>
+                    <span className="text-gray-700 font-medium">{user.full_name}</span>
                   </div>
-                  <span className="text-gray-700 font-medium">{user.full_name}</span>
-                </div>
-                <Link
-                  href="/account"
-                  className="block text-gray-700 hover:text-blue-700 font-medium focus:outline-none focus:ring-2 focus:ring-blue-400 px-2 py-1 rounded transition-colors"
-                  onClick={handleClose}
-                >
-                  Account Dashboard
-                </Link>
-
-                {/* Mode Toggle in mobile menu */}
-                <div className="px-2 py-2 border-t border-gray-100 mt-2">
-                  <ModeToggle />
-                </div>
-
-                <button
-                  onClick={() => {
-                    handleLogout();
-                    handleClose();
-                  }}
-                  className="block w-full text-left text-gray-700 hover:text-blue-700 font-medium focus:outline-none focus:ring-2 focus:ring-blue-400 px-2 py-1 rounded transition-colors"
-                >
-                  Logout
-                </button>
-              </li>
-            ) : (
-              <>
-                <li>
                   <Link
-                    href="/login"
-                    className="block text-gray-900 hover:text-blue-700 font-medium focus:outline-none focus:ring-2 focus:ring-blue-400 px-4 py-2 rounded transition-colors"
+                    href="/account"
+                    className="block text-gray-700 hover:text-blue-700 font-medium focus:outline-none focus:ring-2 focus:ring-blue-400 px-4 py-2 rounded transition-colors w-full text-center"
                     onClick={handleClose}
                   >
-                    Sign In
+                    Account Dashboard
                   </Link>
-                </li>
-                <li>
-                  <Link
-                    href="/signup"
-                    className="block bg-blue-600 hover:bg-blue-700 text-white font-medium px-4 py-2 rounded transition-colors focus:outline-none focus:ring-2 focus:ring-blue-400"
-                    onClick={handleClose}
+
+                  {/* Mode Toggle in mobile menu */}
+                  <div className="px-4 py-2 border-t border-gray-100 mt-2 flex justify-center">
+                    <ModeToggle />
+                  </div>
+
+                  <button
+                    onClick={() => {
+                      handleLogout();
+                      handleClose();
+                    }}
+                    className="block w-full text-center text-gray-700 hover:text-blue-700 font-medium focus:outline-none focus:ring-2 focus:ring-blue-400 px-4 py-2 rounded transition-colors"
                   >
-                    Sign Up
-                  </Link>
+                    Logout
+                  </button>
                 </li>
-              </>
-            )}
-          </ul>
+              ) : (
+                <>
+                  <li className="w-full text-center">
+                    <Link
+                      href="/login"
+                      className="block text-gray-900 hover:text-blue-700 font-medium focus:outline-none focus:ring-2 focus:ring-blue-400 px-4 py-2 rounded transition-colors w-full"
+                      onClick={handleClose}
+                    >
+                      Sign In
+                    </Link>
+                  </li>
+                  <li className="w-full text-center">
+                    <Link
+                      href="/signup"
+                      className="block bg-blue-600 hover:bg-blue-700 text-white font-medium px-4 py-2 rounded transition-colors focus:outline-none focus:ring-2 focus:ring-blue-400 w-full"
+                      onClick={handleClose}
+                    >
+                      Sign Up
+                    </Link>
+                  </li>
+                </>
+              )}
+            </ul>
+          </div>
         </div>
       )}
     </nav>

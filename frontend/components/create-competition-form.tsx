@@ -1,12 +1,14 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { CompetitionCreate } from '../app/api/competitions';
+import { CompetitionCreate, Competition, competitionsAPI } from '../app/api/competitions';
+import ImageUpload from './image-upload';
+import DetailImagesUpload from './detail-images-upload';
 
 interface CreateCompetitionFormProps {
   isOpen: boolean;
   onClose: () => void;
-  onSubmit: (data: CompetitionCreate) => void;
+  onSubmit: (data: Competition) => void;
   isLoading?: boolean;
 }
 
@@ -17,6 +19,11 @@ export default function CreateCompetitionForm({
   isLoading = false
 }: CreateCompetitionFormProps) {
   const modalRef = useRef<HTMLDivElement>(null);
+  const [uploadErrors, setUploadErrors] = useState<{ [key: string]: string }>({});
+  const [backgroundImageFile, setBackgroundImageFile] = useState<File | null>(null);
+  const [detailImageFiles, setDetailImageFiles] = useState<File[]>([]);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [registrationTime, setRegistrationTime] = useState<string>('');
   const [formData, setFormData] = useState<CompetitionCreate>({
     title: '',
     introduction: '',
@@ -47,12 +54,58 @@ export default function CreateCompetitionForm({
     }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleUploadError = (field: string, error: string) => {
+    setUploadErrors(prev => ({
+      ...prev,
+      [field]: error
+    }));
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    onSubmit(formData);
+    setIsSubmitting(true);
+
+    try {
+      // Combine date and time for registration deadline
+      let finalRegistrationDeadline = formData.registration_deadline;
+      if (formData.registration_deadline && registrationTime) {
+        const dateTimeString = `${formData.registration_deadline}T${registrationTime}`;
+        finalRegistrationDeadline = dateTimeString;
+      }
+
+      // Create submission data with combined date and time
+      const submissionData = {
+        ...formData,
+        registration_deadline: finalRegistrationDeadline
+      };
+
+      // Use the new two-step process
+      const createdCompetition = await competitionsAPI.createCompetitionWithImages(
+        submissionData,
+        backgroundImageFile || undefined,
+        detailImageFiles
+      );
+
+      onSubmit(createdCompetition);
+      handleClose();
+    } catch (error) {
+      console.error('Error creating competition:', error);
+      if (error instanceof Error) {
+        setUploadErrors({ general: error.message });
+      } else {
+        setUploadErrors({ general: 'Failed to create competition. Please try again.' });
+      }
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleClose = () => {
+    setUploadErrors({});
+    setBackgroundImageFile(null);
+    setDetailImageFiles([]);
+    setIsSubmitting(false);
+    setRegistrationTime('');
     setFormData({
       title: '',
       introduction: '',
@@ -304,19 +357,33 @@ export default function CreateCompetitionForm({
                 />
               </div>
 
-              <div>
-                <label htmlFor="background_image_url" className="block text-sm font-medium text-gray-700 mb-1">
-                  Background Image URL
-                </label>
-                <input
-                  type="url"
-                  id="background_image_url"
-                  value={formData.background_image_url || ''}
-                  onChange={(e) => handleInputChange('background_image_url', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  placeholder="https://example.com/image.jpg"
-                />
-              </div>
+              <ImageUpload
+                label="Background Image"
+                value={formData.background_image_url}
+                onChange={(url) => handleInputChange('background_image_url', url)}
+                onFileChange={setBackgroundImageFile}
+                onError={(error) => handleUploadError('background_image', error)}
+                category="competition-background"
+                placeholder="Upload background image for the competition"
+                immediateUpload={false}
+              />
+
+              {uploadErrors.background_image && (
+                <p className="text-sm text-red-600">{uploadErrors.background_image}</p>
+              )}
+
+              <DetailImagesUpload
+                label="Detail Images"
+                value={formData.detail_image_urls || []}
+                onChange={(urls) => handleInputChange('detail_image_urls', urls)}
+                onFileChange={setDetailImageFiles}
+                onError={(error) => handleUploadError('detail_images', error)}
+                immediateUpload={false}
+              />
+
+              {uploadErrors.detail_images && (
+                <p className="text-sm text-red-600">{uploadErrors.detail_images}</p>
+              )}
             </div>
 
             {/* Location and Format */}
@@ -376,17 +443,31 @@ export default function CreateCompetitionForm({
             <div className="space-y-4">
               <h3 className="text-lg font-semibold text-gray-900 border-b pb-2">Dates, Size & Target Audience</h3>
 
-              <div>
-                <label htmlFor="registration_deadline" className="block text-sm font-medium text-gray-700 mb-1">
-                  Registration Deadline
-                </label>
-                <input
-                  type="date"
-                  id="registration_deadline"
-                  value={formData.registration_deadline || ''}
-                  onChange={(e) => handleInputChange('registration_deadline', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                />
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label htmlFor="registration_deadline" className="block text-sm font-medium text-gray-700 mb-1">
+                    Registration Deadline Date
+                  </label>
+                  <input
+                    type="date"
+                    id="registration_deadline"
+                    value={formData.registration_deadline || ''}
+                    onChange={(e) => handleInputChange('registration_deadline', e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  />
+                </div>
+                <div>
+                  <label htmlFor="registration_time" className="block text-sm font-medium text-gray-700 mb-1">
+                    Registration Deadline Time
+                  </label>
+                  <input
+                    type="time"
+                    id="registration_time"
+                    value={registrationTime}
+                    onChange={(e) => setRegistrationTime(e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  />
+                </div>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -439,20 +520,23 @@ export default function CreateCompetitionForm({
 
             {/* Form Actions */}
             <div className="flex items-center justify-end gap-4 pt-6 border-t">
+              {uploadErrors.general && (
+                <p className="text-sm text-red-600 mr-auto">{uploadErrors.general}</p>
+              )}
               <button
                 type="button"
                 onClick={handleClose}
                 className="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
-                disabled={isLoading}
+                disabled={isSubmitting}
               >
                 Cancel
               </button>
               <button
                 type="submit"
-                disabled={isLoading || !formData.title.trim()}
+                disabled={isSubmitting || !formData.title.trim()}
                 className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors flex items-center gap-2"
               >
-                {isLoading ? (
+                {isSubmitting ? (
                   <>
                     <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
                     Creating...

@@ -7,8 +7,8 @@ Environment/base URL: `NEXT_PUBLIC_API_URL` (defaults to `http://localhost:8000`
 Token storage: `localStorage['auth_token']` managed by `app/contexts/AuthContext.tsx`.
 
 Summary
-- **Total endpoints**: 29
-- **Integrated**: 25
+- **Total endpoints**: 32
+- **Integrated**: 28
 - **Partial (client exists, not wired in UI)**: 3
 - **Not integrated**: 1
 
@@ -61,12 +61,20 @@ Summary
 | PUT | `/admin/competitions/{id}/activate` | Integrated | `app/api/competitions.ts` → `activateCompetition`; `app/admin/*` pages | – |
 | PUT | `/admin/competitions/{id}/deactivate` | Integrated | `app/api/competitions.ts` → `deactivateCompetition`; `app/admin/*` pages | – |
 
+### Uploads
+| Method | Endpoint | Status | Where used | Notes |
+|---|---|---|---|---|
+| POST | `/upload/images` | ✅ **INTEGRATED** | `app/api/upload.ts` → `uploadImage`; `components/image-upload.tsx`; `components/detail-images-upload.tsx` | Full image upload functionality with validation and error handling |
+| DELETE | `/upload/images/{key:path}` | ✅ **INTEGRATED** | `app/api/upload.ts` → `deleteImage` | Available for future use in image management |
+| GET | `/upload/images/status` | ✅ **INTEGRATED** | `app/api/upload.ts` → `getUploadStatus` | Available for checking upload service health |
+
 ### Notable notes and gaps
 - **Password reset flow**: UI currently simulates email/token steps. Wire to `POST /auth/forgot-password` and `POST /auth/reset-password` for full integration.
 - **Profile**: ✅ **COMPLETED** - Profile editing uses `PUT /users/me` via `components/user-profile-form.tsx` and updates context in `app/account/page.tsx`. Retrieval uses `GET /auth/me` on startup; `GET /users/me` client exists but is not used in UI.
 - **System health**: Only `/api/v1/health` is used (as a connectivity probe in `app/account/page.tsx`). `/health` is unused.
 - **Field coverage (overview)**: ✅ **COMPLETED** - Added `overview` field to all interfaces, forms, and display components. Overview field is now fully integrated with 2000 character limit and proper validation.
 - **Admin user management**: ✅ **ENHANCED** - Added user detail viewing modal and improved user management interface. Note: Full user editing by admins requires backend endpoint that doesn't currently exist.
+- **Image uploads**: ✅ **COMPLETED** - Full image upload functionality implemented with `app/api/upload.ts`, `components/image-upload.tsx`, `components/detail-images-upload.tsx`, and `hooks/useImageUpload.ts`. Supports competition background and detail images with validation and error handling.
 
 ### Cross-cutting implementation details
 - All API calls go through `apiRequest` in `app/api/utils.ts` for consistent headers, error parsing (supports both `{detail}` and `{error:{...}}`), and 401 handling (redirect to `/login`).
@@ -77,4 +85,5 @@ Summary
 - ✅ **COMPLETED** - Profile editing functionality implemented with `PUT /users/me` endpoint (UI retrieves user via `GET /auth/me`).
 - ✅ **COMPLETED** - Competition edit UI implemented with full `PUT /competitions/{id}` integration.
 - ✅ **COMPLETED** - Overview field fully integrated across all components.
+- ✅ **COMPLETED** - Image upload functionality fully implemented with comprehensive validation and error handling.
 - **Backend enhancement needed**: Add admin endpoint for updating other users' information (e.g., `PUT /admin/users/{user_id}`).

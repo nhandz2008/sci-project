@@ -25,14 +25,14 @@ const ArrowButton = ({
       aria-label={isLeft ? 'Scroll left' : 'Scroll right'}
       onClick={onClick}
       className={`absolute top-1/2 -translate-y-1/2 ${
-        isLeft ? 'left-3' : 'right-3'
-      } z-20 rounded-full bg-black/50 hover:bg-black/70 text-white p-3 focus:outline-none focus:ring-2 focus:ring-blue-500 button-smooth shadow-lg backdrop-blur-sm`}
+        isLeft ? 'left-2 sm:left-3' : 'right-2 sm:right-3'
+      } z-20 rounded-full bg-black/50 hover:bg-black/70 text-white p-2 sm:p-3 focus:outline-none focus:ring-2 focus:ring-blue-500 button-smooth shadow-lg backdrop-blur-sm`}
     >
       <svg
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 24 24"
         fill="currentColor"
-        className="w-6 h-6"
+        className="w-4 h-4 sm:w-6 sm:h-6"
       >
         {isLeft ? (
           <path fillRule="evenodd" d="M15.78 4.72a.75.75 0 010 1.06L9.56 12l6.22 6.22a.75.75 0 11-1.06 1.06l-6.75-6.75a.75.75 0 010-1.06l6.75-6.75a.75.75 0 011.06 0z" clipRule="evenodd" />
@@ -48,11 +48,21 @@ const ProgressIndicator = ({
   isActive,
   duration,
   animationKey,
+  isDot = false,
 }: {
   isActive: boolean;
   duration: number;
   animationKey: number;
+  isDot?: boolean;
 }) => {
+  if (isDot) {
+    return (
+      <div className={`w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full transition-all duration-300 ${
+        isActive ? 'bg-white' : 'bg-white/30'
+      }`} />
+    );
+  }
+
   return (
     <div className="h-1 bg-white/30 rounded-full overflow-hidden backdrop-blur-enhanced">
       <div
@@ -201,7 +211,7 @@ export default function FeaturedCarousel() {
   if (isLoading) {
     return (
       <section className="container mx-auto px-4 py-8">
-        <div className="h-56 sm:h-72 md:h-96 w-full rounded-2xl bg-gray-100 animate-pulse" aria-label="Loading featured competitions" />
+        <div className="h-48 sm:h-56 md:h-64 lg:h-72 w-full rounded-2xl bg-gray-100 animate-pulse" aria-label="Loading featured competitions" />
       </section>
     );
   }
@@ -231,7 +241,7 @@ export default function FeaturedCarousel() {
               key={comp.id}
               href={`/competitions/${comp.id}`}
               onClick={handleCardClick}
-              className={`relative min-w-full h-64 sm:h-80 md:h-[28rem] snap-start rounded-2xl overflow-hidden carousel-card-clickable block focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+              className={`relative min-w-full h-48 sm:h-56 md:h-64 lg:h-72 xl:h-80 snap-start rounded-2xl overflow-hidden carousel-card-clickable block focus:outline-none focus:ring-2 focus:ring-blue-500 ${
                 index === currentIndex ? 'fade-in' : ''
               }`}
             >
@@ -250,15 +260,15 @@ export default function FeaturedCarousel() {
               )}
               <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/30 to-transparent" />
 
-              <div className="absolute inset-0 p-6 sm:p-8 flex items-end">
-                <div className="max-w-3xl">
+              <div className="absolute inset-0 p-4 sm:p-6 lg:p-8 flex items-end">
+                <div className="w-full max-w-3xl">
                   <div className="text-smooth">
-                    <h3 className="text-white text-2xl sm:text-3xl md:text-4xl font-bold mb-3 line-clamp-2 text-smooth">
+                    <h3 className="text-white text-lg sm:text-xl md:text-2xl lg:text-3xl font-bold mb-2 sm:mb-3 line-clamp-2 text-smooth">
                       {comp.title}
                     </h3>
                     {comp.introduction && (
-                      <p className="text-white/90 text-sm sm:text-base md:text-lg line-clamp-3 text-smooth">
-                        {truncateWords(comp.introduction, 35)}
+                      <p className="text-white/90 text-xs sm:text-sm md:text-base lg:text-lg line-clamp-2 sm:line-clamp-3 text-smooth">
+                        {truncateWords(comp.introduction, 25)}
                       </p>
                     )}
                   </div>
@@ -268,24 +278,59 @@ export default function FeaturedCarousel() {
           ))}
         </div>
 
-        <ArrowButton direction="left" onClick={() => handleScroll('left')} />
-        <ArrowButton direction="right" onClick={() => handleScroll('right')} />
+        {/* Arrow buttons - only show on larger screens */}
+        <div className="hidden md:block">
+          <ArrowButton direction="left" onClick={() => handleScroll('left')} />
+          <ArrowButton direction="right" onClick={() => handleScroll('right')} />
+        </div>
 
-        {/* Page Indicators */}
+        {/* Page Indicators - responsive sizing */}
         {visible.length > 1 && (
-          <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 z-30">
-            <div className="flex items-center space-x-3">
+          <div className="absolute bottom-2 sm:bottom-3 lg:bottom-4 left-1/2 transform -translate-x-1/2 z-30">
+            <div className="flex items-center space-x-0.5 sm:space-x-1 md:space-x-2 lg:space-x-3 max-w-[80%] sm:max-w-[70%] md:max-w-none">
               {visible.map((_, index) => (
                 <button
                   key={index}
                   type="button"
                   aria-label={`Go to slide ${index + 1}`}
                   onClick={() => goToSlide(index)}
-                  className="flex flex-col items-center space-y-2 focus:outline-none focus:ring-2 focus:ring-white rounded transition-all duration-300 hover:scale-110"
+                  className="flex flex-col items-center space-y-1 sm:space-y-2 focus:outline-none focus:ring-2 focus:ring-white rounded transition-all duration-300 hover:scale-110 flex-shrink-0"
                 >
-                  <div className="w-20">
+                  {/* Mobile: Dots */}
+                  <div className="block md:hidden">
                     <ProgressIndicator
-                      key={`${index}-${currentIndex}`}
+                      key={`${index}-${currentIndex}-dot`}
+                      isActive={index === currentIndex}
+                      duration={slideDuration}
+                      animationKey={animationKey}
+                      isDot={true}
+                    />
+                  </div>
+
+                  {/* Tablet: Small bars */}
+                  <div className="hidden md:block lg:hidden w-6">
+                    <ProgressIndicator
+                      key={`${index}-${currentIndex}-small`}
+                      isActive={index === currentIndex}
+                      duration={slideDuration}
+                      animationKey={animationKey}
+                    />
+                  </div>
+
+                  {/* Desktop: Medium bars */}
+                  <div className="hidden lg:block xl:hidden w-12">
+                    <ProgressIndicator
+                      key={`${index}-${currentIndex}-medium`}
+                      isActive={index === currentIndex}
+                      duration={slideDuration}
+                      animationKey={animationKey}
+                    />
+                  </div>
+
+                  {/* Large Desktop: Wider bars */}
+                  <div className="hidden xl:block w-16">
+                    <ProgressIndicator
+                      key={`${index}-${currentIndex}-wide`}
                       isActive={index === currentIndex}
                       duration={slideDuration}
                       animationKey={animationKey}
