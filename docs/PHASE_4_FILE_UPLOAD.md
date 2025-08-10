@@ -34,6 +34,9 @@ Flow when creating competitions:
 - Dependencies (already present): `boto3`, `python-multipart`, `pillow`
 - Bucket policy permitting uploads. For public serving via direct URLs, configure bucket to allow public read of uploaded objects or serve via CloudFront.
 
+Recommended settings:
+- Set `ALLOWED_FILE_TYPES=jpg,jpeg,png,webp` and adjust `MAX_FILE_SIZE_MB` as needed in your `.env`.
+
 Tip: For local dev you can use a real S3 bucket or a local S3-compatible emulator (e.g. LocalStack). This guide targets real S3 with SDK-level validation and stubbed tests.
 
 ---
@@ -145,13 +148,11 @@ def upload_image(file: UploadFile, user_id: str) -> dict:
 
     key = build_key(user_id, ext)
     s3 = get_s3_client()
-    s3.upload_fileobj(
-        io.BytesIO(content),
-        settings.S3_BUCKET_NAME,
-        key,
-        ExtraArgs={
-            "ContentType": file.content_type or mimetypes.types_map.get(f".{ext}", "application/octet-stream"),
-        },
+    s3.put_object(
+        Bucket=settings.S3_BUCKET_NAME,
+        Key=key,
+        Body=content,
+        ContentType=file.content_type or mimetypes.types_map.get(f".{ext}", "application/octet-stream"),
     )
 
     url = f"{settings.S3_BUCKET_URL}/{key}" if settings.S3_BUCKET_URL else key
@@ -175,6 +176,7 @@ Notes:
 - We validate actual image content using Pillow and enforce max size
 - Keys embed the `user_id` to enforce ownership on deletion
 - For private buckets, you may prefer presigned URLs for GETs; for now we return the S3 URL composed from `S3_BUCKET_URL`
+ - Using `put_object` keeps tests simple and deterministic (works cleanly with `botocore.stub.Stubber`).
 
 
 ### 2) Schemas – `app/schemas/upload.py`
@@ -195,10 +197,6 @@ class UploadStatusResponse(BaseModel):
     status: str
     bucket: str | None = None
     region: str | None = None
-
-
-class MessageResponse(BaseModel):
-    message: str
 ```
 
 
@@ -214,7 +212,8 @@ from app.api.deps import get_current_active_user
 from app.core.config import settings
 from app.core.upload import delete_object, get_s3_client, upload_image
 from app.models.user import User
-from app.schemas.upload import MessageResponse, UploadImageResponse, UploadStatusResponse
+from app.schemas.auth import MessageResponse
+from app.schemas.upload import UploadImageResponse, UploadStatusResponse
 
 router = APIRouter(prefix="/upload", tags=["upload"])
 
@@ -252,7 +251,7 @@ async def delete_image_route(
     from app.models.common import UserRole
 
     allowed_prefix = f"competitions/{current_user.id}/"
-    if current_user.role.value != UserRole.ADMIN.value and not key.startswith(allowed_prefix):
+    if current_user.role != UserRole.ADMIN and not key.startswith(allowed_prefix):
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Permission denied")
 
     try:

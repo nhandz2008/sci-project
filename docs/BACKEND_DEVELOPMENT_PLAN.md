@@ -198,10 +198,11 @@ This document provides a high-level, sequential plan for developing the backend 
 
 ## Phase 7: System Endpoints & Finalization
 
-1. **System Endpoints** ✅
-   - ✅ Implement `/health` and `/info` endpoints.
+1. **System Endpoints** ✅/➕
+   - ✅ Implement `/health` endpoint (also `GET {API_V1_STR}/health` includes version).
+   - ❌ Implement `/info` endpoint.
    - ❌ Ensure OpenAPI docs are complete and accurate.
-   - ❌ Add versioning and metadata to API responses.
+   - ➕ Add versioning and metadata to API responses (partial: version returned in health endpoint).
 
 2. **Comprehensive Testing** ✅/➕
    - ✅ Write end-to-end tests for all major user flows.
@@ -225,7 +226,7 @@ This document provides a high-level, sequential plan for developing the backend 
 - **Base Models**: User and Competition models with relationships are implemented
 - **Core Utilities**: Database session management, security utilities, CORS configuration
 - **Basic System Endpoints**: Health check endpoints are working
-- **Authentication System**: JWT auth (access/refresh), password reset, token validation
+- **Authentication System**: JWT auth (access), password reset, token validation
 - **API Routes**: Authentication, User Management, and Competition Management (public, creator, admin moderation, featured) implemented and secured
 - **Competition Enhancements**: Sorting, case-insensitive search, filters, featured listing, moderation audit fields
 - **Migrations**: Alembic configured with initial and follow-up migrations

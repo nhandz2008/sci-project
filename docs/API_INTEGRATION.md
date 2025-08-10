@@ -259,7 +259,100 @@ Competitions list:
 
 ## 6. File uploads
 
-Not implemented in current version.
+Implemented. The backend stores files in S3 with organized keys.
+
+### Endpoints
+
+- POST `/upload/images` (auth required)
+  - Multipart form fields:
+    - `file`: required (the file to upload)
+    - `category`: optional, one of `user-image` | `competition-background` | `competition-asset` (default: `user-image`)
+    - `competition_id`: required when `category` is `competition-background` or `competition-asset`
+  - Behavior:
+    - Validates size (<= `MAX_FILE_SIZE_MB`) and extension against `ALLOWED_FILE_TYPES`
+    - If the extension is an image (`jpg,jpeg,png,webp`), validates actual image content via Pillow
+    - Uploads to S3 using organized keys (see Key structure below)
+  - Response `200 OK`:
+    ```json
+    {
+      "url": "https://<bucket>.s3.<region>.amazonaws.com/users/<user_id>/images/<uuid>.png",
+      "key": "users/<user_id>/images/<uuid>.png",
+      "filename": "image.png",
+      "content_type": "image/png",
+      "size": 123456
+    }
+    ```
+  - Errors: `400` invalid/unsupported file, missing `competition_id`; `502` S3 error
+
+- DELETE `/upload/images/{key:path}` (auth required)
+  - Deletes a previously uploaded object by its S3 key (URL-encoded in the path)
+  - Permissions:
+    - Admin can delete any key
+    - Users can delete only their own `users/{user_id}/...` keys
+  - Errors: `400` invalid key; `403` permission denied; `502` S3 error
+
+- GET `/upload/images/status` (public)
+  - Returns S3 head-bucket result
+  - Response:
+    ```json
+    { "status": "ok", "bucket": "<bucket>", "region": "<region>" }
+    ```
+    or `{ "status": "unavailable", ... }` on failure
+
+### Key structure
+
+- User image uploads
+  - `users/{user_id}/images/<uuid>.<ext>`
+- Competition background image
+  - `competitions/{competition_id}/background.<ext>`
+- Competition assets (images or allowed docs)
+  - `competitions/{competition_id}/assets/<uuid>.<ext>`
+
+### Allowed types and limits
+
+- Max size: `MAX_FILE_SIZE_MB` (default `10`)
+- Allowed extensions: `ALLOWED_FILE_TYPES` (default `jpg,jpeg,png,webp,pdf,doc,docx`)
+
+### Examples
+
+Upload user image:
+```bash
+TOKEN=...
+curl -X POST "$BASE_URL/upload/images" \
+  -H "Authorization: Bearer $TOKEN" \
+  -F "category=user-image" \
+  -F "file=@/absolute/path/to/avatar.png"
+```
+
+Upload competition background:
+```bash
+TOKEN=...
+COMP_ID=<uuid>
+curl -X POST "$BASE_URL/upload/images" \
+  -H "Authorization: Bearer $TOKEN" \
+  -F "category=competition-background" \
+  -F "competition_id=$COMP_ID" \
+  -F "file=@/absolute/path/to/bg.jpg"
+```
+
+Upload competition asset (image or doc):
+```bash
+TOKEN=...
+COMP_ID=<uuid>
+curl -X POST "$BASE_URL/upload/images" \
+  -H "Authorization: Bearer $TOKEN" \
+  -F "category=competition-asset" \
+  -F "competition_id=$COMP_ID" \
+  -F "file=@/absolute/path/to/guide.pdf"
+```
+
+Delete an object (admin or owner of user-image):
+```bash
+TOKEN=...
+KEY="users/<user_id>/images/<uuid>.png"
+curl -X DELETE "$BASE_URL/upload/images/$KEY" \
+  -H "Authorization: Bearer $TOKEN"
+```
 
 ---
 
