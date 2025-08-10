@@ -8,8 +8,8 @@ const ModeToggle: React.FC = () => {
   const { toggleMode, isCreatorsMode } = useMode();
   const { user } = useAuth();
 
-  // Only show toggle for authenticated users
-  if (!user) {
+  // Only show toggle for authenticated users who are not admins
+  if (!user || user.role === 'ADMIN') {
     return null;
   }
 

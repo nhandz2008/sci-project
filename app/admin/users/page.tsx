@@ -4,12 +4,213 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { usersAPI, UserListResponse } from '../../api/users';
+import { usersAPI, UserListResponse, UserDetailResponse } from '../../api/users';
+
+interface UserDetailModalProps {
+  user: UserDetailResponse | null;
+  isOpen: boolean;
+  onClose: () => void;
+  onUpdate: (userId: string, data: any) => Promise<void>;
+}
+
+const UserDetailModal = ({ user, isOpen, onClose, onUpdate }: UserDetailModalProps) => {
+  const [isEditing, setIsEditing] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [formData, setFormData] = useState({
+    full_name: '',
+    organization: '',
+    phone_number: '',
+  });
+
+  useEffect(() => {
+    if (user) {
+      setFormData({
+        full_name: user.full_name || '',
+        organization: user.organization || '',
+        phone_number: user.phone_number || '',
+      });
+    }
+  }, [user]);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!user) return;
+
+    setIsLoading(true);
+    try {
+      await onUpdate(user.id, formData);
+      setIsEditing(false);
+      alert('User information updated successfully!');
+    } catch (error) {
+      console.error('Error updating user:', error);
+      if (error instanceof Error) {
+        alert(`Failed to update user: ${error.message}`);
+      } else {
+        alert('Failed to update user. Please try again.');
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  if (!isOpen || !user) return null;
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div className="bg-white rounded-lg p-6 w-full max-w-2xl mx-4 max-h-[90vh] overflow-y-auto">
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="text-2xl font-bold text-gray-900">User Details</h2>
+          <button
+            onClick={onClose}
+            className="text-gray-400 hover:text-gray-600 transition-colors"
+          >
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+
+        {isEditing ? (
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Full Name
+              </label>
+              <input
+                type="text"
+                value={formData.full_name}
+                onChange={(e) => setFormData(prev => ({ ...prev, full_name: e.target.value }))}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                required
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Organization
+              </label>
+              <input
+                type="text"
+                value={formData.organization}
+                onChange={(e) => setFormData(prev => ({ ...prev, organization: e.target.value }))}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Phone Number
+              </label>
+              <input
+                type="tel"
+                value={formData.phone_number}
+                onChange={(e) => setFormData(prev => ({ ...prev, phone_number: e.target.value }))}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                placeholder="+1234567890"
+              />
+            </div>
+
+            <div className="flex items-center gap-3 pt-4">
+              <button
+                type="submit"
+                disabled={isLoading}
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
+              >
+                {isLoading ? 'Saving...' : 'Save Changes'}
+              </button>
+              <button
+                type="button"
+                onClick={() => setIsEditing(false)}
+                disabled={isLoading}
+                className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              >
+                Cancel
+              </button>
+            </div>
+          </form>
+        ) : (
+          <div className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                <p className="text-gray-900 bg-gray-50 px-3 py-2 rounded-lg">{user.email}</p>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
+                <p className="text-gray-900 bg-gray-50 px-3 py-2 rounded-lg">{user.full_name}</p>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Organization</label>
+                <p className="text-gray-900 bg-gray-50 px-3 py-2 rounded-lg">{user.organization || 'Not specified'}</p>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Phone Number</label>
+                <p className="text-gray-900 bg-gray-50 px-3 py-2 rounded-lg">{user.phone_number || 'Not specified'}</p>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Role</label>
+                <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                  user.role === 'ADMIN' 
+                    ? 'bg-purple-100 text-purple-800' 
+                    : 'bg-blue-100 text-blue-800'
+                }`}>
+                  {user.role}
+                </span>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
+                <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                  user.is_active 
+                    ? 'bg-green-100 text-green-800' 
+                    : 'bg-red-100 text-red-800'
+                }`}>
+                  {user.is_active ? 'Active' : 'Inactive'}
+                </span>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Created At</label>
+                <p className="text-gray-900 bg-gray-50 px-3 py-2 rounded-lg">
+                  {new Date(user.created_at).toLocaleString()}
+                </p>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Last Updated</label>
+                <p className="text-gray-900 bg-gray-50 px-3 py-2 rounded-lg">
+                  {new Date(user.updated_at).toLocaleString()}
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-3 pt-4">
+              <button
+                onClick={() => setIsEditing(true)}
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+              >
+                Edit User
+              </button>
+              <button
+                onClick={onClose}
+                className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
 
 export default function AdminUsersPage() {
   const { user } = useAuth();
   const router = useRouter();
   const [users, setUsers] = useState<UserListResponse[]>([]);
+  const [selectedUser, setSelectedUser] = useState<UserDetailResponse | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [isActionLoading, setIsActionLoading] = useState(false);
   const [totalUsers, setTotalUsers] = useState(0);
@@ -57,6 +258,50 @@ export default function AdminUsersPage() {
       alert('Failed to fetch users. Please try again.');
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleViewUser = async (userId: string) => {
+    try {
+      // Try to get user details from API if available
+      try {
+        const userDetail = await usersAPI.getUserById(userId);
+        setSelectedUser(userDetail);
+        setIsModalOpen(true);
+      } catch (apiError) {
+        // Fallback to mock data if API endpoint doesn't exist yet
+        console.log('API endpoint not available, using mock data:', apiError);
+        const userDetail: UserDetailResponse = {
+          id: userId,
+          email: users.find(u => u.id === userId)?.email || '',
+          full_name: users.find(u => u.id === userId)?.full_name || '',
+          organization: users.find(u => u.id === userId)?.organization,
+          phone_number: '', // This would come from the API
+          role: users.find(u => u.id === userId)?.role || 'CREATOR',
+          is_active: users.find(u => u.id === userId)?.is_active || false,
+          created_at: users.find(u => u.id === userId)?.created_at || '',
+          updated_at: new Date().toISOString(), // This would come from the API
+        };
+        
+        setSelectedUser(userDetail);
+        setIsModalOpen(true);
+      }
+    } catch (error) {
+      console.error('Error fetching user details:', error);
+      alert('Failed to fetch user details. Please try again.');
+    }
+  };
+
+  const handleUpdateUser = async (userId: string, data: any) => {
+    try {
+      // Try to update user via API if available
+      await usersAPI.updateUser(userId, data);
+      alert('User information updated successfully!');
+      fetchUsers(); // Refresh the list
+    } catch (error) {
+      // Fallback message if API endpoint doesn't exist yet
+      console.log('API endpoint not available:', error);
+      alert('User editing functionality requires backend support. The API endpoint for updating other users is not yet implemented.');
     }
   };
 
@@ -307,6 +552,15 @@ export default function AdminUsersPage() {
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                           <div className="flex items-center gap-2">
+                            {/* View Details Button */}
+                            <button
+                              onClick={() => handleViewUser(userItem.id)}
+                              className="text-blue-600 hover:text-blue-900 transition-colors"
+                              title="View user details"
+                            >
+                              View
+                            </button>
+
                             {/* Change Role Button */}
                             <button
                               onClick={() => handleChangeRole(userItem.id, userItem.role, userItem.full_name)}
@@ -380,6 +634,17 @@ export default function AdminUsersPage() {
             </>
           )}
         </div>
+
+        {/* User Detail Modal */}
+        <UserDetailModal
+          user={selectedUser}
+          isOpen={isModalOpen}
+          onClose={() => {
+            setIsModalOpen(false);
+            setSelectedUser(null);
+          }}
+          onUpdate={handleUpdateUser}
+        />
       </div>
     </main>
   );

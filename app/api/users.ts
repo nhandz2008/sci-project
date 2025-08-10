@@ -132,6 +132,20 @@ class UsersAPI {
       requireAuth: true,
     });
   }
+
+  // Get user by ID (for admin use - requires backend endpoint)
+  async getUserById(userId: string): Promise<UserDetailResponse> {
+    return apiRequest<UserDetailResponse>(`/api/v1/users/${userId}`, { requireAuth: true });
+  }
+
+  // Update user by ID (for admin use - requires backend endpoint)
+  async updateUser(userId: string, data: UserUpdate): Promise<UserDetailResponse> {
+    return apiRequest<UserDetailResponse>(`/api/v1/users/${userId}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+      requireAuth: true,
+    });
+  }
 }
 
 export const usersAPI = new UsersAPI();

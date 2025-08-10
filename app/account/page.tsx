@@ -6,7 +6,9 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import CreateCompetitionForm from '../../components/create-competition-form';
 import EditCompetitionForm from '../../components/edit-competition-form';
+import UserProfileForm from '../../components/user-profile-form';
 import { CompetitionCreate, competitionsAPI, Competition } from '../api/competitions';
+import { usersAPI, UserUpdate } from '../api/users';
 import { canEditCompetitionInCreatorsMode } from '../utils/permissions';
 import { useMode } from '../contexts/ModeContext';
 
@@ -33,6 +35,8 @@ export default function AccountPage() {
   const [editingCompetition, setEditingCompetition] = useState<Competition | null>(null);
   const [userCompetitions, setUserCompetitions] = useState<Competition[]>([]);
   const [isLoadingUserCompetitions, setIsLoadingUserCompetitions] = useState(false);
+  const [isProfileFormOpen, setIsProfileFormOpen] = useState(false);
+  const [isUpdatingProfile, setIsUpdatingProfile] = useState(false);
 
   // Redirect if not logged in
   useEffect(() => {
@@ -263,6 +267,33 @@ export default function AccountPage() {
     }
   };
 
+  const handleUpdateProfile = async (data: UserUpdate) => {
+    setIsUpdatingProfile(true);
+    try {
+      const updatedUser = await usersAPI.updateCurrentUser(data);
+      
+      // Update the user context with the new data
+      updateUser(updatedUser);
+      
+      alert('Profile updated successfully!');
+    } catch (error) {
+      console.error('Error updating profile:', error);
+      
+      if (error instanceof Error) {
+        if (error.message.includes('authentication') || error.message.includes('token')) {
+          alert('Authentication failed. Please log in again.');
+          router.push('/login');
+        } else {
+          alert(`Failed to update profile: ${error.message}`);
+        }
+      } else {
+        alert('Failed to update profile. Please try again.');
+      }
+    } finally {
+      setIsUpdatingProfile(false);
+    }
+  };
+
   if (!user) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -318,7 +349,19 @@ export default function AccountPage() {
             <div className="flex-1">
               <h1 className="text-3xl font-bold text-gray-900 mb-2">{user.full_name}</h1>
               <p className="text-gray-600 mb-1">{user.email}</p>
+              {user.organization && (
+                <p className="text-gray-600 mb-1">{user.organization}</p>
+              )}
+              {user.phone_number && (
+                <p className="text-gray-600 mb-1">{user.phone_number}</p>
+              )}
               <p className="text-sm text-gray-500">Member since {new Date(user.created_at).toLocaleDateString()}</p>
+              <button
+                onClick={() => setIsProfileFormOpen(true)}
+                className="mt-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+              >
+                Edit Profile
+              </button>
             </div>
           </div>
         </div>
@@ -616,6 +659,15 @@ export default function AccountPage() {
         competition={editingCompetition}
         onUpdate={handleUpdateCompetition}
         isLoading={false}
+      />
+
+      {/* User Profile Form Modal */}
+      <UserProfileForm
+        user={user}
+        isOpen={isProfileFormOpen}
+        onClose={() => setIsProfileFormOpen(false)}
+        onUpdate={handleUpdateProfile}
+        isLoading={isUpdatingProfile}
       />
     </main>
   );
