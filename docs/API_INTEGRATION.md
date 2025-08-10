@@ -369,6 +369,7 @@ All endpoints below are under `/users`.
 - Purpose: Get current user profile
 - Auth: Yes (active user)
 - Success `200 OK` → `UserDetailResponse`
+- Errors: `401/403` invalid/missing token
 
 #### PUT `/users/me`
 - Purpose: Update current user profile
@@ -423,6 +424,7 @@ All endpoints below are under `/users`.
   ```json
   { "message": "User deactivated successfully" }
   ```
+- Errors: `400` invalid UUID format or deactivating self; `404` not found; `500` on failure
 
 #### PUT `/users/{user_id}/activate`
 - Purpose: Activate user (admin-only)
@@ -431,6 +433,7 @@ All endpoints below are under `/users`.
   ```json
   { "message": "User activated successfully" }
   ```
+- Errors: `400` invalid UUID format; `404` not found; `500` on failure
 
 #### PUT `/users/{user_id}/role?new_role=ADMIN|CREATOR`
 - Purpose: Change user role (admin-only)
@@ -440,6 +443,7 @@ All endpoints below are under `/users`.
   ```json
   { "message": "User role changed to ADMIN successfully" }
   ```
+- Errors: `400` invalid UUID format or changing own role; `404` not found; `500` on failure
 
 ---
 
@@ -456,7 +460,7 @@ All endpoints below are under `/competitions`.
   - `format`: `ONLINE` | `OFFLINE` | `HYBRID` (optional)
   - `scale`: `PROVINCIAL` | `REGIONAL` | `INTERNATIONAL` (optional)
   - `location`: string (optional)
-  - `search`: string (matches title and description, case-insensitive) (optional)
+  - `search`: string (matches title and introduction, case-insensitive) (optional)
   - `sort_by`: `created_at` | `registration_deadline` | `title` (optional)
   - `order`: `asc` | `desc` (optional)
 - Success `200 OK` → `CompetitionListPaginatedResponse`
@@ -476,7 +480,7 @@ All endpoints below are under `/competitions`.
 - Purpose: Get competition details by ID (public - only approved competitions)
 - Auth: No
 - Success `200 OK` → `CompetitionResponse`
-- Errors: `404` not found or not approved
+- Errors: `400` invalid ID format; `404` not found or not approved
 
 #### POST `/competitions`
 - Purpose: Create a new competition (authenticated users only)
@@ -519,7 +523,7 @@ All endpoints below are under `/competitions`.
 - Auth: Yes (active user)
 - Body: `CompetitionUpdate` schema (any subset of fields)
 - Success `200 OK` → `CompetitionResponse`
-- Errors: `403` insufficient permissions; `404` not found
+- Errors: `400` invalid ID format; `403` insufficient permissions; `404` not found; `422` validation errors
 
 #### DELETE `/competitions/{competition_id}`
 - Purpose: Delete competition by ID (owner/admin only)
@@ -528,7 +532,7 @@ All endpoints below are under `/competitions`.
   ```json
   { "message": "Competition deleted successfully" }
   ```
-- Errors: `403` insufficient permissions; `404` not found
+- Errors: `400` invalid ID format; `403` insufficient permissions; `404` not found; `500` on failure
 
 #### GET `/competitions/my/competitions`
 - Purpose: Get current user's competitions
@@ -561,7 +565,7 @@ All endpoints below are under `/admin`.
   ```json
   { "message": "Competition approved successfully" }
   ```
-- Errors: `404` not found
+- Errors: `400` invalid ID format; `404` not found
 
 #### PUT `/admin/competitions/{competition_id}/reject`
 - Purpose: Reject competition by ID (admin only)
@@ -574,7 +578,7 @@ All endpoints below are under `/admin`.
   ```json
   { "message": "Competition rejected successfully" }
   ```
-- Errors: `404` not found
+- Errors: `400` invalid ID format; `404` not found
 
 #### PUT `/admin/competitions/{competition_id}/feature`
 - Purpose: Feature competition by ID (admin only)
@@ -583,7 +587,7 @@ All endpoints below are under `/admin`.
   ```json
   { "message": "Competition featured successfully" }
   ```
-- Errors: `404` not found
+- Errors: `400` invalid ID format; `404` not found
 
 #### PUT `/admin/competitions/{competition_id}/unfeature`
 - Purpose: Unfeature competition by ID (admin only)
@@ -592,7 +596,7 @@ All endpoints below are under `/admin`.
   ```json
   { "message": "Competition unfeatured successfully" }
   ```
-- Errors: `404` not found
+- Errors: `400` invalid ID format; `404` not found
 
 #### PUT `/admin/competitions/{competition_id}/activate`
 - Purpose: Activate competition by ID (admin only)
@@ -601,7 +605,7 @@ All endpoints below are under `/admin`.
   ```json
   { "message": "Competition activated successfully" }
   ```
-- Errors: `404` not found
+- Errors: `400` invalid ID format; `404` not found
 
 #### PUT `/admin/competitions/{competition_id}/deactivate`
 - Purpose: Deactivate competition by ID (admin only)
@@ -610,7 +614,7 @@ All endpoints below are under `/admin`.
   ```json
   { "message": "Competition deactivated successfully" }
   ```
-- Errors: `404` not found
+- Errors: `400` invalid ID format; `404` not found
 
 ---
 
@@ -755,6 +759,7 @@ All endpoints below are under `/admin`.
   "id": "uuid",
   "title": "Competition Title",
   "introduction": "Description",
+  "overview": "Comprehensive overview of the competition",
   "owner_id": "uuid",
   "created_at": "2025-08-08T14:30:00+00:00",
   "is_approved": false
