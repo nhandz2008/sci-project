@@ -21,7 +21,7 @@ RUN --mount=type=cache,target=/root/.cache/uv \
 COPY ./app /app/app
 COPY ./scripts /app/scripts
 COPY ./pyproject.toml ./uv.lock /app/
-# ./alembic.ini # TODO: Add alembic.ini to the project
+COPY ./alembic.ini /app/alembic.ini
 
 # Sync the project
 RUN --mount=type=cache,target=/root/.cache/uv \
