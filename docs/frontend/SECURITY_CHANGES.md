@@ -96,7 +96,7 @@ await competitionsAPI.getCompetition(competitionId);
    - Removed competition creation data logging
    - Maintained error logging for debugging
 
-4. **`frontend/COMPETITION_DETAILS_IMPLEMENTATION.md`**
+4. **`docs/frontend/COMPETITION_DETAILS_IMPLEMENTATION.md`**
    - Updated documentation to reflect security changes
    - Added security notes about hidden IDs
 
