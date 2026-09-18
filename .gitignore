@@ -8,3 +8,10 @@ node_modules/
 .idea/
 *.log
 
+# Local dependency and validation caches
+.venv/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+.DS_Store

@@ -73,3 +73,7 @@ If you encounter issues:
 1. Check service logs: `docker compose logs`
 2. Restart services: `docker compose down && docker compose up --build`
 3. See `backend/README.md` for detailed backend documentation
+
+## Repository maintenance
+
+The backend already separates application code (`backend/app/`), migrations (`backend/app/alembic/`), and helper scripts (`scripts/` and `backend/scripts/`). Keep those paths stable for Docker and Alembic. Local virtual environments and tool caches are ignored. The existing example environment file is retained; configure local values before running the services.
