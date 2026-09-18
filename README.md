@@ -129,4 +129,8 @@ sci-project/
 
 ---
 
-For more details, see the [Development Guide](./SCI_Development_Guide.md). 
+For more details, see the [documentation index](docs/README.md).
+
+## Documentation
+
+See the [documentation index](docs/README.md) for implementation notes and guides. Source code, tests, scripts, framework configuration, and deployment files remain in their existing locations.
