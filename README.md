@@ -23,5 +23,13 @@ A modern web app for science competitions, built with Next.js 14+, TypeScript, a
 ## Folder Structure
 - `/app` - Main app pages and layouts
 - `/components` - Reusable UI components
-- `/public/logos` - Competition and partner logos
+- `/public/assets/logos` - Competition and partner logos
 - `/styles` - Global styles
+
+## Documentation
+
+See the [documentation index](docs/README.md) for implementation notes and guides. Source code, tests, scripts, framework configuration, and deployment files remain in their existing locations.
+
+## Maintenance
+
+Run `npm run lint` and `npm run build` from this frontend directory. There is no frontend test script. Implementation notes are listed in the [documentation index](docs/README.md). TypeScript build caches (`*.tsbuildinfo`) are generated locally and are not committed.
