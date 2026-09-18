@@ -217,3 +217,7 @@ sci-project/
 - **Validation** (`app/schemas/`): Request/response validation and serialization
 - **Configuration** (`app/core/`): Settings, security, and utilities
 - **Testing** (`tests/`): Comprehensive test coverage for all layers
+
+## Documentation
+
+See the [documentation index](docs/README.md) for implementation notes and guides. Source code, tests, scripts, framework configuration, and deployment files remain in their existing locations.
