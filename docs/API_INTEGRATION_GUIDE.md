@@ -915,7 +915,7 @@ if (error.response?.status === 429) {
 
 ## Missing Features for Full Implementation
 
-To fully implement the frontend according to the context.md requirements, the following backend features need to be added:
+To fully implement the frontend according to the docs/context.md requirements, the following backend features need to be added:
 
 ### 1. Enhanced Competition Model
 The current competition model is missing several fields required by the design document:
