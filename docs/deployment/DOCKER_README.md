@@ -201,7 +201,7 @@ sci-project/
 ├── docker-compose.override.yml  # Development overrides
 ├── .dockerignore           # Docker ignore file
 ├── env.example             # Environment template
-└── DOCKER_README.md        # This file
+└── docs/deployment/DOCKER_README.md        # This file
 ```
 
 ## 🔍 Service Details

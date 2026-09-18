@@ -1,0 +1,25 @@
+# Local environment files (keep checked-in examples)
+.env
+.env.*
+!.env.example
+!.env.*.example
+
+# Dependencies and generated output
+.venv/
+__pycache__/
+*.py[cod]
+node_modules/
+dist/
+*.tsbuildinfo
+.pytest_cache/
+.ruff_cache/
+.coverage
+coverage/
+
+# Local logs and OS files
+*.log
+.DS_Store
+Thumbs.db
+
+# New uploaded files are runtime data; existing tracked examples are preserved.
+/backend/uploads/
